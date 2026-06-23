@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alex Sharma — Backend Engineer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #F8F8F6;
+      --surface: #FFFFFF;
+      --border: #E4E4E0;
+      --border-soft: #EBEBEA;
+      --text-primary: #1A1A18;
+      --text-secondary: #6B6B65;
+      --text-muted: #9E9E97;
+      --accent: #1A1A18;
+      --accent-light: #F0F0EE;
+      --mono: 'JetBrains Mono', monospace;
+      --sans: 'Inter', sans-serif;
+      --radius: 10px;
+      --radius-lg: 16px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text-primary);
+      font-size: 15px;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: rgba(248, 248, 246, 0.88);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-soft);
+      padding: 0 2rem;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-logo {
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      text-decoration: none;
+      letter-spacing: -0.02em;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-size: 13px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    .nav-links a:hover { color: var(--text-primary); }
+
+    /* LAYOUT */
+    main { padding-top: 56px; }
+
+    section {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 5rem 2rem;
+    }
+
+    /* HERO */
+    #hero {
+      padding-top: 7rem;
+      padding-bottom: 5rem;
+    }
+
+    .hero-eyebrow {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+
+    h1 {
+      font-size: clamp(2.4rem, 5vw, 3.4rem);
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      line-height: 1.12;
+      margin-bottom: 1.25rem;
+    }
+
+    .hero-sub {
+      font-size: 1.05rem;
+      color: var(--text-secondary);
+      max-width: 520px;
+      line-height: 1.75;
+      margin-bottom: 2.5rem;
+    }
+
+    .hero-cta {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 20px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.15s;
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn-primary {
+      background: var(--text-primary);
+      color: #fff;
+    }
+
+    .btn-primary:hover { background: #333; }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost:hover {
+      background: var(--surface);
+      color: var(--text-primary);
+    }
+
+    .hero-stack {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 3rem;
+    }
+
+    .tag {
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: var(--accent-light);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-soft);
+    }
+
+    /* SECTION HEADERS */
+    .section-label {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 2.5rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* EXPERIENCE */
+    .exp-list { display: flex; flex-direction: column; gap: 0; }
+
+    .exp-item {
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      gap: 2rem;
+      padding: 2rem 0;
+      border-bottom: 1px solid var(--border-soft);
+    }
+
+    .exp-item:last-child { border-bottom: none; }
+
+    .exp-period {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      padding-top: 4px;
+    }
+
+    .exp-role {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .exp-company {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+    }
+
+    .exp-desc {
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .exp-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 1rem;
+    }
+
+    /* PROJECTS */
+    .proj-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .proj-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      transition: all 0.18s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .proj-card:hover {
+      border-color: #C0C0BA;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+    }
+
+    .proj-card.featured {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    .proj-num {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+
+    .proj-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .proj-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+    }
+
+    .proj-meta {
+      margin-top: 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .proj-link {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: color 0.15s;
+    }
+
+    .proj-link:hover { color: var(--text-primary); }
+
+    .arrow { display: inline-block; transition: transform 0.15s; }
+    .proj-card:hover .arrow { transform: translate(2px, -2px); }
+
+    /* CONTACT */
+    #contact { padding-bottom: 7rem; }
+
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-top: 0;
+    }
+
+    .contact-heading {
+      grid-column: 1 / -1;
+      font-size: clamp(1.5rem, 3vw, 2rem);
+      font-weight: 600;
+      letter-spacing: -0.025em;
+      line-height: 1.25;
+      margin-bottom: 0.5rem;
+    }
+
+    .contact-sub {
+      grid-column: 1 / -1;
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-bottom: 2rem;
+    }
+
+    .contact-link {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      text-decoration: none;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+
+    .contact-link:hover {
+      border-color: #C0C0BA;
+      background: var(--accent-light);
+    }
+
+    .contact-platform {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border-soft);
+      text-align: center;
+      padding: 2rem;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* MOBILE */
+    @media (max-width: 640px) {
+      .exp-item { grid-template-columns: 1fr; gap: 0.5rem; }
+      .proj-grid { grid-template-columns: 1fr; }
+      .proj-card.featured { grid-template-columns: 1fr; }
+      .contact-grid { grid-template-columns: 1fr; }
+      .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="#hero" class="nav-logo">alex.sh</a>
+  <ul class="nav-links">
+    <li><a href="#experience">Experience</a></li>
+    <li><a href="#projects">Projects</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<main>
+
+  <!-- HERO -->
+  <section id="hero">
+    <p class="hero-eyebrow">Based in Bangalore, India &nbsp;·&nbsp; Open to roles</p>
+    <h1>Building the systems that scale.</h1>
+    <p class="hero-sub">
+      Backend engineer with 5+ years designing distributed systems, REST & gRPC APIs, and data pipelines that handle millions of requests per day. I care about reliability, observability, and code that's easy to reason about.
+    </p>
+    <div class="hero-cta">
+      <a href="#projects" class="btn btn-primary">View projects ↓</a>
+      <a href="#contact" class="btn btn-ghost">Get in touch</a>
+    </div>
+    <div class="hero-stack">
+      <span class="tag">Go</span>
+      <span class="tag">Python</span>
+      <span class="tag">PostgreSQL</span>
+      <span class="tag">Redis</span>
+      <span class="tag">Kafka</span>
+      <span class="tag">Kubernetes</span>
+      <span class="tag">AWS</span>
+      <span class="tag">gRPC</span>
+      <span class="tag">Docker</span>
+    </div>
+  </section>
+
+  <!-- EXPERIENCE -->
+  <section id="experience">
+    <p class="section-label">Experience</p>
+    <div class="exp-list">
+
+      <div class="exp-item">
+        <div class="exp-period">2022 — Present</div>
+        <div>
+          <p class="exp-role">Senior Backend Engineer</p>
+          <p class="exp-company">Razorpay</p>
+          <p class="exp-desc">Led architecture of the payments routing engine, reducing p99 latency from 380ms to 90ms. Built a real-time fraud detection pipeline processing 40K events/sec using Kafka and Go. Mentored a team of 4 engineers and drove adoption of internal RPC standards.</p>
+          <div class="exp-tags">
+            <span class="tag">Go</span>
+            <span class="tag">Kafka</span>
+            <span class="tag">PostgreSQL</span>
+            <span class="tag">Redis</span>
+            <span class="tag">Kubernetes</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="exp-item">
+        <div class="exp-period">2020 — 2022</div>
+        <div>
+          <p class="exp-role">Backend Engineer</p>
+          <p class="exp-company">Freshworks</p>
+          <p class="exp-desc">Owned the CRM notification service serving 10M+ daily emails & webhooks. Migrated a monolithic Rails service to microservices in Python, reducing deployment time by 60%. Introduced structured logging and distributed tracing with OpenTelemetry.</p>
+          <div class="exp-tags">
+            <span class="tag">Python</span>
+            <span class="tag">Rails</span>
+            <span class="tag">AWS SQS</span>
+            <span class="tag">OpenTelemetry</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="exp-item">
+        <div class="exp-period">2019 — 2020</div>
+        <div>
+          <p class="exp-role">Software Engineer</p>
+          <p class="exp-company">Hasura</p>
+          <p class="exp-desc">Contributed to the open-source GraphQL engine core in Haskell and Rust. Built the metadata API layer and worked on database schema introspection for MySQL support. Wrote technical docs used by 10K+ developers.</p>
+          <div class="exp-tags">
+            <span class="tag">Haskell</span>
+            <span class="tag">Rust</span>
+            <span class="tag">GraphQL</span>
+            <span class="tag">MySQL</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- PROJECTS -->
+  <section id="projects">
+    <p class="section-label">Projects</p>
+    <div class="proj-grid">
+
+      <a href="#" class="proj-card featured">
+        <div>
+          <p class="proj-num">01 — Featured</p>
+          <p class="proj-title">pgstream</p>
+          <p class="proj-desc">An open-source Postgres change data capture (CDC) tool that streams table mutations to Kafka, Redis Streams, or webhooks. Designed for zero-downtime migrations and real-time data sync between services. Written in Go with a pluggable sink interface.</p>
+          <div class="exp-tags">
+            <span class="tag">Go</span>
+            <span class="tag">PostgreSQL</span>
+            <span class="tag">CDC</span>
+            <span class="tag">Kafka</span>
+          </div>
+        </div>
+        <div>
+          <div class="proj-meta" style="margin-top:0; margin-bottom: 1.5rem;">
+            <a href="#" class="proj-link">github.com/alex/pgstream <span class="arrow">↗</span></a>
+          </div>
+          <div style="background: #F4F4F1; border-radius: 10px; padding: 1.25rem; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #6B6B65; line-height: 1.8;">
+            <span style="color:#9E9E97"># quick start</span><br/>
+            $ pgstream init \<br/>
+            &nbsp;&nbsp;--source postgres://...<br/>
+            &nbsp;&nbsp;--sink kafka://...<br/><br/>
+            <span style="color: #1A1A18; font-weight:500">✓ Capturing 40K rows/sec</span><br/>
+            <span style="color:#9E9E97">lag: 12ms &nbsp;·&nbsp; uptime: 99.98%</span>
+          </div>
+        </div>
+      </a>
+
+      <a href="#" class="proj-card">
+        <p class="proj-num">02</p>
+        <p class="proj-title">ratelimiter</p>
+        <p class="proj-desc">A distributed rate limiter library in Go using a sliding window algorithm backed by Redis. Drop-in middleware for Gin and Chi routers with per-tenant and per-endpoint granularity.</p>
+        <div class="exp-tags" style="margin-top: 1rem;">
+          <span class="tag">Go</span>
+          <span class="tag">Redis</span>
+        </div>
+        <div class="proj-meta">
+          <a href="#" class="proj-link">View on GitHub <span class="arrow">↗</span></a>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-muted);">★ 840</span>
+        </div>
+      </a>
+
+      <a href="#" class="proj-card">
+        <p class="proj-num">03</p>
+        <p class="proj-title">querylog</p>
+        <p class="proj-desc">Middleware for Python's SQLAlchemy that logs slow queries, detects N+1 patterns, and exports metrics to Prometheus. Used in production at Freshworks.</p>
+        <div class="exp-tags" style="margin-top: 1rem;">
+          <span class="tag">Python</span>
+          <span class="tag">SQLAlchemy</span>
+          <span class="tag">Prometheus</span>
+        </div>
+        <div class="proj-meta">
+          <a href="#" class="proj-link">View on GitHub <span class="arrow">↗</span></a>
+          <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-muted);">★ 310</span>
+        </div>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact">
+    <p class="section-label">Contact</p>
+    <div class="contact-grid">
+      <h2 class="contact-heading">Let's build something reliable.</h2>
+      <p class="contact-sub">Open to senior & staff backend roles, consulting, and interesting open-source collaborations.</p>
+
+      <a href="mailto:alex@sharma.dev" class="contact-link">
+        <div>
+          <div>alex@sharma.dev</div>
+          <div class="contact-platform">Email</div>
+        </div>
+        <span class="arrow">↗</span>
+      </a>
+
+      <a href="https://linkedin.com/in/alexsharma" target="_blank" class="contact-link">
+        <div>
+          <div>linkedin.com/in/alexsharma</div>
+          <div class="contact-platform">LinkedIn</div>
+        </div>
+        <span class="arrow">↗</span>
+      </a>
+
+      <a href="https://github.com/alexsharma" target="_blank" class="contact-link">
+        <div>
+          <div>github.com/alexsharma</div>
+          <div class="contact-platform">GitHub</div>
+        </div>
+        <span class="arrow">↗</span>
+      </a>
+
+      <a href="/resume.pdf" class="contact-link">
+        <div>
+          <div>Download résumé</div>
+          <div class="contact-platform">PDF · Updated Jun 2026</div>
+        </div>
+        <span class="arrow">↗</span>
+      </a>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  Built with HTML &amp; CSS &nbsp;·&nbsp; Deployed on Vercel &nbsp;·&nbsp; © 2026 Alex Sharma
+</footer>
+
+</body>
+</html>
