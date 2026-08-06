@@ -155,6 +155,9 @@ export default function Home() {
               <p>Complex systems deserve calm UX.</p>
             </div>
           </div>
+          <Link href="/about" className="button button-text">
+            Read the full story <span>→</span>
+          </Link>
         </div>
       </section>
 

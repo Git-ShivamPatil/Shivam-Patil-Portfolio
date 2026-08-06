@@ -6,6 +6,11 @@ export function Footer() {
       <div className="shell footer-inner">
         <p>© {new Date().getFullYear()} Shivam Patil. Built with clarity and intent.</p>
         <div className="footer-links">
+          <Link href="/skills">Skills</Link>
+          <Link href="/experience">Experience</Link>
+          <Link href="/certifications">Certifications</Link>
+          <Link href="/achievements">Achievements</Link>
+          <Link href="/resume">Résumé</Link>
           <a href="https://github.com/Git-ShivamPatil" target="_blank" rel="noreferrer">
             GitHub ↗
           </a>
