@@ -5,6 +5,7 @@ import { Header } from "../components/header";
 import { Footer } from "../components/footer";
 import { ThemeProvider } from "../components/providers/theme-provider";
 import { PageTransition } from "../components/providers/page-transition";
+import { SessionProvider } from "../components/providers/session-provider";
 import { Toaster } from "sonner";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://shivamsfolio.com";
@@ -40,22 +41,24 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           Skip to content
         </a>
         <ThemeProvider>
-          <div className="page-grid" aria-hidden="true" />
-          <Header />
-          <main id="main-content">
-            <PageTransition>{children}</PageTransition>
-          </main>
-          <Footer />
-          <Toaster
-            position="bottom-right"
-            toastOptions={{
-              style: {
-                background: "var(--bg)",
-                color: "var(--fg)",
-                border: "1px solid var(--line)",
-              },
-            }}
-          />
+          <SessionProvider>
+            <div className="page-grid" aria-hidden="true" />
+            <Header />
+            <main id="main-content">
+              <PageTransition>{children}</PageTransition>
+            </main>
+            <Footer />
+            <Toaster
+              position="bottom-right"
+              toastOptions={{
+                style: {
+                  background: "var(--bg)",
+                  color: "var(--fg)",
+                  border: "1px solid var(--line)",
+                },
+              }}
+            />
+          </SessionProvider>
         </ThemeProvider>
       </body>
     </html>

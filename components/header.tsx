@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ThemeToggle } from "./theme-toggle";
+import { AuthNav } from "./auth-nav";
 
 export function Header() {
   return (
@@ -16,6 +17,7 @@ export function Header() {
         </nav>
         <div className="header-actions">
           <ThemeToggle />
+          <AuthNav />
           <Link href="/reach-out" className="nav-cta">
             Let&apos;s talk <span aria-hidden="true">↗</span>
           </Link>
