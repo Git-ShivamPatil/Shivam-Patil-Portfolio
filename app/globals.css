@@ -2,8 +2,15 @@
 @import "tailwindcss";
 
 :root {
+  /* --ink/--paper are intentionally NEVER overridden per theme: several
+     components (the header CTA, proof strip, architecture section, contact
+     banner) hardcode them to mean "always near-black" / "always near-white"
+     regardless of theme. --bg/--fg are the indirection layer that actually
+     switches with the theme; body and new components should read those. */
   --ink: #111110;
   --paper: #f4f3ee;
+  --bg: var(--paper);
+  --fg: var(--ink);
   --warm: #eae8e0;
   --line: #d6d4ca;
   --muted: #6d6c66;
@@ -15,6 +22,76 @@
   --pink: #ffabcf;
   --radius: 20px;
 }
+
+/* Dark theme: only the indirection tokens + genuinely theme-agnostic tokens
+   (line/muted/warm/accents) are overridden. This is a solid baseline for the
+   highest-visibility surfaces (header, footer, hero, section headings, new
+   marketing pages) — the pastel project-card tints and the sections that are
+   already dark by design (proof-strip, architecture-section) are left as-is
+   on purpose, and a handful of page-specific hardcoded text-color literals
+   are a known, scoped follow-up rather than silently claimed as covered. */
+:root {
+  /* Component-specific literals that need a different value per theme but
+     aren't semantic enough to route through --bg/--fg/--line/--muted. Kept
+     as named tokens (rather than duplicating whole rule blocks per theme)
+     so each component stays a single rule referencing var(...). */
+  --header-bg: rgba(244, 243, 238, 0.8);
+  --header-border: rgba(17, 17, 16, 0.1);
+  --grid-line: rgba(17, 17, 16, 0.027);
+  --hero-em: #3c3b37;
+  --hero-intro-fg: #4f4e49;
+  --footer-fg: #77766f;
+  --nav-fg: #55544f;
+  --project-hero-bg: #f0efe9;
+}
+:root[data-theme="dark"] {
+  --bg: #171716;
+  --fg: #ede9dd;
+  --warm: #232320;
+  --line: #34342f;
+  --muted: #9a988d;
+  --header-bg: rgba(23, 23, 22, 0.8);
+  --header-border: rgba(237, 233, 221, 0.1);
+  --grid-line: rgba(237, 233, 221, 0.045);
+  --hero-em: #cfcabb;
+  --hero-intro-fg: #b9b6ab;
+  --footer-fg: #939186;
+  --nav-fg: #a9a79c;
+  --project-hero-bg: #1c1c19;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #171716;
+    --fg: #ede9dd;
+    --warm: #232320;
+    --line: #34342f;
+    --muted: #9a988d;
+    --header-bg: rgba(23, 23, 22, 0.8);
+    --header-border: rgba(237, 233, 221, 0.1);
+    --grid-line: rgba(237, 233, 221, 0.045);
+    --hero-em: #cfcabb;
+    --hero-intro-fg: #b9b6ab;
+    --footer-fg: #939186;
+    --nav-fg: #a9a79c;
+    --project-hero-bg: #1c1c19;
+  }
+}
+
+/* Tailwind v4: register (not bake in) the same tokens so new Tailwind-authored
+   components can use bg-app/text-app/etc. and still switch live at runtime.
+   Plain @theme just names the CSS variable — @theme inline would resolve the
+   value at build time and break theme switching entirely. */
+@theme {
+  --color-app-bg: var(--bg);
+  --color-app-fg: var(--fg);
+  --color-app-ink: var(--ink);
+  --color-app-paper: var(--paper);
+  --color-app-line: var(--line);
+  --color-app-muted: var(--muted);
+  --color-app-lime: var(--lime);
+}
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 * {
   box-sizing: border-box;
 }
@@ -23,14 +100,17 @@ html {
 }
 body {
   margin: 0;
-  background: var(--paper);
-  color: var(--ink);
+  background: var(--bg);
+  color: var(--fg);
   font-family: Manrope, Arial, sans-serif;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
 body:has(.project-hero) {
-  background: #f0efe9;
+  background: var(--project-hero-bg);
 }
 a {
   color: inherit;
@@ -39,6 +119,47 @@ a {
 button {
   font: inherit;
 }
+
+/* ===== accessibility: focus visibility & skip link ===== */
+:focus-visible {
+  outline: 2px solid var(--fg);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+/* Lime surfaces need an ink outline — a lime outline on a lime background
+   would be invisible. */
+.button-light:focus-visible,
+.nav-cta:hover:focus-visible {
+  outline-color: var(--ink);
+}
+.skip-link {
+  position: absolute;
+  top: -48px;
+  left: 16px;
+  z-index: 50;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--lime);
+  font:
+    500 12px "DM Mono",
+    monospace;
+  transition: top 0.2s;
+}
+.skip-link:focus-visible {
+  top: 16px;
+  outline-color: var(--lime);
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal-delay {
+    animation: none !important;
+  }
+  * {
+    transition-duration: 0.001ms !important;
+  }
+}
+
 .shell {
   width: min(1180px, calc(100% - 64px));
   margin: auto;
@@ -49,8 +170,8 @@ button {
   z-index: -1;
   inset: 0;
   background-image:
-    linear-gradient(rgba(17, 17, 16, 0.027) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(17, 17, 16, 0.027) 1px, transparent 1px);
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
   background-size: 40px 40px;
   mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), transparent 70%);
 }
@@ -107,8 +228,8 @@ h2 em {
   position: sticky;
   top: 0;
   z-index: 20;
-  border-bottom: 1px solid rgba(17, 17, 16, 0.1);
-  background: rgba(244, 243, 238, 0.8);
+  border-bottom: 1px solid var(--header-border);
+  background: var(--header-bg);
   backdrop-filter: blur(14px);
 }
 .header-inner {
@@ -116,6 +237,11 @@ h2 em {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 .wordmark {
   display: flex;
@@ -150,18 +276,18 @@ h2 em {
   font-weight: 700;
 }
 .primary-nav a {
-  color: #55544f;
+  color: var(--nav-fg);
   transition: color 0.2s;
 }
 .primary-nav a:hover {
-  color: var(--ink);
+  color: var(--fg);
 }
 .nav-cta {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 10px 14px;
-  border: 1px solid var(--ink);
+  border: 1px solid var(--fg);
   border-radius: 999px;
   transition:
     background 0.2s,
@@ -187,12 +313,12 @@ h2 em {
   margin: 0 0 24px;
 }
 .hero h1 em {
-  color: #3c3b37;
+  color: var(--hero-em);
 }
 .hero-intro {
   max-width: 530px;
   margin-bottom: 34px;
-  color: #4f4e49;
+  color: var(--hero-intro-fg);
   font-size: 18px;
   line-height: 1.68;
 }
@@ -941,7 +1067,7 @@ h2 em {
   display: flex;
   justify-content: space-between;
   padding: 25px 0;
-  color: #77766f;
+  color: var(--footer-fg);
   font:
     500 10px "DM Mono",
     monospace;
@@ -955,7 +1081,7 @@ h2 em {
   gap: 12px 18px;
 }
 .footer-links a:hover {
-  color: var(--ink);
+  color: var(--fg);
 }
 .project-hero {
   position: relative;

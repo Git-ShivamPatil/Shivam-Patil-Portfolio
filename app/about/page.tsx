@@ -2,7 +2,10 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { ArrowUpRight } from "../../components/icons";
 
-export const metadata: Metadata = { title: "About — Shivam Patil" };
+export const metadata: Metadata = {
+  title: "About — Shivam Patil",
+  alternates: { canonical: "/about" },
+};
 
 export default function AboutPage() {
   return (

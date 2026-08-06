@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { achievements } from "../achievements";
 
-export const metadata: Metadata = { title: "Achievements — Shivam Patil" };
+export const metadata: Metadata = {
+  title: "Achievements — Shivam Patil",
+  alternates: { canonical: "/achievements" },
+};
 
 export default function AchievementsPage() {
   return (

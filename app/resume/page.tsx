@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { ArrowUpRight } from "../../components/icons";
 
-export const metadata: Metadata = { title: "Résumé — Shivam Patil" };
+export const metadata: Metadata = {
+  title: "Résumé — Shivam Patil",
+  alternates: { canonical: "/resume" },
+};
 
 const RESUME_PATH = "/Shivam-Patil-SDE-II-Resume.pdf";
 

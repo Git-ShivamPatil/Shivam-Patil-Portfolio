@@ -15,7 +15,13 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const project = projectBySlug(slug);
-  return { title: project ? `${project.title} — Shivam Patil` : "Project — Shivam Patil" };
+  if (!project) return { title: "Project — Shivam Patil" };
+  return {
+    title: `${project.title} — Shivam Patil`,
+    description: project.summary,
+    alternates: { canonical: `/projects/${project.slug}` },
+    openGraph: { title: `${project.title} — Shivam Patil`, description: project.summary },
+  };
 }
 
 export default async function ProjectPage({ params }: { params: Promise<{ slug: string }> }) {

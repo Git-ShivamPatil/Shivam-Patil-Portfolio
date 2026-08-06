@@ -14,9 +14,26 @@ const skills = [
   "Generative AI",
 ];
 
+const personJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: "Shivam Patil",
+  jobTitle: "Software Development Engineer",
+  url: "https://shivamsfolio.com",
+  sameAs: ["https://www.linkedin.com/in/shivam--patil/", "https://github.com/Git-ShivamPatil"],
+  worksFor: {
+    "@type": "Organization",
+    name: "Tata Consultancy Services",
+  },
+};
+
 export default function Home() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd) }}
+      />
       <section className="hero shell">
         <div className="hero-copy reveal">
           <p className="eyebrow">

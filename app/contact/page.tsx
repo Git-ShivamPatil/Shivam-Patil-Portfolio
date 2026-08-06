@@ -11,7 +11,10 @@ const services: [string, string][] = [
   ["AI product systems", "RAG, agent orchestration, evaluation harnesses, and governed delivery."],
 ];
 
-export const metadata: Metadata = { title: "Contact — Shivam Patil" };
+export const metadata: Metadata = {
+  title: "Contact — Shivam Patil",
+  alternates: { canonical: "/contact" },
+};
 
 export default function ContactPage() {
   return (

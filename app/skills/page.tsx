@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { skillCategories } from "../skills";
 
-export const metadata: Metadata = { title: "Skills — Shivam Patil" };
+export const metadata: Metadata = {
+  title: "Skills — Shivam Patil",
+  alternates: { canonical: "/skills" },
+};
 
 export default function SkillsPage() {
   return (

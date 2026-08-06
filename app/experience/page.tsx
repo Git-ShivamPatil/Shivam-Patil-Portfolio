@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { education, experience } from "../experience";
 
-export const metadata: Metadata = { title: "Experience — Shivam Patil" };
+export const metadata: Metadata = {
+  title: "Experience — Shivam Patil",
+  alternates: { canonical: "/experience" },
+};
 
 export default function ExperiencePage() {
   return (

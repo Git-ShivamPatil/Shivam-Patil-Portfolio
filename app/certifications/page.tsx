@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { certifications } from "../certifications";
 
-export const metadata: Metadata = { title: "Certifications — Shivam Patil" };
+export const metadata: Metadata = {
+  title: "Certifications — Shivam Patil",
+  alternates: { canonical: "/certifications" },
+};
 
 export default function CertificationsPage() {
   return (

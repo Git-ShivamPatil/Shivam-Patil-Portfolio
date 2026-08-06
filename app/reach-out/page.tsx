@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { ArrowUpRight } from "../../components/icons";
 
-export const metadata: Metadata = { title: "Reach out — Shivam Patil" };
+export const metadata: Metadata = {
+  title: "Reach out — Shivam Patil",
+  alternates: { canonical: "/reach-out" },
+};
 
 interface ContactChannel {
   label: string;

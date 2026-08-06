@@ -2,7 +2,10 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { ArrowUpRight } from "../components/icons";
 
-export const metadata: Metadata = { title: "404 — Shivam Patil" };
+export const metadata: Metadata = {
+  title: "404 — Shivam Patil",
+  robots: { index: false, follow: false },
+};
 
 export default function NotFound() {
   return (
