@@ -6,6 +6,7 @@ import { Footer } from "../components/footer";
 import { ThemeProvider } from "../components/providers/theme-provider";
 import { PageTransition } from "../components/providers/page-transition";
 import { SessionProvider } from "../components/providers/session-provider";
+import { BackToTop } from "../components/back-to-top";
 import { Toaster } from "sonner";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://shivamsfolio.com";
@@ -48,6 +49,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <PageTransition>{children}</PageTransition>
             </main>
             <Footer />
+            <BackToTop />
             <Toaster
               position="bottom-right"
               toastOptions={{

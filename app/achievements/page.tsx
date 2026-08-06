@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { achievements } from "../achievements";
+import { AnimatedMetric } from "../../components/animated-metric";
 
 export const metadata: Metadata = {
   title: "Achievements — Shivam Patil",
@@ -25,7 +26,9 @@ export default function AchievementsPage() {
       <div className="achievement-grid shell">
         {achievements.map((item) => (
           <div key={`${item.metric}-${item.label}`} className="achievement-card">
-            <strong>{item.metric}</strong>
+            <strong>
+              <AnimatedMetric value={item.metric} />
+            </strong>
             <p>{item.label}</p>
             <span className="achievement-source">{item.source}</span>
           </div>

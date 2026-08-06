@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowUpRight, GridIcon, PulseIcon } from "../components/icons";
+import { AnimatedMetric } from "../components/animated-metric";
 import { projects, type Project } from "./projects";
 
 const skills = [
@@ -102,15 +103,21 @@ export default function Home() {
             <strong>signal, not noise.</strong>
           </p>
           <div>
-            <strong>45K</strong>
+            <strong>
+              <AnimatedMetric value="45K" />
+            </strong>
             <span>requests / second</span>
           </div>
           <div>
-            <strong>8ms</strong>
+            <strong>
+              <AnimatedMetric value="8ms" />
+            </strong>
             <span>p99 latency</span>
           </div>
           <div>
-            <strong>87%</strong>
+            <strong>
+              <AnimatedMetric value="87%" />
+            </strong>
             <span>agent task success</span>
           </div>
         </div>

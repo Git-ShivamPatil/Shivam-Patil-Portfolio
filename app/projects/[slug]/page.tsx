@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ArrowUpRight } from "../../../components/icons";
+import { CopyButton } from "../../../components/copy-button";
 import { projectBySlug, projects } from "../../projects";
 
 export function generateStaticParams() {
@@ -152,9 +153,12 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                   <h3>{title}</h3>
                   <p>{description}</p>
                 </div>
-                <pre>
-                  <code>{command}</code>
-                </pre>
+                <div className="build-step-command">
+                  <pre>
+                    <code>{command}</code>
+                  </pre>
+                  <CopyButton value={command} label="Copy command" className="build-step-copy" />
+                </div>
               </li>
             ))}
           </ol>

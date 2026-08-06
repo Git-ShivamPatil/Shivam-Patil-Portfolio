@@ -1,4 +1,4 @@
-import { emailButton, emailLayout } from "./layout";
+import { emailButton, emailLayout, escapeHtml } from "./layout";
 
 export function passwordResetEmail({ resetUrl }: { resetUrl: string }): {
   subject: string;
@@ -40,5 +40,35 @@ export function oauthOnlyAccountEmail({ loginUrl }: { loginUrl: string }): {
   return {
     subject: "About your account",
     html: emailLayout({ previewText: "This account signs in with Google or GitHub", bodyHtml }),
+  };
+}
+
+export function contactFormEmail({
+  name,
+  email,
+  message,
+}: {
+  name: string;
+  email: string;
+  message: string;
+}): { subject: string; html: string } {
+  // name/email/message are visitor-supplied — escape before interpolating.
+  const safeName = escapeHtml(name);
+  const safeEmail = escapeHtml(email);
+  const safeMessage = escapeHtml(message).replace(/\n/g, "<br />");
+
+  const bodyHtml = `
+    <p style="margin:0 0 16px;font:700 20px Arial,sans-serif;color:#111110;">New message from your site</p>
+    <p style="margin:0 0 4px;font:700 12px Arial,sans-serif;color:#6d6c66;text-transform:uppercase;letter-spacing:0.05em;">From</p>
+    <p style="margin:0 0 20px;font:400 14px Arial,sans-serif;color:#42413c;">
+      ${safeName} &lt;<a href="mailto:${safeEmail}" style="color:#42413c;">${safeEmail}</a>&gt;
+    </p>
+    <p style="margin:0 0 4px;font:700 12px Arial,sans-serif;color:#6d6c66;text-transform:uppercase;letter-spacing:0.05em;">Message</p>
+    <p style="margin:0 0 24px;font:400 14px/1.6 Arial,sans-serif;color:#42413c;">${safeMessage}</p>
+    ${emailButton(`mailto:${safeEmail}`, "Reply")}
+  `;
+  return {
+    subject: `New contact form message from ${name}`,
+    html: emailLayout({ previewText: `${name} sent a message via shivamsfolio.com`, bodyHtml }),
   };
 }

@@ -54,6 +54,19 @@ export function emailLayout({
 </html>`;
 }
 
+// Every other caller here passes fixed, author-written copy — but the
+// contact-form email interpolates raw user input, which must be escaped
+// before it lands in HTML. Anyone rendering user-supplied text should use
+// this rather than interpolating directly.
+export function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export function emailButton(href: string, label: string): string {
   return `<table role="presentation" cellpadding="0" cellspacing="0">
     <tr>

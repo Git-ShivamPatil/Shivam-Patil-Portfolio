@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { ArrowUpRight } from "../../components/icons";
+import { ContactForm } from "../../components/contact-form";
 
 const services: [string, string][] = [
   ["Backend & APIs", "High-throughput services, clear API contracts, and reliable integrations."],
@@ -60,6 +61,12 @@ export default function ContactPage() {
             ))}
           </div>
         </div>
+      </section>
+      <section className="contact-form-section shell">
+        <div className="contact-callout">
+          <p className="eyebrow">Or send a message directly</p>
+        </div>
+        <ContactForm />
       </section>
       <section className="contact-quick shell">
         <div>

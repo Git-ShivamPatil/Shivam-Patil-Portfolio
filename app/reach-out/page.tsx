@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ArrowUpRight } from "../../components/icons";
+import { CopyButton } from "../../components/copy-button";
 
 export const metadata: Metadata = {
   title: "Reach out — Shivam Patil",
@@ -11,6 +12,8 @@ interface ContactChannel {
   value: string;
   href: string;
   note: string;
+  /** Present only for channels worth copying (email, phone numbers). */
+  copyValue?: string;
 }
 
 const contactChannels: ContactChannel[] = [
@@ -19,6 +22,7 @@ const contactChannels: ContactChannel[] = [
     value: "shivampatilinfo@gmail.com",
     href: "mailto:shivampatilinfo@gmail.com",
     note: "Best for roles & collaborations",
+    copyValue: "shivampatilinfo@gmail.com",
   },
   {
     label: "LinkedIn",
@@ -31,12 +35,14 @@ const contactChannels: ContactChannel[] = [
     value: "+91 70385 73273",
     href: "https://wa.me/917038573273",
     note: "Quick message",
+    copyValue: "+91 70385 73273",
   },
   {
     label: "Phone",
     value: "+91 70385 73273",
     href: "tel:+917038573273",
     note: "Mumbai, India · IST",
+    copyValue: "+91 70385 73273",
   },
   {
     label: "GitHub",
@@ -63,21 +69,35 @@ export default function ReachOutPage() {
       </div>
       <div className="channel-list">
         {contactChannels.map((channel, index) => (
-          <a
-            key={channel.label}
-            href={channel.href}
-            target={channel.href.startsWith("http") ? "_blank" : undefined}
-            rel={channel.href.startsWith("http") ? "noreferrer" : undefined}
-            className="channel-row"
-          >
-            <span>{String(index + 1).padStart(2, "0")}</span>
-            <div>
-              <small>{channel.label}</small>
-              <strong>{channel.value}</strong>
+          <div key={channel.label} className="channel-row">
+            <a
+              href={channel.href}
+              target={channel.href.startsWith("http") ? "_blank" : undefined}
+              rel={channel.href.startsWith("http") ? "noreferrer" : undefined}
+              className="channel-row-link"
+            >
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              <div>
+                <small>{channel.label}</small>
+                <strong>{channel.value}</strong>
+              </div>
+              <p>{channel.note}</p>
+            </a>
+            <div className="channel-row-actions">
+              {channel.copyValue ? (
+                <CopyButton value={channel.copyValue} label={`Copy ${channel.label}`} />
+              ) : null}
+              <a
+                href={channel.href}
+                target={channel.href.startsWith("http") ? "_blank" : undefined}
+                rel={channel.href.startsWith("http") ? "noreferrer" : undefined}
+                aria-label={`Open ${channel.label}`}
+                className="channel-row-arrow"
+              >
+                <ArrowUpRight />
+              </a>
             </div>
-            <p>{channel.note}</p>
-            <ArrowUpRight />
-          </a>
+          </div>
         ))}
       </div>
       <div className="resume-download">

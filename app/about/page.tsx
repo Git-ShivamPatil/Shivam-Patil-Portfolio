@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { ArrowUpRight } from "../../components/icons";
+import { AboutPhoto } from "../../components/about-photo";
 
 export const metadata: Metadata = {
   title: "About — Shivam Patil",
@@ -10,18 +11,21 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <>
-      <section className="page-hero shell">
-        <p className="eyebrow">About</p>
-        <h1>
-          Software engineer,
-          <br />
-          <em>systems-minded.</em>
-        </h1>
-        <p>
-          I&apos;m Shivam Patil — a software engineer with 1.5+ years of experience designing
-          high-throughput distributed systems and delivering production-grade applications,
-          currently working as an SDE at Tata Consultancy Services.
-        </p>
+      <section className="about-hero shell">
+        <div className="about-hero-copy">
+          <p className="eyebrow">About</p>
+          <h1>
+            Software engineer,
+            <br />
+            <em>systems-minded.</em>
+          </h1>
+          <p>
+            I&apos;m Shivam Patil — a software engineer based in Mumbai, India, with 1.5+ years of
+            experience designing high-throughput distributed systems and delivering production-grade
+            applications, currently working as an SDE at Tata Consultancy Services.
+          </p>
+        </div>
+        <AboutPhoto />
       </section>
 
       <section className="about-page-story shell">
