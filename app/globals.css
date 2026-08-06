@@ -37,7 +37,7 @@
      so each component stays a single rule referencing var(...). */
   --header-bg: rgba(244, 243, 238, 0.8);
   --header-border: rgba(17, 17, 16, 0.1);
-  --grid-line: rgba(17, 17, 16, 0.027);
+  --grid-line: rgba(17, 17, 16, 0.052);
   --hero-em: #3c3b37;
   --hero-intro-fg: #4f4e49;
   --footer-fg: #77766f;
@@ -186,16 +186,69 @@ button {
   width: min(1180px, calc(100% - 64px));
   margin: auto;
 }
+/* Ambient video wallpaper (light mode only — see .ambient-background below)
+   sits at z-index:0, so .page-grid moves up from -1 to 0 to stay visible on
+   top of it (same z-index, later in DOM = on top), and the real content
+   (.site-header/main/.site-footer) explicitly lifts to z-index:1. */
 .page-grid {
   pointer-events: none;
   position: fixed;
-  z-index: -1;
+  z-index: 0;
   inset: 0;
   background-image:
     linear-gradient(var(--grid-line) 1px, transparent 1px),
     linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
   background-size: 40px 40px;
   mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), transparent 70%);
+}
+.site-header,
+main,
+.site-footer {
+  position: relative;
+  z-index: 1;
+}
+/* Ported from the version already live on the deployed site (found on
+   origin/main — this checkout never had a copy of it locally). Light-mode
+   only: the palette (sage/lime/warm-paper tint) was built for the light
+   theme, so it's disabled under [data-theme="dark"] below rather than
+   fighting the dark palette tuned in for that mode. */
+.ambient-background {
+  position: fixed;
+  z-index: 0;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 20% 15%, #adf06d 0, transparent 32%),
+    linear-gradient(125deg, #1f392f, #daddd0 53%, #8be2d2);
+}
+.ambient-background video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.58;
+  filter: saturate(0.8) contrast(1.12) brightness(0.8);
+  transform: scale(1.04);
+}
+.ambient-background-tint {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      115deg,
+      rgba(244, 243, 238, 0.72) 0%,
+      rgba(244, 243, 238, 0.43) 46%,
+      rgba(209, 240, 225, 0.35) 100%
+    ),
+    radial-gradient(circle at 86% 12%, rgba(216, 254, 103, 0.27), transparent 29%);
+}
+:root[data-theme="dark"] .ambient-background {
+  display: none;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .ambient-background {
+    display: none;
+  }
 }
 .eyebrow {
   display: flex;
