@@ -1,0 +1,6 @@
+.next
+node_modules
+pnpm-lock.yaml
+lib/generated
+public
+ignore_old
