@@ -174,7 +174,8 @@ button {
 }
 @media (prefers-reduced-motion: reduce) {
   .reveal,
-  .reveal-delay {
+  .reveal-delay,
+  .skill-marquee {
     animation: none !important;
   }
   * {
@@ -1062,8 +1063,22 @@ h2 em {
   display: flex;
   width: max-content;
   gap: 22px;
-  transform: translateX(-62px);
   white-space: nowrap;
+  animation: skill-marquee-scroll 38s linear infinite;
+}
+.skill-marquee:hover {
+  animation-play-state: paused;
+}
+@keyframes skill-marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    /* The list is rendered twice (see the [...skills, ...skills] map in
+       app/page.tsx), so -50% lands exactly on the seam between the two
+       copies — the loop resets invisibly instead of visibly jumping. */
+    transform: translateX(-50%);
+  }
 }
 .skill-marquee span {
   display: flex;
@@ -1932,8 +1947,8 @@ h2 em {
     padding: 25px 0;
   }
   .skill-marquee {
-    transform: translateX(-120px);
     gap: 17px;
+    animation-duration: 26s;
   }
   .skill-marquee span {
     gap: 17px;
