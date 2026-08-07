@@ -1,0 +1,399 @@
+export type ProjectAccent = "cyan" | "violet" | "orange" | "lime" | "blue" | "pink";
+
+export type ArchitectureNodeType = "input" | "core" | "store" | "output";
+
+export interface ArchitectureNode {
+  title: string;
+  detail: string;
+  type: ArchitectureNodeType;
+}
+
+export interface Project {
+  slug: string;
+  number: string;
+  category: string;
+  title: string;
+  shortTitle: string;
+  summary: string;
+  outcome: string;
+  accent: ProjectAccent;
+  stack: string[];
+  useCase: string;
+  implemented: [string, string][];
+  architecture: ArchitectureNode[];
+  steps: [string, string, string][];
+}
+
+export const projects: Project[] = [
+  {
+    slug: "distributed-rate-limiter-api-gateway",
+    number: "01",
+    category: "Distributed systems",
+    title: "Distributed Rate Limiter & API Gateway",
+    shortTitle: "Rate limiter",
+    summary:
+      "A fault-tolerant gateway that enforces fair API usage at high throughput without becoming the bottleneck.",
+    outcome: "45K req/s · <8ms p99",
+    accent: "cyan",
+    stack: ["Go", "gRPC / REST", "Redis", "PostgreSQL", "AKS", "Prometheus", "React"],
+    useCase:
+      "Protect multi-tenant APIs from noisy neighbours while keeping quotas accurate across replicas, regions, and transient failures.",
+    implemented: [
+      [
+        "Dual limiting strategies",
+        "Token-bucket for smooth burst control and sliding-window counters for stricter endpoint policies.",
+      ],
+      [
+        "Resilient control plane",
+        "Consistent-hash sharding keeps a tenant on a stable limiter shard; Raft election promotes a replacement leader on failure.",
+      ],
+      [
+        "Observable delivery",
+        "gRPC and REST APIs expose decisions and quota status, while Prometheus metrics feed Grafana and a live React dashboard.",
+      ],
+    ],
+    architecture: [
+      { title: "Client traffic", detail: "REST / gRPC", type: "input" },
+      { title: "Gateway replicas", detail: "auth · routing · policy", type: "core" },
+      { title: "Limiter shard ring", detail: "hashing · Raft", type: "core" },
+      { title: "Redis + Postgres", detail: "counters · policies", type: "store" },
+      { title: "Grafana + React", detail: "metrics · quotas", type: "output" },
+    ],
+    steps: [
+      [
+        "Bring up the data plane",
+        "Start Redis and PostgreSQL locally; apply the tenant-policy schema before launching the gateway.",
+        "docker compose up -d redis postgres\nmake migrate",
+      ],
+      [
+        "Start a shard",
+        "Run a gateway replica with the desired node identity and consistent-hash ring configuration.",
+        "go run ./cmd/gateway --node gateway-1 --config ./configs/local.yaml",
+      ],
+      [
+        "Attach the dashboard",
+        "Install the dashboard dependencies and point it at the REST metrics endpoint.",
+        "cd dashboard && npm install && npm run dev",
+      ],
+      [
+        "Prove the envelope",
+        "Exercise both a burst and sustained-load profile, then inspect p99 latency and rejected requests.",
+        "k6 run tests/rate-limit.js\nkubectl get pods -n gateway",
+      ],
+    ],
+  },
+  {
+    slug: "agentic-ai-orchestration-platform",
+    number: "02",
+    category: "AI systems",
+    title: "Agentic AI Orchestration Platform",
+    shortTitle: "Agentic platform",
+    summary:
+      "A governed, multi-agent runtime that plans, retrieves, acts, critiques, and explains every decision in real time.",
+    outcome: "87% success · 150 eval cases",
+    accent: "violet",
+    stack: [
+      "Python",
+      "FastAPI",
+      "Tool calling",
+      "Pinecone / Weaviate",
+      "PostgreSQL",
+      "WebSockets",
+      "React",
+    ],
+    useCase:
+      "Turn complex knowledge-work requests into repeatable, auditable workflows without hiding the reasoning trace or tool activity.",
+    implemented: [
+      [
+        "Specialised agent loop",
+        "Planner, retriever, executor, and critic agents share task state and take turns through explicit tool-calling contracts.",
+      ],
+      [
+        "Safe recovery",
+        "A sandboxed execution loop captures failed actions, lets the critic propose corrections, and bounds retries with policy checks.",
+      ],
+      [
+        "Governance surface",
+        "WebSocket events stream live traces to React; PostgreSQL persists inputs, tools, outputs, and checkpoints for replay.",
+      ],
+    ],
+    architecture: [
+      { title: "Operator", detail: "React workspace", type: "input" },
+      { title: "FastAPI runtime", detail: "tasks · WebSockets", type: "core" },
+      { title: "Agent team", detail: "plan · retrieve · act · critique", type: "core" },
+      { title: "Knowledge + audit", detail: "Vector DB · Postgres", type: "store" },
+      { title: "Evaluation harness", detail: "quality · replay", type: "output" },
+    ],
+    steps: [
+      [
+        "Configure model and storage",
+        "Copy the example environment file and provide model, vector-store, and database credentials.",
+        "cp .env.example .env\ndocker compose up -d postgres weaviate",
+      ],
+      [
+        "Run the orchestration API",
+        "Install Python dependencies, apply the schema, and start the FastAPI development server.",
+        "uv sync\nuv run alembic upgrade head\nuv run fastapi dev app/main.py",
+      ],
+      [
+        "Open the trace console",
+        "Launch the React client and connect it to the WebSocket endpoint exposed by the API.",
+        "cd web && npm install && npm run dev",
+      ],
+      [
+        "Evaluate a task suite",
+        "Run the Ragas-style harness against the pinned benchmark cases and compare success rate by agent stage.",
+        "uv run python -m evals.run --suite core-150",
+      ],
+    ],
+  },
+  {
+    slug: "high-performance-llm-inference-server",
+    number: "03",
+    category: "Systems engineering",
+    title: "High-Performance LLM Inference Server",
+    shortTitle: "LLM inference",
+    summary:
+      "A Rust inference runtime designed around continuous batching, KV-cache discipline, and transparent live performance signals.",
+    outcome: "+230% throughput · −42% p99",
+    accent: "orange",
+    stack: [
+      "Rust",
+      "Python / PyO3",
+      "gRPC",
+      "Continuous batching",
+      "INT8 / FP16",
+      "Docker",
+      "React",
+    ],
+    useCase:
+      "Serve concurrent LLM requests efficiently by avoiding the throughput collapse and tail-latency spikes of single-request inference.",
+    implemented: [
+      [
+        "Continuous scheduler",
+        "A Rust scheduler admits compatible requests at decode boundaries instead of waiting for a full batch to finish.",
+      ],
+      [
+        "Memory-aware serving",
+        "KV-cache slots are reserved, reused, and released predictably; model loading supports INT8 and FP16 variants.",
+      ],
+      [
+        "Inspectable performance",
+        "gRPC exposes generation controls, while React visualises token rate, batch fill, and memory pressure in real time.",
+      ],
+    ],
+    architecture: [
+      { title: "Apps + dashboard", detail: "gRPC · React", type: "input" },
+      { title: "Inference gateway", detail: "routing · streaming", type: "core" },
+      { title: "Rust scheduler", detail: "continuous batch", type: "core" },
+      { title: "Model + KV cache", detail: "INT8 / FP16", type: "store" },
+      { title: "Telemetry", detail: "tokens · memory · batches", type: "output" },
+    ],
+    steps: [
+      [
+        "Build the runtime",
+        "Compile the Rust server with the CUDA or CPU feature set required by the target machine.",
+        "cargo build --release --features cuda",
+      ],
+      [
+        "Prepare a model",
+        "Fetch a supported checkpoint and select the quantisation profile for the serving environment.",
+        "./target/release/inference pull --model ./models/model.gguf --quant int8",
+      ],
+      [
+        "Start the gRPC service",
+        "Launch the scheduler with bounded batch and cache settings.",
+        "./target/release/inference serve --port 50051 --max-batch 32",
+      ],
+      [
+        "Watch and load test",
+        "Open the dashboard, then drive concurrent streaming prompts through the gRPC benchmark client.",
+        "cd dashboard && npm run dev\npython bench.py --concurrency 64",
+      ],
+    ],
+  },
+  {
+    slug: "secure-banking-system",
+    number: "04",
+    category: "FinTech infrastructure",
+    title: "Secure Banking System",
+    shortTitle: "Secure banking",
+    summary:
+      "A decentralised banking platform that combines tamper-evident transaction processing with scalable APIs and operational guardrails.",
+    outcome: "Secure by design",
+    accent: "lime",
+    stack: [
+      "Python",
+      "Django",
+      "Hyperledger Fabric",
+      "Web3.py",
+      "Kafka",
+      "Vault",
+      "Kubernetes",
+      "Grafana",
+    ],
+    useCase:
+      "Process sensitive financial operations with a verifiable ledger, controlled access, resilient asynchronous workflows, and production-grade monitoring.",
+    implemented: [
+      [
+        "Ledger-backed transactions",
+        "Hyperledger Fabric records authorised state changes while Django APIs coordinate application-level workflows.",
+      ],
+      [
+        "Event-driven processing",
+        "Kafka decouples high-volume transaction events from downstream enrichment and notification services.",
+      ],
+      [
+        "Defense in depth",
+        "OAuth2, Redis caching, Vault-managed secrets, container deployment, and Prometheus/Grafana support security and operations.",
+      ],
+    ],
+    architecture: [
+      { title: "Banking clients", detail: "web · mobile", type: "input" },
+      { title: "Django API", detail: "OAuth2 · policy", type: "core" },
+      { title: "Fabric network", detail: "endorsers · ledger", type: "core" },
+      { title: "Kafka + Postgres", detail: "events · operations", type: "store" },
+      { title: "Vault + Grafana", detail: "secrets · observability", type: "output" },
+    ],
+    steps: [
+      [
+        "Start foundational services",
+        "Bring up the ledger network, database, broker, cache, and secret manager for local development.",
+        "docker compose up -d postgres redis kafka vault\n./network.sh up createChannel",
+      ],
+      [
+        "Deploy the chaincode",
+        "Package and commit the banking transaction contract to the development channel.",
+        "./network.sh deployCC -ccn banking -ccp ../chaincode -ccl go",
+      ],
+      [
+        "Run the application API",
+        "Configure the Fabric connection profile and apply the Django database migrations.",
+        "python manage.py migrate\npython manage.py runserver",
+      ],
+      [
+        "Deploy observability",
+        "Install the monitoring stack and verify the transaction and consumer metrics dashboards.",
+        "helm upgrade --install monitoring prometheus-community/kube-prometheus-stack",
+      ],
+    ],
+  },
+  {
+    slug: "online-examination-system",
+    number: "05",
+    category: "Platform engineering",
+    title: "Online Examination System",
+    shortTitle: "Exam platform",
+    summary:
+      "A scalable test-taking platform built for secure sessions, high concurrency, dependable scoring, and low-latency delivery.",
+    outcome: "Secure · concurrent · resilient",
+    accent: "blue",
+    stack: ["Python", "FastAPI", "PostgreSQL", "Redis", "Docker", "NGINX", "AWS", "JWT"],
+    useCase:
+      "Provide a consistent, secure assessment experience when many candidates start, save, and submit at the same time.",
+    implemented: [
+      [
+        "Fast, balanced API layer",
+        "NGINX routes requests across FastAPI workers and Redis keeps hot session and scoring state close to the application.",
+      ],
+      [
+        "Secure exam sessions",
+        "JWT-protected endpoints, encrypted data handling, access controls, and server-side validation protect candidate interactions.",
+      ],
+      [
+        "Fault-tolerant scoring",
+        "Submission events are safely persisted and a resilient scoring path uses caching to keep results responsive under load.",
+      ],
+    ],
+    architecture: [
+      { title: "Candidates", detail: "exam workspace", type: "input" },
+      { title: "NGINX edge", detail: "TLS · load balancing", type: "core" },
+      { title: "FastAPI workers", detail: "auth · answers · score", type: "core" },
+      { title: "Redis + Postgres", detail: "sessions · durable data", type: "store" },
+      { title: "Scoring worker", detail: "retries · outcomes", type: "output" },
+    ],
+    steps: [
+      [
+        "Configure the environment",
+        "Set local secrets and start PostgreSQL plus Redis before booting the application.",
+        "cp .env.example .env\ndocker compose up -d postgres redis",
+      ],
+      [
+        "Apply the schema",
+        "Create the required tables and seed a sample examination with questions and access policy.",
+        "alembic upgrade head\npython scripts/seed_exam.py",
+      ],
+      [
+        "Launch behind the proxy",
+        "Start the API workers and the NGINX container that distributes incoming test traffic.",
+        "docker compose up --build api nginx",
+      ],
+      [
+        "Exercise concurrent sessions",
+        "Run a mixed create, save, and submit traffic scenario to inspect response time and score consistency.",
+        "k6 run tests/exam-journey.js",
+      ],
+    ],
+  },
+  {
+    slug: "secure-rag-with-rbac-guardrails-monitoring",
+    number: "06",
+    category: "Generative AI",
+    title: "Secure RAG with RBAC, Guardrails & Monitoring",
+    shortTitle: "Secure RAG",
+    summary:
+      "An enterprise knowledge assistant that makes retrieval both useful and defensible through access control, privacy guardrails, and evaluations.",
+    outcome: "Grounded & governed",
+    accent: "pink",
+    stack: ["Python", "Qdrant / Milvus", "Streamlit", "Ragas", "Docling", "AWS", "RBAC", "LLMs"],
+    useCase:
+      "Give teams answers from private knowledge while ensuring each person can retrieve only what they are authorised to see and prompts remain safe.",
+    implemented: [
+      [
+        "Permission-aware retrieval",
+        "RBAC metadata is applied to the retrieval filter so vector search respects the caller’s organisational scope.",
+      ],
+      [
+        "Ingestion and protection",
+        "Docling prepares source documents; guardrails mask PII and detect out-of-scope or unsafe requests before generation.",
+      ],
+      [
+        "Quality feedback loop",
+        "Ragas-based monitoring evaluates retrieval relevance and response quality so regressions are visible and actionable.",
+      ],
+    ],
+    architecture: [
+      { title: "Knowledge user", detail: "Streamlit workspace", type: "input" },
+      { title: "RBAC + guardrails", detail: "policy · PII checks", type: "core" },
+      { title: "RAG service", detail: "retrieve · ground · answer", type: "core" },
+      { title: "Vector knowledge", detail: "Docling · Qdrant / Milvus", type: "store" },
+      { title: "Ragas monitor", detail: "quality signals", type: "output" },
+    ],
+    steps: [
+      [
+        "Start the knowledge services",
+        "Run the vector store and database containers and configure the model provider in the environment file.",
+        "docker compose up -d qdrant postgres\ncp .env.example .env",
+      ],
+      [
+        "Ingest approved sources",
+        "Parse documents into chunks, attach ACL metadata, then create or refresh vector embeddings.",
+        "python -m app.ingest ./documents --collection knowledge-base",
+      ],
+      [
+        "Launch the workspace",
+        "Start the Streamlit interface and authenticate with a user role to verify scoped retrieval.",
+        "streamlit run app/ui.py",
+      ],
+      [
+        "Measure quality",
+        "Run the evaluation suite and review relevance, faithfulness, and guardrail outcomes before releasing changes.",
+        "python -m evals.ragas --dataset evals/golden.json",
+      ],
+    ],
+  },
+];
+
+export function projectBySlug(slug: string): Project | undefined {
+  return projects.find((project) => project.slug === slug);
+}

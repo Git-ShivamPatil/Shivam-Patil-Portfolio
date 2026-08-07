@@ -1,0 +1,4 @@
+# Force LF line endings for Husky hook scripts regardless of platform checkout
+# settings — a hook file checked out with CRLF fails under Git Bash's `sh`
+# with "$'\r': command not found".
+.husky/* text eol=lf
