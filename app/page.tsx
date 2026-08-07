@@ -1,19 +1,9 @@
 import Link from "next/link";
-import { ArrowUpRight, GridIcon, PulseIcon } from "../components/icons";
+import { ArrowUpRight } from "../components/icons";
 import { AnimatedMetric } from "../components/animated-metric";
-import { projects, type Project } from "./projects";
-
-const skills = [
-  "Go",
-  "Python",
-  "Rust",
-  "React",
-  "Next.js",
-  "Distributed systems",
-  "gRPC",
-  "Kubernetes",
-  "Generative AI",
-];
+import { ProjectFilter } from "../components/project-filter";
+import { getProjects } from "./projects";
+import { getSkillNames } from "./skills";
 
 const personJsonLd = {
   "@context": "https://schema.org",
@@ -28,7 +18,8 @@ const personJsonLd = {
   },
 };
 
-export default function Home() {
+export default async function Home() {
+  const [projects, skills] = await Promise.all([getProjects(), getSkillNames()]);
   return (
     <>
       <script
@@ -89,7 +80,7 @@ export default function Home() {
             <span className="star star-four" />
           </div>
           <div className="visual-caption">
-            <span>01 / 06</span>
+            <span>01 / {String(projects.length).padStart(2, "0")}</span>
             <span>reliable by design</span>
           </div>
         </div>
@@ -126,7 +117,7 @@ export default function Home() {
       <section id="work" className="section shell work-section">
         <div className="section-heading reveal">
           <p className="eyebrow">
-            Selected projects <span>06</span>
+            Selected projects <span>{String(projects.length).padStart(2, "0")}</span>
           </p>
           <h2>
             Technical work,
@@ -134,15 +125,11 @@ export default function Home() {
             <em>made tangible.</em>
           </h2>
           <p>
-            Six end-to-end system designs — from architecture and implementation decisions to
-            commands for getting each project running.
+            End-to-end system designs — from architecture and implementation decisions to commands
+            for getting each project running.
           </p>
         </div>
-        <div className="project-list">
-          {projects.map((project, index) => (
-            <ProjectCard key={project.slug} project={project} index={index} />
-          ))}
-        </div>
+        <ProjectFilter projects={projects} />
       </section>
 
       <section id="about" className="section shell about-section">
@@ -221,81 +208,5 @@ export default function Home() {
         </div>
       </section>
     </>
-  );
-}
-
-function ProjectCard({ project, index }: { project: Project; index: number }) {
-  return (
-    <Link
-      href={`/projects/${project.slug}`}
-      className={`project-card project-${project.accent} reveal ${index % 2 ? "offset-card" : ""}`}
-    >
-      <div className="project-card-top">
-        <span className="project-number">{project.number}</span>
-        <span className="project-category">{project.category}</span>
-        <span className="project-arrow">
-          <ArrowUpRight />
-        </span>
-      </div>
-      <div className="project-card-body">
-        <div className="project-card-graphic" aria-hidden="true">
-          {project.accent === "cyan" && (
-            <>
-              <GridIcon />
-              <PulseIcon />
-            </>
-          )}
-          {project.accent === "violet" && (
-            <div className="agent-graphic">
-              <b>Plan</b>
-              <b>Find</b>
-              <b>Act</b>
-              <b>Check</b>
-            </div>
-          )}
-          {project.accent === "orange" && (
-            <div className="batch-graphic">
-              <span />
-              <span />
-              <span />
-              <span />
-              <i />
-            </div>
-          )}
-          {project.accent === "lime" && (
-            <div className="ledger-graphic">
-              <i />
-              <i />
-              <i />
-              <i />
-              <i />
-            </div>
-          )}
-          {project.accent === "blue" && (
-            <div className="exam-graphic">
-              <i>01</i>
-              <i>02</i>
-              <i>03</i>
-              <b>✓</b>
-            </div>
-          )}
-          {project.accent === "pink" && (
-            <div className="rag-graphic">
-              <span>?</span>
-              <i />
-              <i />
-              <i />
-              <b>✓</b>
-            </div>
-          )}
-        </div>
-        <h3>{project.shortTitle}</h3>
-        <p>{project.summary}</p>
-      </div>
-      <div className="project-card-bottom">
-        <span>{project.outcome}</span>
-        <span>Case study →</span>
-      </div>
-    </Link>
   );
 }

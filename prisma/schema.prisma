@@ -28,6 +28,7 @@ model User {
   accounts    Account[]
   sessions    Session[]
   resetTokens PasswordResetToken[]
+  blogPosts   BlogPost[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -84,4 +85,124 @@ model PasswordResetToken {
   createdAt DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ---- Phase 3/4: content CMS, inbox, referrals ----
+
+enum ProjectAccent {
+  cyan
+  violet
+  orange
+  lime
+  blue
+  pink
+}
+
+// Case-study projects shown on the homepage and /projects/[slug]. The
+// tuple-shaped fields (implemented/architecture/steps) mirror the static
+// shape the site was originally built around (see the pre-CMS app/projects.ts)
+// and are stored as JSON rather than fully normalized — they're
+// display-only nested content, not something that needs relational queries.
+model Project {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  number      String
+  category    String
+  title       String
+  shortTitle  String
+  summary     String        @db.Text
+  outcome     String
+  accent      ProjectAccent
+  stack       String[]
+  tags        String[]
+  useCase     String        @db.Text
+  // [title, description][]
+  implemented Json
+  // { title, detail, type: "input"|"core"|"store"|"output" }[]
+  architecture Json
+  // [title, description, command][]
+  steps       Json
+  published   Boolean       @default(true)
+  order       Int           @default(0)
+
+  images ProjectImage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([published, order])
+}
+
+model ProjectImage {
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  url       String
+  alt       String  @default("")
+  order     Int     @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([projectId, order])
+}
+
+model BlogPost {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  title       String
+  excerpt     String    @db.Text
+  content     String    @db.Text
+  tags        String[]
+  coverImage  String?
+  published   Boolean   @default(false)
+  publishedAt DateTime?
+
+  authorId String?
+  author   User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([published, publishedAt])
+}
+
+// Flat list rather than a separate SkillCategory table — categories are just
+// a label grouping key (see app/skills.ts's original shape), not an entity
+// that needs its own CRUD or relations.
+model Skill {
+  id       String @id @default(cuid())
+  category String
+  name     String
+  order    Int    @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([category, name])
+  @@index([category, order])
+}
+
+enum MessageStatus {
+  UNREAD
+  READ
+  ARCHIVED
+}
+
+// The admin "Inbox" — every /contact and /reach-out submission, persisted
+// so a lead survives even if Resend isn't configured (see lib/mail.ts) or
+// an email bounces. referralRef captures the P3 "Referrals" signal: which
+// ?ref= source sent this lead in.
+model ContactMessage {
+  id          String        @id @default(cuid())
+  name        String
+  email       String
+  message     String        @db.Text
+  source      String        @default("contact")
+  referralRef String?
+  status      MessageStatus @default(UNREAD)
+
+  createdAt DateTime @default(now())
+
+  @@index([status, createdAt])
+  @@index([referralRef])
 }

@@ -8,5 +8,8 @@ export const contactFormSchema = z.object({
   // real (optional) field or react-hook-form's validated output would never
   // include it, silently defeating the check in app/api/contact/route.ts.
   website: z.string().optional(),
+  // Referral attribution — populated client-side (see components/contact-form.tsx)
+  // from a `?ref=` query param or the 30-day cookie it sets, never user-typed.
+  ref: z.string().max(80).optional(),
 });
 export type ContactFormInput = z.infer<typeof contactFormSchema>;

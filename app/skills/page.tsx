@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
-import { skillCategories } from "../skills";
+import { getSkillCategories } from "../skills";
 
 export const metadata: Metadata = {
   title: "Skills — Shivam Patil",
   alternates: { canonical: "/skills" },
 };
 
-export default function SkillsPage() {
+export default async function SkillsPage() {
+  const skillCategories = await getSkillCategories();
   return (
     <>
       <section className="page-hero shell">

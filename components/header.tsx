@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ThemeToggle } from "./theme-toggle";
 import { AuthNav } from "./auth-nav";
+import { SearchIcon } from "./icons";
 
 export function Header() {
   return (
@@ -12,10 +13,14 @@ export function Header() {
         </Link>
         <nav className="primary-nav" aria-label="Main navigation">
           <Link href="/#work">Selected work</Link>
+          <Link href="/blog">Blog</Link>
           <Link href="/about">About</Link>
           <Link href="/contact">Contact</Link>
         </nav>
         <div className="header-actions">
+          <Link href="/search" aria-label="Search" className="header-search-link">
+            <SearchIcon />
+          </Link>
           <ThemeToggle />
           <AuthNav />
           <Link href="/reach-out" className="nav-cta">

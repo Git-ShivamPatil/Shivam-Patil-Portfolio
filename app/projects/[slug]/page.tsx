@@ -3,9 +3,11 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ArrowUpRight } from "../../../components/icons";
 import { CopyButton } from "../../../components/copy-button";
-import { projectBySlug, projects } from "../../projects";
+import { ImageGallery } from "../../../components/image-gallery";
+import { getProjectBySlug, getProjects } from "../../projects";
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
+  const projects = await getProjects();
   return projects.map(({ slug }) => ({ slug }));
 }
 
@@ -15,7 +17,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const project = projectBySlug(slug);
+  const project = await getProjectBySlug(slug);
   if (!project) return { title: "Project — Shivam Patil" };
   return {
     title: `${project.title} — Shivam Patil`,
@@ -27,7 +29,7 @@ export async function generateMetadata({
 
 export default async function ProjectPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const project = projectBySlug(slug);
+  const [project, projects] = await Promise.all([getProjectBySlug(slug), getProjects()]);
   if (!project) notFound();
   const projectIndex = projects.findIndex((item) => item.slug === slug);
   const nextProject = projects[(projectIndex + 1) % projects.length];
@@ -40,7 +42,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             ← All projects
           </Link>
           <div className="project-hero-meta">
-            <span>{project.number} / 06</span>
+            <span>
+              {project.number} / {String(projects.length).padStart(2, "0")}
+            </span>
             <span>{project.category}</span>
           </div>
           <h1>{project.title}</h1>
@@ -92,6 +96,21 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
         </div>
       </section>
 
+      {project.images.length > 0 && (
+        <section className="project-content shell gallery-section">
+          <div className="project-side-label">
+            03 <span>Gallery</span>
+          </div>
+          <div className="project-main">
+            <p className="eyebrow">A closer look</p>
+            <h2>
+              Screens &amp; <em>diagrams.</em>
+            </h2>
+            <ImageGallery images={project.images} />
+          </div>
+        </section>
+      )}
+
       <section className="architecture-section">
         <div className="shell">
           <div className="architecture-heading">
@@ -132,7 +151,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
 
       <section className="project-content shell build-section">
         <div className="project-side-label">
-          03 <span>Build guide</span>
+          {project.images.length > 0 ? "04" : "03"} <span>Build guide</span>
         </div>
         <div className="project-main">
           <p className="eyebrow">Step by step</p>

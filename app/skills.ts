@@ -1,34 +1,30 @@
+import { prisma } from "../lib/prisma";
+
 export interface SkillCategory {
   label: string;
   items: string[];
 }
 
-export const skillCategories: SkillCategory[] = [
-  { label: "Languages", items: ["C++", "Python", "Go", "Rust", "JavaScript", "TypeScript"] },
-  { label: "Frontend", items: ["React.js", "Next.js"] },
-  { label: "Backend", items: ["FastAPI", "REST APIs", "Microservices", "Distributed Systems"] },
-  {
-    label: "Cloud & DevOps",
-    items: [
-      "Azure Kubernetes Service (AKS)",
-      "AWS",
-      "Docker",
-      "Kubernetes",
-      "Prometheus",
-      "Grafana",
-    ],
-  },
-  {
-    label: "AI/ML & Generative AI",
-    items: [
-      "AI Agents",
-      "Prompt Engineering",
-      "RAG (Retrieval-Augmented Generation)",
-      "Vector Databases",
-    ],
-  },
-  {
-    label: "Core CS",
-    items: ["System Programming", "MCP (Model Context Protocol)", "Multithreading", "Concurrency"],
-  },
-];
+/** Skills grouped by category, in admin-defined order — used by /skills and the admin CRUD. */
+export async function getSkillCategories(): Promise<SkillCategory[]> {
+  // Sorted by `order` alone (not category-then-order): seed.ts assigns a
+  // single counter across all categories, so this reproduces categories in
+  // their original curated sequence — grouping by category name would sort
+  // them alphabetically instead.
+  const rows = await prisma.skill.findMany({ orderBy: { order: "asc" } });
+
+  const byCategory = new Map<string, string[]>();
+  for (const row of rows) {
+    const items = byCategory.get(row.category) ?? [];
+    items.push(row.name);
+    byCategory.set(row.category, items);
+  }
+
+  return Array.from(byCategory, ([label, items]) => ({ label, items }));
+}
+
+/** Flat name list — used by the homepage's animated skill marquee. */
+export async function getSkillNames(): Promise<string[]> {
+  const rows = await prisma.skill.findMany({ select: { name: true }, orderBy: { order: "asc" } });
+  return rows.map((row) => row.name);
+}

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { sendContactFormEmail } from "../../../lib/mail";
 import { contactFormSchema } from "../../../lib/validations/contact";
+import { prisma } from "../../../lib/prisma";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
@@ -20,14 +21,29 @@ export async function POST(request: Request) {
     );
   }
 
+  const { name, email, message, ref } = parsed.data;
+
   try {
-    await sendContactFormEmail(parsed.data);
-    return NextResponse.json({ message: "Message sent." });
+    // The database write is the source of truth (the admin Inbox) — a
+    // Resend outage or missing RESEND_API_KEY shouldn't make a real
+    // submission look like it failed to the visitor, so email is
+    // best-effort below and never blocks the success response.
+    await prisma.contactMessage.create({
+      data: { name, email, message, source: "contact", referralRef: ref || null },
+    });
   } catch (error) {
-    console.error("POST /api/contact failed:", error);
+    console.error("POST /api/contact failed to persist message:", error);
     return NextResponse.json(
       { error: "Something went wrong. Please try again, or email directly." },
       { status: 500 },
     );
   }
+
+  try {
+    await sendContactFormEmail({ name, email, message });
+  } catch (error) {
+    console.error("POST /api/contact: email notification failed (message was still saved):", error);
+  }
+
+  return NextResponse.json({ message: "Message sent." });
 }

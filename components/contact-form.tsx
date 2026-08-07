@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { contactFormSchema, type ContactFormInput } from "../lib/validations/contact";
+import { readReferralCookie } from "../lib/referral";
 import { FormField } from "./auth/form-field";
 
 export function ContactForm() {
@@ -15,10 +16,11 @@ export function ContactForm() {
   } = useForm<ContactFormInput>({ resolver: zodResolver(contactFormSchema) });
 
   async function onSubmit(values: ContactFormInput) {
+    const ref = new URLSearchParams(window.location.search).get("ref") ?? readReferralCookie();
     const res = await fetch("/api/contact", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(values),
+      body: JSON.stringify({ ...values, ref }),
     });
     const data = await res.json().catch(() => null);
 
