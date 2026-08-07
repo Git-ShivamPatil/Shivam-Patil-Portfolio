@@ -1,158 +1,93 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useTheme } from "next-themes";
+import { useState } from "react";
 
 // Mumbai, India.
-const LNG = 72.8777;
 const LAT = 19.076;
-const ZOOM = 10.5;
-
-const MAPBOX_JS = "https://api.mapbox.com/mapbox-gl-js/v3.9.0/mapbox-gl.js";
-const MAPBOX_CSS = "https://api.mapbox.com/mapbox-gl-js/v3.9.0/mapbox-gl.css";
-
-interface MapboxGL {
-  accessToken: string;
-  Map: new (options: Record<string, unknown>) => { remove: () => void };
-  Marker: new (options?: Record<string, unknown>) => {
-    setLngLat: (coords: [number, number]) => { addTo: (map: unknown) => void };
-  };
-}
-declare global {
-  interface Window {
-    mapboxgl?: MapboxGL;
-  }
-}
-
-function loadScript(src: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const existing = document.querySelector<HTMLScriptElement>(`script[src="${src}"]`);
-    if (existing) {
-      existing.addEventListener("load", () => resolve(), { once: true });
-      existing.addEventListener("error", () => reject(new Error("script failed")), { once: true });
-      return;
-    }
-    const script = document.createElement("script");
-    script.src = src;
-    script.async = true;
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error("script failed"));
-    document.head.appendChild(script);
-  });
-}
+const LNG = 72.8777;
+// Bounding box the embed opens at — roughly greater Mumbai.
+const BBOX = "72.70,18.88,73.12,19.32";
 
 /**
- * Location map with progressive enhancement.
+ * OpenStreetMap embed, loaded on demand.
  *
- * First paint is a single Static Images API request — one cached image, no
- * JavaScript. Mapbox GL JS is ~250KB gzipped plus a WebGL context, which is a
- * lot to spend on a decorative "I'm in Mumbai" panel that most visitors will
- * never interact with, so it is only fetched if someone actually asks for the
- * interactive version.
+ * Chosen over Mapbox deliberately: OSM's embed needs no account, no API key,
+ * and no payment method on file, where Mapbox is a metered service that bills
+ * past a free allowance. Nothing here can ever generate a charge.
  *
- * With no token configured this falls back to a styled placeholder rather
- * than a broken image.
+ * The iframe is only mounted after a click. That keeps a third-party frame
+ * (and its tile requests) off the page for the majority of visitors who never
+ * interact with it, and means the panel costs nothing on first paint.
  */
 export function LocationMap() {
-  const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-  const { resolvedTheme } = useTheme();
-  const [interactive, setInteractive] = useState(false);
-  const [failed, setFailed] = useState(false);
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [showMap, setShowMap] = useState(false);
 
-  const style = resolvedTheme === "dark" ? "dark-v11" : "light-v11";
-
-  useEffect(() => {
-    if (!interactive || !token || !containerRef.current) return;
-
-    let map: { remove: () => void } | null = null;
-    let cancelled = false;
-
-    (async () => {
-      try {
-        if (!document.querySelector(`link[href="${MAPBOX_CSS}"]`)) {
-          const link = document.createElement("link");
-          link.rel = "stylesheet";
-          link.href = MAPBOX_CSS;
-          document.head.appendChild(link);
-        }
-        await loadScript(MAPBOX_JS);
-        if (cancelled || !window.mapboxgl || !containerRef.current) return;
-
-        window.mapboxgl.accessToken = token;
-        map = new window.mapboxgl.Map({
-          container: containerRef.current,
-          style: `mapbox://styles/mapbox/${style}`,
-          center: [LNG, LAT],
-          zoom: ZOOM,
-          attributionControl: true,
-        });
-        new window.mapboxgl.Marker({ color: "#8eba00" }).setLngLat([LNG, LAT]).addTo(map);
-      } catch (error) {
-        console.error("[map] interactive load failed:", error);
-        if (!cancelled) {
-          setInteractive(false);
-          setFailed(true);
-        }
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-      map?.remove();
-    };
-  }, [interactive, token, style]);
-
-  if (!token) {
-    return (
-      <div className="location-map location-map-fallback" aria-label="Based in Mumbai, India">
-        <div>
-          <p className="eyebrow">Based in</p>
-          <strong>Mumbai, India</strong>
-          <span>IST · UTC+5:30</span>
-        </div>
-      </div>
-    );
-  }
-
-  const staticUrl =
-    `https://api.mapbox.com/styles/v1/mapbox/${style}/static/` +
-    `pin-l+8eba00(${LNG},${LAT})/${LNG},${LAT},${ZOOM},0/1000x460@2x` +
-    `?access_token=${token}&logo=false`;
+  const embedUrl =
+    `https://www.openstreetmap.org/export/embed.html` +
+    `?bbox=${encodeURIComponent(BBOX)}&layer=mapnik&marker=${LAT}%2C${LNG}`;
+  const fullUrl = `https://www.openstreetmap.org/?mlat=${LAT}&mlon=${LNG}#map=11/${LAT}/${LNG}`;
 
   return (
     <div className="location-map">
-      {interactive ? (
-        <div ref={containerRef} className="location-map-canvas" />
+      {showMap ? (
+        <iframe
+          className="location-map-frame"
+          src={embedUrl}
+          title="Map showing Mumbai, India"
+          loading="lazy"
+          // The embed is a static tile view; it needs no privileges at all.
+          sandbox="allow-scripts"
+          referrerPolicy="no-referrer"
+        />
       ) : (
-        <>
-          {/* Intentionally a plain <img>: this is a remote, token-signed URL
-              whose dimensions are already fixed by the request itself, so
-              next/image would add a proxy hop and a remotePatterns entry for
-              no benefit. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={staticUrl}
-            alt="Map showing Mumbai, India"
-            className="location-map-static"
-            width={1000}
-            height={460}
-            loading="lazy"
-            onError={() => setFailed(true)}
-          />
+        <div className="location-map-placeholder">
+          {/* A hand-drawn coastline suggestion rather than a real tile —
+              free, instant, and themed, with the real map one click away. */}
+          <svg viewBox="0 0 400 220" aria-hidden="true" focusable="false">
+            <defs>
+              <pattern id="map-grid" width="28" height="28" patternUnits="userSpaceOnUse">
+                <path d="M28 0H0v28" fill="none" stroke="currentColor" strokeOpacity="0.13" />
+              </pattern>
+            </defs>
+            <rect width="400" height="220" fill="url(#map-grid)" />
+            <path
+              d="M96 -10c14 44 2 70 22 104 16 27 8 52 26 84 8 15 6 30 2 46"
+              fill="none"
+              stroke="currentColor"
+              strokeOpacity="0.28"
+              strokeWidth="1.5"
+            />
+            <path
+              d="M0 150c56 8 92-14 128-6 40 9 78-6 120 4 34 8 60 2 92-10"
+              fill="none"
+              stroke="currentColor"
+              strokeOpacity="0.2"
+              strokeWidth="1.5"
+            />
+            <circle cx="150" cy="118" r="6" className="location-map-pin" />
+            <circle cx="150" cy="118" r="15" className="location-map-pin-halo" />
+          </svg>
+          <div className="location-map-placeholder-copy">
+            <strong>Mumbai, India</strong>
+            <span>19.076° N, 72.878° E</span>
+          </div>
           <button
             type="button"
             className="location-map-cta"
-            onClick={() => setInteractive(true)}
+            onClick={() => setShowMap(true)}
             data-ripple
           >
-            {failed ? "Retry interactive map" : "Explore the map"}
+            Load map
           </button>
-        </>
+        </div>
       )}
+
       <p className="location-map-caption">
         <span className="live-dot" aria-hidden="true" />
-        Mumbai, India · IST (UTC+5:30)
+        Mumbai · IST (UTC+5:30)
+        <a href={fullUrl} target="_blank" rel="noreferrer">
+          Open in OpenStreetMap ↗
+        </a>
       </p>
     </div>
   );
