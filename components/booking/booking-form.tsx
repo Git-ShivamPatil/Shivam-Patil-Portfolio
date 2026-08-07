@@ -153,7 +153,7 @@ export function BookingForm({
         {offerings.map((offering) => (
           <label
             key={offering.slug}
-            className={`booking-offering${offering.slug === slug ? "is-selected" : ""}`}
+            className={offering.slug === slug ? "booking-offering is-selected" : "booking-offering"}
           >
             <input
               type="radio"

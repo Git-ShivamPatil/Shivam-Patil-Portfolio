@@ -9,7 +9,7 @@
 export function StaleNote({ fetchedAt, stale }: { fetchedAt: Date; stale: boolean }) {
   const iso = fetchedAt.toISOString();
   return (
-    <p className={`stat-provenance${stale ? "is-stale" : ""}`}>
+    <p className={stale ? "stat-provenance is-stale" : "stat-provenance"}>
       <span className={stale ? "" : "live-dot"} aria-hidden="true" />
       {stale ? "Upstream unavailable — showing last good data from " : "Live · fetched "}
       <time dateTime={iso}>{fetchedAt.toUTCString().replace("GMT", "UTC")}</time>

@@ -134,7 +134,7 @@ export function PushToggle() {
   return (
     <button
       type="button"
-      className={`push-toggle${on ? "is-on" : ""}`}
+      className={on ? "push-toggle is-on" : "push-toggle"}
       onClick={on ? disable : enable}
       disabled={busy}
       data-ripple
