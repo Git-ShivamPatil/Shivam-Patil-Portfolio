@@ -18,7 +18,14 @@ export function BrandWatermark({
   placement?: "bottom-right" | "top-right";
 }) {
   return (
-    <div className={`brand-watermark brand-watermark-${placement}`} aria-hidden="true">
+    <div
+      className={`brand-watermark brand-watermark-${placement}`}
+      aria-hidden="true"
+      // Drifts with both the pointer and the scroll position, so it sits
+      // behind the content as a parallax layer rather than a flat sticker.
+      data-parallax-pointer="0.7"
+      data-parallax-scroll="0.22"
+    >
       <Image
         src="/logo.jpeg"
         alt=""

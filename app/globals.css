@@ -3,6 +3,8 @@
 /* Motion/interaction layer lives in its own file — it is a self-contained
    concern driven by data-attributes, not part of the base design system. */
 @import "./motion.css";
+/* Split-text reveals, cursor follower, parallax, animated card graphics. */
+@import "./motion-bold.css";
 /* Phase 5-7 surfaces: live stats, chat, newsletter, booking, invoices, map. */
 @import "./features.css";
 

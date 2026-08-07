@@ -12,6 +12,8 @@ import { ScrollReveal } from "../components/providers/scroll-reveal";
 import { InteractionLayer } from "../components/providers/interaction-layer";
 import { ScrollProgress } from "../components/scroll-progress";
 import { ChatWidget } from "../components/chat/chat-widget";
+import { SplitText } from "../components/providers/split-text";
+import { CursorFollower } from "../components/cursor-follower";
 import { Toaster } from "sonner";
 import { Analytics } from "@vercel/analytics/next";
 
@@ -60,8 +62,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <SessionProvider>
             <ReferralCapture />
             <ScrollReveal />
+            <SplitText />
             <InteractionLayer />
             <ScrollProgress />
+            <CursorFollower />
             <div className="page-grid" aria-hidden="true" />
             <Header />
             <main id="main-content">

@@ -16,7 +16,7 @@ export default function AboutPage() {
       <section className="about-hero shell">
         <div className="about-hero-copy" data-reveal>
           <p className="eyebrow">About</p>
-          <h1>
+          <h1 data-split>
             Software engineer,
             <br />
             <em>systems-minded.</em>

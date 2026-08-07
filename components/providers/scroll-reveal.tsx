@@ -21,7 +21,12 @@ export function ScrollReveal() {
   const pathname = usePathname();
 
   useEffect(() => {
-    const targets = Array.from(document.querySelectorAll<HTMLElement>("[data-reveal]"));
+    // [data-stagger] containers are observed too. They don't fade themselves —
+    // only their children do, via nth-child delays — but they still need the
+    // data-revealed flag flipped to start that cascade.
+    const targets = Array.from(
+      document.querySelectorAll<HTMLElement>("[data-reveal], [data-stagger]"),
+    );
     if (targets.length === 0) return;
 
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;

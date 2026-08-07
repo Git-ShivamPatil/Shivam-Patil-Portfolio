@@ -1,0 +1,268 @@
+/* =========================================================================
+   BOLD MOTION LAYER
+   Split-text heading reveals, cursor follower, pointer/scroll parallax, and
+   the animated project-card graphics. Everything here is decorative — the
+   whole file is neutralised under prefers-reduced-motion at the bottom.
+   ========================================================================= */
+
+/* ---- split-text headings ----
+   Spans are produced at runtime by components/providers/split-text.tsx, which
+   also sets aria-label on the heading and aria-hidden on each span, so screen
+   readers still get the whole string. */
+.split-char {
+  display: inline-block;
+  /* Without this the rotateX below is a flat squash rather than a tilt. */
+  transform-origin: 50% 80%;
+  opacity: 0;
+  transform: translateY(0.55em) rotateX(-55deg);
+}
+[data-split][data-split-revealed="true"] .split-char {
+  animation: split-char-in 0.62s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  /* Capped so a long heading doesn't take three seconds to finish. */
+  animation-delay: calc(min(var(--char-index) * 26ms, 900ms));
+}
+@keyframes split-char-in {
+  to {
+    opacity: 1;
+    transform: translateY(0) rotateX(0deg);
+  }
+}
+/* Headings sit in a 3D context so the per-character rotateX has depth. */
+[data-split] {
+  perspective: 700px;
+}
+
+/* ---- cursor follower ---- */
+.cursor-ring,
+.cursor-dot {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 60;
+  pointer-events: none;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  /* Promoted so the rAF transform writes never trigger layout. */
+  will-change: transform;
+}
+.cursor-ring {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--fg);
+  opacity: 0;
+  transition:
+    opacity 0.25s ease,
+    width 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    height 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    background 0.22s ease,
+    border-color 0.22s ease;
+}
+.cursor-ring.is-visible {
+  opacity: 0.42;
+}
+.cursor-ring.is-active {
+  width: 54px;
+  height: 54px;
+  opacity: 0.75;
+  background: color-mix(in srgb, var(--lime) 22%, transparent);
+  border-color: var(--lime);
+}
+.cursor-dot {
+  width: 5px;
+  height: 5px;
+  background: var(--fg);
+}
+.cursor-dot.is-visible {
+  opacity: 0.85;
+}
+
+/* ---- parallax ----
+   --parallax-x/y come from the pointer listener, --scroll-parallax-y from the
+   scroll listener; both default to 0 so an element is unmoved until a driver
+   writes to it. */
+[data-parallax-pointer] {
+  transform: translate3d(var(--parallax-x, 0px), var(--parallax-y, 0px), 0);
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+[data-parallax-scroll] {
+  transform: translate3d(0, var(--scroll-parallax-y, 0px), 0);
+  will-change: transform;
+}
+/* The watermark takes both drivers, so its transform has to compose them
+   rather than let the second rule win outright. */
+.brand-watermark[data-parallax-scroll][data-parallax-pointer] {
+  transform: translate3d(
+    var(--parallax-x, 0px),
+    calc(var(--scroll-parallax-y, 0px) + var(--parallax-y, 0px)),
+    0
+  );
+}
+
+/* ---- animated project-card graphics ----
+   These only run while the card is hovered, so six cards aren't animating
+   continuously in the background. */
+.project-card .grid-icon i:nth-child(2)::after,
+.project-card .grid-icon i:nth-child(3)::after {
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.project-card:hover .grid-icon i:nth-child(2)::after {
+  transform: translateX(6px);
+}
+.project-card:hover .grid-icon i:nth-child(3)::after {
+  transform: translateX(-6px);
+}
+.project-card .pulse-icon i {
+  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.project-card:hover .pulse-icon i:nth-child(1) {
+  transform: translateY(-7px);
+}
+.project-card:hover .pulse-icon i:nth-child(2) {
+  transform: translateY(5px);
+}
+.project-card:hover .pulse-icon i:nth-child(3) {
+  transform: translateY(-4px);
+}
+.project-card .agent-graphic b {
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.project-card:hover .agent-graphic b:nth-child(1) {
+  transform: translate(-4px, -3px);
+}
+.project-card:hover .agent-graphic b:nth-child(2) {
+  transform: translate(4px, -3px);
+}
+.project-card:hover .agent-graphic b:nth-child(3) {
+  transform: translate(-4px, 3px);
+}
+.project-card:hover .agent-graphic b:nth-child(4) {
+  transform: translate(4px, 3px);
+}
+.project-card .batch-graphic span {
+  transform-origin: left center;
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.project-card:hover .batch-graphic span:nth-child(1) {
+  transform: scaleX(1.12);
+}
+.project-card:hover .batch-graphic span:nth-child(3) {
+  transform: scaleX(1.22);
+}
+.project-card .ledger-graphic i {
+  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.project-card:hover .ledger-graphic i:nth-child(odd) {
+  transform: translateY(16px);
+}
+.project-card:hover .ledger-graphic i:nth-child(even) {
+  transform: translateY(9px);
+}
+.project-card .exam-graphic i,
+.project-card .exam-graphic b {
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.project-card:hover .exam-graphic i:nth-child(1) {
+  transform: translateY(-5px);
+}
+.project-card:hover .exam-graphic i:nth-child(2) {
+  transform: translateY(-5px);
+  transition-delay: 0.06s;
+}
+.project-card:hover .exam-graphic i:nth-child(3) {
+  transform: translateY(-5px);
+  transition-delay: 0.12s;
+}
+.project-card:hover .exam-graphic b {
+  transform: scale(1.12) rotate(-6deg);
+}
+.project-card .rag-graphic i {
+  transform-origin: left center;
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.project-card:hover .rag-graphic i:nth-of-type(1) {
+  transform: scaleX(1.1);
+}
+.project-card:hover .rag-graphic i:nth-of-type(2) {
+  transform: scaleX(1.22);
+  transition-delay: 0.05s;
+}
+.project-card:hover .rag-graphic i:nth-of-type(3) {
+  transform: scaleX(1.15);
+  transition-delay: 0.1s;
+}
+.project-card .rag-graphic b,
+.project-card .rag-graphic span {
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.project-card:hover .rag-graphic span {
+  transform: rotate(-10deg) scale(1.06);
+}
+.project-card:hover .rag-graphic b {
+  transform: scale(1.15);
+}
+
+/* ---- staggered children ----
+   Applied to a container: each child fades up slightly after the last. Uses
+   nth-child rather than a per-item attribute so server-rendered lists need no
+   extra markup. */
+[data-reveal-ready="true"] [data-stagger] > * {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+[data-reveal-ready="true"] [data-stagger][data-revealed="true"] > * {
+  opacity: 1;
+  transform: none;
+}
+[data-stagger] > *:nth-child(1) {
+  transition-delay: 0.05s;
+}
+[data-stagger] > *:nth-child(2) {
+  transition-delay: 0.11s;
+}
+[data-stagger] > *:nth-child(3) {
+  transition-delay: 0.17s;
+}
+[data-stagger] > *:nth-child(4) {
+  transition-delay: 0.23s;
+}
+[data-stagger] > *:nth-child(5) {
+  transition-delay: 0.29s;
+}
+[data-stagger] > *:nth-child(6) {
+  transition-delay: 0.35s;
+}
+[data-stagger] > *:nth-child(n + 7) {
+  transition-delay: 0.41s;
+}
+
+/* ---- section heading underline sweep ---- */
+.section-heading h2,
+.page-hero h1 {
+  position: relative;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .split-char,
+  [data-split][data-split-revealed="true"] .split-char {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+  }
+  .cursor-ring,
+  .cursor-dot {
+    display: none !important;
+  }
+  [data-parallax-pointer],
+  [data-parallax-scroll],
+  .brand-watermark[data-parallax-scroll][data-parallax-pointer] {
+    transform: none !important;
+  }
+  [data-reveal-ready="true"] [data-stagger] > * {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

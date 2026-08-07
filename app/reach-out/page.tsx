@@ -58,7 +58,7 @@ export default function ReachOutPage() {
     <section className="reach-page shell">
       <div className="reach-intro" data-reveal>
         <p className="eyebrow">Reach out</p>
-        <h1>
+        <h1 data-split>
           Find the
           <br />
           <em>right channel.</em>
@@ -68,7 +68,7 @@ export default function ReachOutPage() {
           I&apos;d be glad to hear from you.
         </p>
       </div>
-      <div className="channel-list">
+      <div className="channel-list" data-stagger>
         {contactChannels.map((channel, index) => (
           <div key={channel.label} className="channel-row">
             <a

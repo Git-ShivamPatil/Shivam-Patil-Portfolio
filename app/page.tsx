@@ -32,7 +32,7 @@ export default async function Home() {
             <span className="live-dot" />
             Available for impactful engineering work
           </p>
-          <h1>
+          <h1 data-split>
             Build systems
             <br />
             that <em>hold up.</em>
@@ -52,6 +52,7 @@ export default async function Home() {
         </div>
         <div
           className="hero-visual reveal reveal-delay"
+          data-parallax-pointer="1.6"
           aria-label="An abstract diagram representing a resilient distributed system"
         >
           <div className="orbital-field">
@@ -87,7 +88,7 @@ export default async function Home() {
       </section>
 
       <section className="proof-strip" data-reveal>
-        <div className="shell proof-grid">
+        <div className="shell proof-grid" data-stagger>
           <p>
             Engineering with
             <br />
@@ -119,7 +120,7 @@ export default async function Home() {
           <p className="eyebrow">
             Selected projects <span>{String(projects.length).padStart(2, "0")}</span>
           </p>
-          <h2>
+          <h2 data-split>
             Technical work,
             <br />
             <em>made tangible.</em>
@@ -149,7 +150,7 @@ export default async function Home() {
             useful contract, a dependable path through failure, and enough observability to tell
             what&apos;s real.
           </p>
-          <div className="principles">
+          <div className="principles" data-stagger>
             <div>
               <span>01</span>
               <strong>Build for the edge cases</strong>

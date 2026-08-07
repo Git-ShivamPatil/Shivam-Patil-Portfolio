@@ -106,6 +106,84 @@ export function InteractionLayer() {
     document.addEventListener("pointerdown", onPointerDown);
     cleanups.push(() => document.removeEventListener("pointerdown", onPointerDown));
 
+    // ---- pointer parallax ----
+    // Elements drift opposite the pointer by a per-element depth, which reads
+    // as the scene having layers. One shared window listener rather than one
+    // per element.
+    const pointerLayers = Array.from(
+      document.querySelectorAll<HTMLElement>("[data-parallax-pointer]"),
+    );
+    if (finePointer && pointerLayers.length > 0) {
+      let pointerFrame = 0;
+      let px = 0;
+      let py = 0;
+
+      const applyPointer = () => {
+        pointerFrame = 0;
+        for (const layer of pointerLayers) {
+          const depth = Number(layer.dataset.parallaxPointer) || 1;
+          layer.style.setProperty("--parallax-x", `${px * depth * -14}px`);
+          layer.style.setProperty("--parallax-y", `${py * depth * -14}px`);
+        }
+      };
+
+      const onPointerParallax = (event: PointerEvent) => {
+        // Normalised to [-0.5, 0.5] from the viewport centre.
+        px = event.clientX / window.innerWidth - 0.5;
+        py = event.clientY / window.innerHeight - 0.5;
+        if (pointerFrame) return;
+        pointerFrame = requestAnimationFrame(applyPointer);
+      };
+
+      window.addEventListener("pointermove", onPointerParallax, { passive: true });
+      cleanups.push(() => {
+        if (pointerFrame) cancelAnimationFrame(pointerFrame);
+        window.removeEventListener("pointermove", onPointerParallax);
+        pointerLayers.forEach((layer) => {
+          layer.style.removeProperty("--parallax-x");
+          layer.style.removeProperty("--parallax-y");
+        });
+      });
+    }
+
+    // ---- scroll parallax ----
+    const scrollLayers = Array.from(
+      document.querySelectorAll<HTMLElement>("[data-parallax-scroll]"),
+    );
+    if (scrollLayers.length > 0) {
+      let scrollFrame = 0;
+
+      const applyScroll = () => {
+        scrollFrame = 0;
+        const viewportH = window.innerHeight;
+        for (const layer of scrollLayers) {
+          const rect = layer.getBoundingClientRect();
+          // Skip offscreen elements entirely — no point paying for a style
+          // write nobody can see.
+          if (rect.bottom < -200 || rect.top > viewportH + 200) continue;
+          const speed = Number(layer.dataset.parallaxScroll) || 0.15;
+          // Progress through the viewport, centred on 0 so the element sits at
+          // its authored position when it is dead centre.
+          const progress = (rect.top + rect.height / 2 - viewportH / 2) / viewportH;
+          layer.style.setProperty("--scroll-parallax-y", `${progress * speed * -100}px`);
+        }
+      };
+
+      const onScroll = () => {
+        if (scrollFrame) return;
+        scrollFrame = requestAnimationFrame(applyScroll);
+      };
+
+      applyScroll();
+      window.addEventListener("scroll", onScroll, { passive: true });
+      window.addEventListener("resize", onScroll, { passive: true });
+      cleanups.push(() => {
+        if (scrollFrame) cancelAnimationFrame(scrollFrame);
+        window.removeEventListener("scroll", onScroll);
+        window.removeEventListener("resize", onScroll);
+      });
+    }
+
     return () => cleanups.forEach((fn) => fn());
   }, [pathname]);
 

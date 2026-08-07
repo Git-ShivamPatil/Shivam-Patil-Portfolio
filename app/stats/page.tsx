@@ -34,7 +34,7 @@ export default function StatsPage() {
     <>
       <section className="page-hero shell" data-reveal>
         <p className="eyebrow">Live signal</p>
-        <h1>
+        <h1 data-split>
           Numbers that
           <br />
           <em>update themselves.</em>

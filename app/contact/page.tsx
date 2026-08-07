@@ -24,7 +24,7 @@ export default function ContactPage() {
       <BrandWatermark placement="top-right" />
       <section className="contact-hero shell" data-reveal>
         <p className="eyebrow">Contact</p>
-        <h1>
+        <h1 data-split>
           Let&apos;s make the
           <br />
           hard part <em>work.</em>
@@ -51,7 +51,7 @@ export default function ContactPage() {
               keeps its <em>promise.</em>
             </h2>
           </div>
-          <div className="service-list" data-reveal data-reveal-delay="2">
+          <div className="service-list" data-reveal data-reveal-delay="2" data-stagger>
             {services.map(([title, description], index) => (
               <article key={title}>
                 <span>0{index + 1}</span>

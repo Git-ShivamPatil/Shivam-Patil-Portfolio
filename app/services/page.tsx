@@ -36,7 +36,7 @@ export default async function ServicesPage() {
     <>
       <section className="page-hero shell" data-reveal>
         <p className="eyebrow">Work with me</p>
-        <h1>
+        <h1 data-split>
           Bring me the
           <br />
           <em>hard part.</em>
