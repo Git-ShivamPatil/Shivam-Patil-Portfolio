@@ -7,7 +7,6 @@ import { ThemeProvider } from "../components/providers/theme-provider";
 import { PageTransition } from "../components/providers/page-transition";
 import { SessionProvider } from "../components/providers/session-provider";
 import { BackToTop } from "../components/back-to-top";
-import { AmbientBackground } from "../components/ambient-background";
 import { Toaster } from "sonner";
 import { Analytics } from "@vercel/analytics/next";
 
@@ -45,7 +44,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         </a>
         <ThemeProvider>
           <SessionProvider>
-            <AmbientBackground />
             <div className="page-grid" aria-hidden="true" />
             <Header />
             <main id="main-content">
