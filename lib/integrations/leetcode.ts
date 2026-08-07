@@ -1,6 +1,6 @@
 import { cached, fetchWithTimeout, type CachedResult } from "./cache";
 
-export const LEETCODE_USERNAME = process.env.LEETCODE_USERNAME ?? "shivampatil";
+export const LEETCODE_USERNAME = process.env.LEETCODE_USERNAME ?? "shivam2op";
 
 const CACHE_KEY = `leetcode:${LEETCODE_USERNAME}`;
 // Longer TTL than GitHub: this endpoint is unofficial and throttles serverless
