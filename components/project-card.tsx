@@ -7,6 +7,7 @@ export function ProjectCard({ project, index }: { project: Project; index: numbe
     <Link
       href={`/projects/${project.slug}`}
       className={`project-card project-${project.accent} reveal ${index % 2 ? "offset-card" : ""}`}
+      data-tilt
     >
       <div className="project-card-top">
         <span className="project-number">{project.number}</span>

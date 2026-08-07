@@ -13,6 +13,8 @@ export function Header() {
         </Link>
         <nav className="primary-nav" aria-label="Main navigation">
           <Link href="/#work">Selected work</Link>
+          <Link href="/services">Services</Link>
+          <Link href="/stats">Stats</Link>
           <Link href="/blog">Blog</Link>
           <Link href="/about">About</Link>
           <Link href="/contact">Contact</Link>

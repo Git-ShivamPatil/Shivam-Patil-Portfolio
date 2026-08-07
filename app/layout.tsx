@@ -8,6 +8,10 @@ import { PageTransition } from "../components/providers/page-transition";
 import { SessionProvider } from "../components/providers/session-provider";
 import { BackToTop } from "../components/back-to-top";
 import { ReferralCapture } from "../components/referral-capture";
+import { ScrollReveal } from "../components/providers/scroll-reveal";
+import { InteractionLayer } from "../components/providers/interaction-layer";
+import { ScrollProgress } from "../components/scroll-progress";
+import { ChatWidget } from "../components/chat/chat-widget";
 import { Toaster } from "sonner";
 import { Analytics } from "@vercel/analytics/next";
 
@@ -40,12 +44,24 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
+        {/* Marks the document as JS-capable before the below-the-fold content
+            paints, which is what arms the [data-reveal] start state. Without
+            this the reveal styles would apply even when JS never runs, and
+            content would stay permanently invisible. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `document.documentElement.setAttribute("data-reveal-ready","true")`,
+          }}
+        />
         <a href="#main-content" className="skip-link">
           Skip to content
         </a>
         <ThemeProvider>
           <SessionProvider>
             <ReferralCapture />
+            <ScrollReveal />
+            <InteractionLayer />
+            <ScrollProgress />
             <div className="page-grid" aria-hidden="true" />
             <Header />
             <main id="main-content">
@@ -53,8 +69,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             </main>
             <Footer />
             <BackToTop />
+            <ChatWidget />
             <Toaster
               position="bottom-right"
+              // Lifted clear of the chat launcher, which occupies the same
+              // corner — otherwise a toast lands on top of it.
+              offset="92px"
               toastOptions={{
                 style: {
                   background: "var(--bg)",

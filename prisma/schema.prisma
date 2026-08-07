@@ -30,6 +30,9 @@ model User {
   resetTokens PasswordResetToken[]
   blogPosts   BlogPost[]
 
+  pushSubscriptions PushSubscription[]
+  chatConversation  ChatConversation?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -205,4 +208,276 @@ model ContactMessage {
 
   @@index([status, createdAt])
   @@index([referralRef])
+}
+
+// ---- Phase 5: third-party integrations ----
+
+// Generic TTL cache for third-party API responses (GitHub, LeetCode).
+//
+// The row is deliberately NOT deleted at expiry: `expiresAt` only decides
+// whether to attempt a refetch. When the upstream is down or rate-limiting —
+// which LeetCode's unofficial GraphQL endpoint does regularly from serverless
+// IPs — the last good payload is still served, so a stats panel degrades to
+// "slightly stale" instead of "error".
+model IntegrationCache {
+  key       String   @id
+  payload   Json
+  fetchedAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@index([expiresAt])
+}
+
+// ---- Phase 6: communication ----
+
+enum SubscriptionStatus {
+  PENDING
+  CONFIRMED
+  UNSUBSCRIBED
+}
+
+// Double opt-in: a row is created as PENDING and only becomes CONFIRMED after
+// the emailed confirmToken is followed. Storing an unsubscribe token up front
+// means every newsletter send can carry a working one-click unsubscribe link
+// without minting state at send time.
+model NewsletterSubscriber {
+  id             String             @id @default(cuid())
+  email          String             @unique
+  status         SubscriptionStatus @default(PENDING)
+  confirmToken   String             @unique
+  unsubToken     String             @unique
+  referralRef    String?
+  confirmedAt    DateTime?
+  unsubscribedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([status])
+}
+
+// Web Push endpoints (RFC 8030). endpoint is the natural key — the browser
+// reissues the same one for a given subscription, so upserting on it keeps
+// re-subscribes from piling up duplicate rows.
+model PushSubscription {
+  id       String @id @default(cuid())
+  endpoint String @unique
+  p256dh   String
+  auth     String
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  userAgent  String?
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+enum ChatStatus {
+  OPEN
+  CLOSED
+}
+
+enum ChatAuthor {
+  VISITOR
+  OWNER
+  SYSTEM
+}
+
+// One conversation per visitor. Anonymous visitors are identified by a signed
+// cookie (guestId); signed-in users by userId. Both are unique and nullable so
+// a guest conversation can be adopted by a user account on sign-in without
+// creating a second thread.
+model ChatConversation {
+  id      String  @id @default(cuid())
+  guestId String? @unique
+  userId  String? @unique
+  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  visitorName  String?
+  visitorEmail String?
+  status       ChatStatus @default(OPEN)
+
+  // Typing indicators as short-lived deadlines rather than booleans. A
+  // boolean would need an explicit "stopped typing" write that a closed tab
+  // never sends, leaving the indicator stuck on forever; a deadline in the
+  // near future simply lapses. They live here rather than in memory because
+  // each serverless invocation is a separate process — an in-memory flag set
+  // by the POST would be invisible to the instance holding the SSE stream.
+  visitorTypingUntil DateTime?
+  ownerTypingUntil   DateTime?
+
+  // Denormalised so the admin inbox can sort threads without aggregating
+  // ChatMessage on every list render.
+  lastMessageAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  messages ChatMessage[]
+
+  @@index([status, lastMessageAt])
+}
+
+// Typing indicators are deliberately absent here — they are sub-second
+// ephemeral state, so they live in the in-memory hub (lib/realtime/hub.ts)
+// and never touch Postgres.
+model ChatMessage {
+  id             String           @id @default(cuid())
+  conversationId String
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  author ChatAuthor
+  body   String     @db.Text
+
+  // Read receipts. deliveredAt is set on persist; readAt is set when the
+  // *other* party acknowledges having seen it.
+  deliveredAt DateTime  @default(now())
+  readAt      DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([conversationId, createdAt])
+  @@index([conversationId, author, readAt])
+}
+
+// ---- Phase 7: monetization ----
+
+enum BookingStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentProvider {
+  STRIPE
+  RAZORPAY
+}
+
+enum PaymentStatus {
+  CREATED
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+// A bookable engagement (consultation, architecture review, ...). Prices are
+// held in the currency's minor unit (paise / cents) — never floats, so no
+// rounding drift between what is charged and what is invoiced.
+model ServiceOffering {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  name        String
+  description String  @db.Text
+  durationMin Int
+  priceMinor  Int
+  currency    String  @default("INR")
+  active      Boolean @default(true)
+  order       Int     @default(0)
+
+  bookings Booking[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active, order])
+}
+
+model Booking {
+  id        String @id @default(cuid())
+  // Human-facing identifier used in emails and invoices (BK-YYMM-XXXX).
+  reference String @unique
+
+  offeringId String
+  offering   ServiceOffering @relation(fields: [offeringId], references: [id], onDelete: Restrict)
+
+  name    String
+  email   String
+  company String?
+  notes   String? @db.Text
+
+  scheduledAt   DateTime?
+  // Cal.com booking uid, when the slot was reserved through Cal.
+  calBookingUid String?
+
+  status      BookingStatus @default(PENDING_PAYMENT)
+  referralRef String?
+  userId      String?
+
+  payments Payment[]
+  invoice  Invoice?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([email])
+}
+
+model Payment {
+  id        String  @id @default(cuid())
+  bookingId String
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  provider PaymentProvider
+  // Provider-side order/session id: a Stripe Checkout Session id or a
+  // Razorpay order id. Unique so a webhook can resolve a payment by it alone.
+  providerOrderId   String  @unique
+  providerPaymentId String? @unique
+
+  amountMinor Int
+  currency    String
+  status      PaymentStatus @default(CREATED)
+
+  // The blueprint's Idempotency-Key stage, applied at the command boundary:
+  // retrying "create checkout for booking X" returns the existing payment
+  // rather than charging twice.
+  idempotencyKey String @unique
+
+  rawPayload Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([bookingId])
+}
+
+model Invoice {
+  id     String @id @default(cuid())
+  number String @unique
+
+  bookingId String  @unique
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  amountMinor Int
+  taxMinor    Int    @default(0)
+  currency    String
+
+  // Snapshotted at issue time. An invoice is a historical record: it must not
+  // change because the offering was later renamed or repriced.
+  billTo    Json
+  lineItems Json
+
+  // Unguessable path segment, so a customer can open their invoice without an
+  // account while an enumerated id cannot leak anyone else's.
+  accessToken String @unique
+
+  issuedAt DateTime @default(now())
+}
+
+// Webhook idempotency ledger. Both Stripe and Razorpay redeliver on any
+// non-2xx, and Stripe explicitly warns that events can arrive more than once —
+// the unique (provider, eventId) is what makes handling exactly-once.
+model WebhookEvent {
+  id       String @id @default(cuid())
+  provider String
+  eventId  String
+  type     String
+
+  processedAt DateTime @default(now())
+
+  @@unique([provider, eventId])
+  @@index([provider, processedAt])
 }

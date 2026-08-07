@@ -42,10 +42,10 @@ export default async function Home() {
             platforms, distributed systems, and thoughtful AI products.
           </p>
           <div className="hero-actions">
-            <Link href="/#work" className="button button-solid">
+            <Link href="/#work" className="button button-solid" data-magnetic>
               Explore my work <ArrowUpRight />
             </Link>
-            <Link href="/reach-out" className="button button-text">
+            <Link href="/reach-out" className="button button-text" data-magnetic>
               Start a conversation <span>→</span>
             </Link>
           </div>
@@ -86,7 +86,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="proof-strip">
+      <section className="proof-strip" data-reveal>
         <div className="shell proof-grid">
           <p>
             Engineering with
@@ -143,7 +143,7 @@ export default async function Home() {
             as you go deeper.
           </h2>
         </div>
-        <div className="about-details">
+        <div className="about-details" data-reveal data-reveal-delay="2">
           <p>
             At the intersection of systems engineering and AI, I work from the fundamentals: a
             useful contract, a dependable path through failure, and enough observability to tell
@@ -166,13 +166,13 @@ export default async function Home() {
               <p>Complex systems deserve calm UX.</p>
             </div>
           </div>
-          <Link href="/about" className="button button-text">
+          <Link href="/about" className="button button-text" data-magnetic>
             Read the full story <span>→</span>
           </Link>
         </div>
       </section>
 
-      <section className="capabilities">
+      <section className="capabilities" data-reveal>
         <div className="shell capabilities-inner">
           <p className="eyebrow">Working set</p>
           <div className="skill-marquee" aria-label="Technical skills">
@@ -186,7 +186,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="contact-banner shell">
+      <section className="contact-banner shell" data-reveal>
         <div className="contact-banner-grid">
           <div>
             <p className="eyebrow">Let&apos;s build</p>
@@ -201,7 +201,7 @@ export default async function Home() {
               I&apos;m open to software engineering roles and collaborations where sound engineering
               makes a measurable difference.
             </p>
-            <Link href="/reach-out" className="button button-light">
+            <Link href="/reach-out" className="button button-light" data-magnetic>
               Reach out <ArrowUpRight />
             </Link>
           </div>

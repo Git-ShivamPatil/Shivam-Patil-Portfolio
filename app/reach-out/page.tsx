@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ArrowUpRight } from "../../components/icons";
 import { CopyButton } from "../../components/copy-button";
+import { LocationMap } from "../../components/location-map";
 
 export const metadata: Metadata = {
   title: "Reach out — Shivam Patil",
@@ -55,7 +56,7 @@ const contactChannels: ContactChannel[] = [
 export default function ReachOutPage() {
   return (
     <section className="reach-page shell">
-      <div className="reach-intro">
+      <div className="reach-intro" data-reveal>
         <p className="eyebrow">Reach out</p>
         <h1>
           Find the
@@ -100,7 +101,23 @@ export default function ReachOutPage() {
           </div>
         ))}
       </div>
-      <div className="resume-download">
+      <div className="reach-map" data-reveal>
+        <div className="reach-map-copy">
+          <p className="eyebrow">Where I work from</p>
+          <h2>
+            Mumbai —
+            <br />
+            <em>remote-friendly.</em>
+          </h2>
+          <p>
+            I work IST hours and overlap comfortably with Europe most of the day, and with US East
+            for a few hours each evening.
+          </p>
+        </div>
+        <LocationMap />
+      </div>
+
+      <div className="resume-download" data-reveal>
         <div>
           <p className="eyebrow">Résumé</p>
           <h2>
@@ -109,7 +126,12 @@ export default function ReachOutPage() {
             at the <em>details.</em>
           </h2>
         </div>
-        <a href="/Shivam-Patil-SDE-II-Resume.pdf" target="_blank" className="button button-solid">
+        <a
+          href="/Shivam-Patil-SDE-II-Resume.pdf"
+          target="_blank"
+          className="button button-solid"
+          data-magnetic
+        >
           View latest résumé <ArrowUpRight />
         </a>
       </div>

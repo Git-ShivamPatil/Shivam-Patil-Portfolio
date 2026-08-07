@@ -1,0 +1,363 @@
+/* =========================================================================
+   MOTION & INTERACTION LAYER
+
+   Driven by components/providers/scroll-reveal.tsx and interaction-layer.tsx,
+   which only toggle data-attributes and CSS custom properties — every
+   transition below is CSS, so the JS stays tiny and the whole layer degrades
+   to "static but fully usable" when it doesn't run.
+   ========================================================================= */
+
+/* ---- scroll reveal ----
+   Gated on [data-reveal-ready], set by an inline script in the root layout.
+   Without JS the attribute never lands and content simply renders visible,
+   rather than being permanently stuck at opacity 0. */
+[data-reveal-ready="true"] [data-reveal] {
+  opacity: 0;
+  transform: translateY(24px);
+  will-change: opacity, transform;
+  transition:
+    opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+}
+[data-reveal-ready="true"] [data-reveal][data-revealed="true"] {
+  opacity: 1;
+  transform: none;
+  will-change: auto;
+}
+[data-reveal-delay="1"] {
+  transition-delay: 0.08s;
+}
+[data-reveal-delay="2"] {
+  transition-delay: 0.16s;
+}
+[data-reveal-delay="3"] {
+  transition-delay: 0.24s;
+}
+[data-reveal-delay="4"] {
+  transition-delay: 0.32s;
+}
+
+/* ---- magnetic buttons ----
+   --magnet-x/y are written by the interaction layer on pointermove and reset
+   to 0 on leave, so the spring-back reuses the same transition as the pull. */
+[data-magnetic] {
+  transform: translate3d(var(--magnet-x, 0px), var(--magnet-y, 0px), 0);
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+[data-magnetic]:hover {
+  transform: translate3d(var(--magnet-x, 0px), calc(var(--magnet-y, 0px) - 2px), 0);
+}
+
+/* ---- click ripple ---- */
+.has-ripple {
+  position: relative;
+  overflow: hidden;
+}
+.ripple-ink {
+  position: absolute;
+  z-index: 0;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.25;
+  transform: scale(0);
+  pointer-events: none;
+  animation: ripple-out 0.62s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes ripple-out {
+  to {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+/* ---- shine sweep on filled buttons ---- */
+.button-solid,
+.button-light {
+  position: relative;
+  overflow: hidden;
+}
+.button-solid::after,
+.button-light::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 -60%;
+  width: 45%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.32), transparent);
+  transform: skewX(-18deg);
+  transition: left 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+.button-solid:hover::after,
+.button-light:hover::after {
+  left: 115%;
+}
+
+/* ---- tilt surfaces ----
+   Project cards restate their full transform because they already own
+   translateY for the hover lift and the .offset-card stagger; tilt has to
+   compose with those rather than replace them. */
+[data-tilt] {
+  transform-style: preserve-3d;
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.project-card[data-tilt] {
+  transform: perspective(900px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+  transition:
+    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.3s;
+}
+.project-card[data-tilt]:hover {
+  transform: perspective(900px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg))
+    translateY(-8px);
+}
+.offset-card[data-tilt] {
+  transform: perspective(900px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg))
+    translateY(52px);
+}
+.offset-card[data-tilt]:hover {
+  transform: perspective(900px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg))
+    translateY(44px);
+}
+/* The graphic and title lift out of the card plane so the tilt reads as
+   depth rather than as a flat sheet being rotated. */
+.project-card[data-tilt] .project-card-graphic,
+.project-card[data-tilt] h3 {
+  transform: translateZ(28px);
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ---- nav underline ---- */
+.primary-nav a {
+  position: relative;
+}
+.primary-nav a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -6px;
+  height: 1.5px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.primary-nav a:hover::after,
+.primary-nav a:focus-visible::after {
+  transform: scaleX(1);
+}
+
+/* ---- reading progress ---- */
+.scroll-progress {
+  position: fixed;
+  z-index: 21;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  pointer-events: none;
+}
+.scroll-progress span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--lime), var(--cyan));
+  transform-origin: left center;
+  will-change: transform;
+}
+
+/* ---- animated hero orbital field ----
+   Each ring carries a satellite dot on ::after; spinning the ring walks the
+   dot around it. In the two elliptical rings the animated rotate() is applied
+   *after* scaleY on purpose, so the dot traces the ellipse rather than a
+   circle that then gets squashed. */
+.orbit::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: -4px;
+  width: 8px;
+  height: 8px;
+  margin-top: -4px;
+  border-radius: 50%;
+  background: var(--lime);
+  box-shadow: 0 0 12px 2px rgba(216, 254, 103, 0.7);
+}
+.orbit-one {
+  animation: orbit-one-spin 18s linear infinite;
+}
+.orbit-two {
+  animation: orbit-two-spin 27s linear infinite;
+}
+.orbit-three {
+  animation: orbit-three-spin 38s linear infinite reverse;
+}
+@keyframes orbit-one-spin {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+@keyframes orbit-two-spin {
+  from {
+    transform: translate(-50%, -50%) rotate(-28deg) scaleY(0.55) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(-28deg) scaleY(0.55) rotate(360deg);
+  }
+}
+@keyframes orbit-three-spin {
+  from {
+    transform: translate(-50%, -50%) rotate(48deg) scaleY(0.32) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(48deg) scaleY(0.32) rotate(360deg);
+  }
+}
+.center-core {
+  animation: core-breathe 4.5s ease-in-out infinite;
+}
+@keyframes core-breathe {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 14px rgba(216, 254, 103, 0.08),
+      0 0 34px rgba(216, 254, 103, 0.3);
+  }
+  50% {
+    box-shadow:
+      0 0 0 22px rgba(216, 254, 103, 0.12),
+      0 0 52px rgba(216, 254, 103, 0.45);
+  }
+}
+.signal-node {
+  animation: node-float 6s ease-in-out infinite;
+}
+.node-two {
+  animation-delay: -2s;
+}
+.node-three {
+  animation-delay: -4s;
+}
+@keyframes node-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+.signal-node i {
+  animation: node-blink 2.4s ease-in-out infinite;
+}
+@keyframes node-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+.star {
+  animation: star-twinkle 3.4s ease-in-out infinite;
+}
+.star-two {
+  animation-delay: -0.9s;
+}
+.star-three {
+  animation-delay: -1.8s;
+}
+.star-four {
+  animation-delay: -2.6s;
+}
+@keyframes star-twinkle {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.25);
+  }
+}
+.live-dot {
+  animation: live-pulse 2.2s ease-in-out infinite;
+}
+@keyframes live-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 4px rgba(142, 186, 0, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 0 9px rgba(142, 186, 0, 0.03);
+  }
+}
+
+/* ---- brand watermark (about / contact) ----
+   Anchors to `main`, which is already position:relative. Desaturated and
+   radially masked so a photographic source reads as texture rather than as a
+   stray photo dropped behind the copy. */
+.brand-watermark {
+  position: absolute;
+  z-index: 0;
+  width: clamp(220px, 32vw, 480px);
+  aspect-ratio: 720 / 1280;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  opacity: var(--watermark-opacity);
+  mix-blend-mode: var(--watermark-blend);
+  filter: grayscale(1) contrast(1.4);
+  -webkit-mask-image: radial-gradient(ellipse at 50% 45%, #000 12%, transparent 68%);
+  mask-image: radial-gradient(ellipse at 50% 45%, #000 12%, transparent 68%);
+}
+.brand-watermark-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.brand-watermark-bottom-right {
+  right: -3%;
+  bottom: 5%;
+}
+.brand-watermark-top-right {
+  right: -3%;
+  top: 8%;
+}
+/* Stops the bleed from producing a horizontal scrollbar. `clip` rather than
+   `hidden` so the sticky .section-heading inside main still sticks. */
+main {
+  overflow-x: clip;
+}
+@media (max-width: 620px) {
+  .brand-watermark {
+    width: 64vw;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal-ready="true"] [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .orbit-one,
+  .orbit-two,
+  .orbit-three,
+  .center-core,
+  .signal-node,
+  .signal-node i,
+  .star,
+  .live-dot {
+    animation: none !important;
+  }
+  .button-solid::after,
+  .button-light::after,
+  .ripple-ink {
+    display: none;
+  }
+}

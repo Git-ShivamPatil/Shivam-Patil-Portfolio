@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { ArrowUpRight } from "../../components/icons";
 import { ContactForm } from "../../components/contact-form";
+import { BrandWatermark } from "../../components/brand-watermark";
 
 const services: [string, string][] = [
   ["Backend & APIs", "High-throughput services, clear API contracts, and reliable integrations."],
@@ -20,7 +21,8 @@ export const metadata: Metadata = {
 export default function ContactPage() {
   return (
     <>
-      <section className="contact-hero shell">
+      <BrandWatermark placement="top-right" />
+      <section className="contact-hero shell" data-reveal>
         <p className="eyebrow">Contact</p>
         <h1>
           Let&apos;s make the
@@ -41,7 +43,7 @@ export default function ContactPage() {
           <p>Currently open to opportunities</p>
         </div>
         <div className="contact-grid-large">
-          <div>
+          <div data-reveal>
             <p className="eyebrow">Where I help</p>
             <h2>
               Engineering that
@@ -49,7 +51,7 @@ export default function ContactPage() {
               keeps its <em>promise.</em>
             </h2>
           </div>
-          <div className="service-list">
+          <div className="service-list" data-reveal data-reveal-delay="2">
             {services.map(([title, description], index) => (
               <article key={title}>
                 <span>0{index + 1}</span>
@@ -68,7 +70,7 @@ export default function ContactPage() {
         </div>
         <ContactForm />
       </section>
-      <section className="contact-quick shell">
+      <section className="contact-quick shell" data-reveal>
         <div>
           <p className="eyebrow">Prefer another channel?</p>
           <h2>
@@ -77,7 +79,7 @@ export default function ContactPage() {
             to reach me.
           </h2>
         </div>
-        <Link href="/reach-out" className="button button-solid">
+        <Link href="/reach-out" className="button button-solid" data-magnetic>
           View contact details <ArrowUpRight />
         </Link>
       </section>

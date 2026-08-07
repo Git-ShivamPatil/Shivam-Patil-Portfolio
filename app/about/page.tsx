@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { ArrowUpRight } from "../../components/icons";
 import { AboutPhoto } from "../../components/about-photo";
+import { BrandWatermark } from "../../components/brand-watermark";
 
 export const metadata: Metadata = {
   title: "About — Shivam Patil",
@@ -11,8 +12,9 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <>
+      <BrandWatermark placement="bottom-right" />
       <section className="about-hero shell">
-        <div className="about-hero-copy">
+        <div className="about-hero-copy" data-reveal>
           <p className="eyebrow">About</p>
           <h1>
             Software engineer,
@@ -29,7 +31,7 @@ export default function AboutPage() {
       </section>
 
       <section className="about-page-story shell">
-        <div>
+        <div data-reveal>
           <p className="eyebrow">How I got here</p>
           <p>
             I studied Artificial Intelligence and Data Science at Pune University, and that
@@ -45,7 +47,7 @@ export default function AboutPage() {
             auditable under autonomy.
           </p>
         </div>
-        <div>
+        <div data-reveal data-reveal-delay="2">
           <p className="eyebrow">The approach</p>
           <div className="principles">
             <div>
@@ -67,15 +69,15 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="about-page-cta shell">
+      <section className="about-page-cta shell" data-reveal>
         <h2>
           Curious about the <em>details?</em>
         </h2>
         <div className="about-page-cta-actions">
-          <Link href="/resume" className="button button-light">
+          <Link href="/resume" className="button button-light" data-magnetic>
             View résumé <ArrowUpRight />
           </Link>
-          <Link href="/reach-out" className="button button-outline-light">
+          <Link href="/reach-out" className="button button-outline-light" data-magnetic>
             Reach out <ArrowUpRight />
           </Link>
         </div>

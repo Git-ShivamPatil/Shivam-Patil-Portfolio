@@ -1,5 +1,10 @@
 @import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600;1,700&display=swap");
 @import "tailwindcss";
+/* Motion/interaction layer lives in its own file — it is a self-contained
+   concern driven by data-attributes, not part of the base design system. */
+@import "./motion.css";
+/* Phase 5-7 surfaces: live stats, chat, newsletter, booking, invoices, map. */
+@import "./features.css";
 
 :root {
   /* --ink/--paper are intentionally NEVER overridden per theme: several
@@ -43,6 +48,21 @@
   --footer-fg: #77766f;
   --nav-fg: #55544f;
   --project-hero-bg: #f0efe9;
+  /* Raised surfaces (capability strip, skill/cert cards, next-project) and
+     long-form prose. These used to be hardcoded light literals, which meant
+     dark theme rendered near-white --fg text on a near-white panel — the
+     "Working set" strip was the worst case, and was unreadable. */
+  --surface: #e9e8e1;
+  --surface-2: #dfded7;
+  --surface-line: rgba(17, 17, 16, 0.17);
+  --prose-fg: #42413c;
+  --prose-soft: #5e5d56;
+  --marquee-accent: #779200;
+  --chip-bg: rgba(255, 255, 255, 0.5);
+  --chip-fg: #3a3934;
+  --chip-line: rgba(17, 17, 16, 0.25);
+  --watermark-opacity: 0.05;
+  --watermark-blend: multiply;
 }
 :root[data-theme="dark"] {
   --bg: #171716;
@@ -58,6 +78,17 @@
   --footer-fg: #939186;
   --nav-fg: #a9a79c;
   --project-hero-bg: #1c1c19;
+  --surface: #1f1f1c;
+  --surface-2: #24241f;
+  --surface-line: rgba(237, 233, 221, 0.14);
+  --prose-fg: #c9c6bb;
+  --prose-soft: #a8a59b;
+  --marquee-accent: #b7e02f;
+  --chip-bg: rgba(255, 255, 255, 0.05);
+  --chip-fg: #ddd9cd;
+  --chip-line: rgba(237, 233, 221, 0.2);
+  --watermark-opacity: 0.08;
+  --watermark-blend: screen;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -74,6 +105,17 @@
     --footer-fg: #939186;
     --nav-fg: #a9a79c;
     --project-hero-bg: #1c1c19;
+    --surface: #1f1f1c;
+    --surface-2: #24241f;
+    --surface-line: rgba(237, 233, 221, 0.14);
+    --prose-fg: #c9c6bb;
+    --prose-soft: #a8a59b;
+    --marquee-accent: #b7e02f;
+    --chip-bg: rgba(255, 255, 255, 0.05);
+    --chip-fg: #ddd9cd;
+    --chip-line: rgba(237, 233, 221, 0.2);
+    --watermark-opacity: 0.08;
+    --watermark-blend: screen;
   }
 }
 
@@ -219,8 +261,17 @@ main,
   text-transform: uppercase;
 }
 .eyebrow span:not(.live-dot) {
-  color: var(--ink);
+  color: var(--fg);
   margin-left: auto;
+}
+/* Sections that are dark by design in BOTH themes — there --fg would be
+   near-black in light mode, so pin the counter to the light end instead. */
+.proof-strip .eyebrow span:not(.live-dot),
+.architecture-heading .eyebrow span:not(.live-dot),
+.contact-banner .eyebrow span:not(.live-dot),
+.about-page-cta .eyebrow span:not(.live-dot),
+.achievement-card .eyebrow span:not(.live-dot) {
+  color: #fff;
 }
 .live-dot {
   display: inline-block;
@@ -1020,7 +1071,7 @@ h2 em {
   max-width: 450px;
   font-size: 18px;
   line-height: 1.7;
-  color: #42413c;
+  color: var(--prose-fg);
 }
 .principles {
   margin-top: 50px;
@@ -1033,7 +1084,7 @@ h2 em {
   border-bottom: 1px solid var(--line);
 }
 .principles span {
-  color: #77766f;
+  color: var(--muted);
   font:
     500 9px "DM Mono",
     monospace;
@@ -1054,19 +1105,29 @@ h2 em {
   overflow: hidden;
   padding: 34px 0;
   border-block: 1px solid var(--line);
-  background: #e9e8e1;
+  background: var(--surface);
+  color: var(--fg);
 }
 .capabilities .eyebrow {
   margin-bottom: 22px;
+}
+/* The eyebrow's trailing counter span is hardcoded to --ink elsewhere, which
+   is always near-black — on the dark capability strip that reads as a hole. */
+.capabilities .eyebrow span:not(.live-dot) {
+  color: var(--fg);
 }
 .skill-marquee {
   display: flex;
   width: max-content;
   gap: 22px;
   white-space: nowrap;
-  animation: skill-marquee-scroll 38s linear infinite;
+  /* Deliberately slow: this is ambient texture, not something to read in a
+     hurry. Duration scales with the track length, so it stays legible whether
+     there are 12 skills or 40. */
+  animation: skill-marquee-scroll 95s linear infinite;
 }
-.skill-marquee:hover {
+.skill-marquee:hover,
+.skill-marquee:focus-within {
   animation-play-state: paused;
 }
 @keyframes skill-marquee-scroll {
@@ -1090,7 +1151,7 @@ h2 em {
   letter-spacing: -0.09em;
 }
 .skill-marquee i {
-  color: #779200;
+  color: var(--marquee-accent);
   font-style: normal;
   font-size: 19px;
 }
@@ -1264,7 +1325,7 @@ h2 em {
   padding-block: 118px;
 }
 .project-side-label {
-  color: #73726b;
+  color: var(--muted);
   font:
     500 9px "DM Mono",
     monospace;
@@ -1304,7 +1365,7 @@ h2 em {
   font:
     500 10px "DM Mono",
     monospace;
-  color: #73726b;
+  color: var(--muted);
 }
 .implementation-list h3 {
   margin: 0 0 9px;
@@ -1314,7 +1375,7 @@ h2 em {
 .implementation-list p {
   margin: 0;
   max-width: 550px;
-  color: #5e5d56;
+  color: var(--prose-soft);
   font-size: 14px;
   line-height: 1.7;
 }
@@ -1432,7 +1493,7 @@ h2 em {
 }
 .guide-intro {
   max-width: 555px;
-  color: #625f58;
+  color: var(--prose-soft);
   font-size: 14px;
   line-height: 1.7;
 }
@@ -1450,7 +1511,7 @@ h2 em {
   border-bottom: 1px solid var(--line);
 }
 .step-index {
-  color: #77766f;
+  color: var(--muted);
   font:
     500 10px "DM Mono",
     monospace;
@@ -1462,7 +1523,7 @@ h2 em {
 }
 .step-copy p {
   margin: 0;
-  color: #62615a;
+  color: var(--prose-soft);
   font-size: 12px;
   line-height: 1.62;
 }
@@ -1500,7 +1561,7 @@ h2 em {
   margin-bottom: 110px;
   padding: 50px;
   border-radius: var(--radius);
-  background: #dfded7;
+  background: var(--surface-2);
 }
 .next-project > a {
   display: grid;
@@ -1510,7 +1571,7 @@ h2 em {
   align-items: end;
 }
 .next-project > a span {
-  color: #696860;
+  color: var(--muted);
   font:
     500 10px "DM Mono",
     monospace;
@@ -1540,7 +1601,7 @@ h2 em {
 }
 .contact-hero > p {
   max-width: 630px;
-  color: #504f49;
+  color: var(--prose-fg);
   font-size: 18px;
   line-height: 1.7;
 }
@@ -1549,7 +1610,7 @@ h2 em {
   align-items: center;
   gap: 18px;
   margin-top: 37px;
-  border-bottom: 2px solid var(--ink);
+  border-bottom: 2px solid var(--fg);
   padding-bottom: 8px;
   font-size: clamp(20px, 3vw, 36px);
   font-weight: 700;
@@ -1594,7 +1655,7 @@ h2 em {
   border-bottom: 1px solid var(--line);
 }
 .service-list span {
-  color: #74736c;
+  color: var(--muted);
   font:
     500 9px "DM Mono",
     monospace;
@@ -1606,7 +1667,7 @@ h2 em {
 }
 .service-list p {
   margin: 0;
-  color: #65645e;
+  color: var(--prose-soft);
   font-size: 12px;
   line-height: 1.65;
 }
@@ -1685,7 +1746,7 @@ h2 em {
   align-self: end;
   max-width: 425px;
   margin: 0 0 6px;
-  color: #57564f;
+  color: var(--prose-fg);
   font-size: 16px;
   line-height: 1.7;
 }
@@ -1726,7 +1787,7 @@ h2 em {
 }
 .channel-row > span,
 .channel-row-link > span {
-  color: #76756e;
+  color: var(--muted);
   font:
     500 10px "DM Mono",
     monospace;
@@ -1734,7 +1795,7 @@ h2 em {
 .channel-row small {
   display: block;
   margin-bottom: 3px;
-  color: #717068;
+  color: var(--muted);
   font:
     500 9px "DM Mono",
     monospace;
@@ -1747,7 +1808,7 @@ h2 em {
 }
 .channel-row p {
   margin: 0;
-  color: #74736c;
+  color: var(--muted);
   font-size: 11px;
 }
 .channel-row .arrow-icon {
@@ -1759,7 +1820,7 @@ h2 em {
   justify-content: space-between;
   gap: 40px;
   padding: 48px;
-  border: 1px solid var(--ink);
+  border: 1px solid var(--fg);
   border-radius: var(--radius);
 }
 .resume-download h2 {
@@ -1948,7 +2009,7 @@ h2 em {
   }
   .skill-marquee {
     gap: 17px;
-    animation-duration: 26s;
+    animation-duration: 68s;
   }
   .skill-marquee span {
     gap: 17px;
@@ -2188,7 +2249,7 @@ h2 em {
 }
 .about-page-story p {
   margin: 0 0 20px;
-  color: #42413c;
+  color: var(--prose-fg);
   font-size: 16px;
   line-height: 1.75;
 }
@@ -2241,9 +2302,9 @@ h2 em {
 }
 .skill-group {
   padding: 28px;
-  border: 1px solid rgba(17, 17, 16, 0.17);
+  border: 1px solid var(--surface-line);
   border-radius: var(--radius);
-  background: #e9e8e1;
+  background: var(--surface);
 }
 .skill-group h2 {
   margin: 0 0 18px;
@@ -2260,13 +2321,22 @@ h2 em {
 }
 .skill-chip-list li {
   padding: 7px 12px;
-  border: 1px solid rgba(17, 17, 16, 0.25);
+  border: 1px solid var(--chip-line);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.5);
+  background: var(--chip-bg);
   font:
     500 11px "DM Mono",
     monospace;
-  color: #3a3934;
+  color: var(--chip-fg);
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease;
+}
+.skill-chip-list li:hover {
+  transform: translateY(-2px);
+  border-color: var(--fg);
+  background: var(--warm);
 }
 
 /* ===== experience page ===== */
@@ -2282,7 +2352,7 @@ h2 em {
   padding: 8px 0 44px;
 }
 .timeline-meta {
-  color: #77766f;
+  color: var(--muted);
   font:
     500 10px "DM Mono",
     monospace;
@@ -2309,7 +2379,7 @@ h2 em {
 .timeline-highlights li {
   position: relative;
   padding-left: 18px;
-  color: #4a4944;
+  color: var(--prose-fg);
   font-size: 14px;
   line-height: 1.65;
 }
@@ -2342,7 +2412,7 @@ h2 em {
 }
 .education-item p {
   margin: 0;
-  color: #62615a;
+  color: var(--prose-soft);
   font-size: 13px;
 }
 
@@ -2360,9 +2430,18 @@ h2 em {
   flex-direction: column;
   gap: 14px;
   padding: 28px;
-  border: 1px solid rgba(17, 17, 16, 0.17);
+  border: 1px solid var(--surface-line);
   border-radius: var(--radius);
-  background: #e9e8e1;
+  background: var(--surface);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
+}
+.cert-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--fg);
+  box-shadow: 0 16px 32px rgba(17, 17, 16, 0.12);
 }
 .cert-card h2 {
   margin: 0;
@@ -2374,7 +2453,7 @@ h2 em {
   font-size: 13px;
 }
 .cert-year {
-  color: #77766f;
+  color: var(--muted);
   font:
     500 10px "DM Mono",
     monospace;
@@ -2494,7 +2573,7 @@ h2 em {
 .error-page p {
   max-width: 520px;
   margin: 0 0 30px;
-  color: #504f49;
+  color: var(--prose-fg);
   font-size: 16px;
   line-height: 1.7;
 }

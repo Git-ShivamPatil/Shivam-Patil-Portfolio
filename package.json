@@ -18,7 +18,8 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "db:seed:services": "tsx prisma/seed-services.ts"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
@@ -46,6 +47,8 @@
     "react-hook-form": "7.84.0",
     "resend": "6.18.1",
     "sonner": "^2.0.7",
+    "stripe": "^22.4.0",
+    "web-push": "^3.6.7",
     "zod": "4.4.3"
   },
   "devDependencies": {
@@ -53,6 +56,7 @@
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
+    "@types/web-push": "^3.6.4",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.3.0",
     "husky": "^9.1.7",
