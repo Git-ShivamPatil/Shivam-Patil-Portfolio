@@ -7,11 +7,29 @@ anything. Everything here is verified fact, not assumption.
 
 ## 1. Where things stand
 
-**Branch:** `claude/phase-5-6-7` → **PR #2** (open, not merged)
-https://github.com/Git-ShivamPatil/Shivam-Patil-Portfolio/pull/2
+**Deployed and live at https://www.shivamsfolio.com** (commit `e71420c`).
+`main` was fast-forwarded to `claude/phase-5-6-7` and pushed; the Vercel
+project is git-connected, so the push built and promoted automatically.
 
-**Nothing is deployed.** That is still why none of P5–P9 is visible on the live
-site — the PR is unmerged and no Vercel deployment has been made from it.
+Correcting two things earlier versions of this file got wrong, because both
+cost time to rediscover:
+
+1. "Nothing is deployed" was **false**. A production site existed the whole
+   time — Vercel project `shivam-patil-portfolio`, custom domain
+   `www.shivamsfolio.com`. What was actually true is that it served an old
+   build stuck at phases 1–4, which is why `/services` and `/stats` 404'd.
+2. "Vercel env vars not configured" was **false**. Six were already set
+   (`DATABASE_URL`, `DIRECT_URL`, `AUTH_SECRET`, `AUTH_URL`,
+   `AUTH_TRUST_HOST`, `NEXT_PUBLIC_SITE_URL`) for Preview and Production.
+
+Verified live after deploy: `/`, `/services`, `/stats`, `/search`, `/blog`,
+`/projects/[slug]` all 200; `/api/qr` 200 for an on-site payload and 422 for an
+off-site one; `/r/<unknown>` 302; `/admin/*` 307 to login when anonymous.
+
+**Still unset in production** (each degrades, none throws): `RESEND_API_KEY`,
+`EMAIL_FROM`, `VAPID_*`, `RAZORPAY_*`, `S3_*`, `CAL_*`, `GITHUB_TOKEN`. So
+email, web push, paid booking and media upload are inert until you add them —
+see §5.
 
 **Phases 1–9 are implemented.** Local verification, all green:
 
