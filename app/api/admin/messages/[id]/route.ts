@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "../../../../../lib/prisma";
 import { requireAdminApi } from "../../../../../lib/api-guards";
+import { isNotFoundError } from "../../../../../lib/prisma-errors";
 
 const updateStatusSchema = z.object({ status: z.enum(["UNREAD", "READ", "ARCHIVED"]) });
 
@@ -27,6 +28,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     });
     return NextResponse.json({ message });
   } catch (error) {
+    if (isNotFoundError(error)) {
+      return NextResponse.json({ error: "Not found." }, { status: 404 });
+    }
     console.error("PATCH /api/admin/messages/[id] failed:", error);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }
@@ -41,6 +45,9 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     await prisma.contactMessage.delete({ where: { id } });
     return NextResponse.json({ ok: true });
   } catch (error) {
+    if (isNotFoundError(error)) {
+      return NextResponse.json({ error: "Not found." }, { status: 404 });
+    }
     console.error("DELETE /api/admin/messages/[id] failed:", error);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }

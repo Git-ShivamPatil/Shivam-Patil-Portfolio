@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "../../../../../lib/prisma";
 import { requireAdminApi } from "../../../../../lib/api-guards";
 import { skillSchema } from "../../../../../lib/validations/skill";
-import { isUniqueConstraintError } from "../../../../../lib/prisma-errors";
+import { isNotFoundError, isUniqueConstraintError } from "../../../../../lib/prisma-errors";
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const guard = await requireAdminApi();
@@ -30,6 +30,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         { status: 409 },
       );
     }
+    if (isNotFoundError(error)) {
+      return NextResponse.json({ error: "Not found." }, { status: 404 });
+    }
     console.error("PUT /api/admin/skills/[id] failed:", error);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }
@@ -45,6 +48,9 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     revalidatePath("/", "layout");
     return NextResponse.json({ ok: true });
   } catch (error) {
+    if (isNotFoundError(error)) {
+      return NextResponse.json({ error: "Not found." }, { status: 404 });
+    }
     console.error("DELETE /api/admin/skills/[id] failed:", error);
     return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }

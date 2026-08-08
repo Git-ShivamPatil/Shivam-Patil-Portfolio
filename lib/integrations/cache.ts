@@ -40,6 +40,18 @@ export async function cached<T>(
     return { data: existing.payload as T, fetchedAt: existing.fetchedAt, stale: false };
   }
 
+  // Negative caching. Without it, an upstream that is down or rate-limiting
+  // gets a fresh request from every single page render — the exact traffic
+  // pattern that keeps a 429 window open — and each one pays the full 8s
+  // timeout before the page can finish. The tombstone is a separate row so
+  // the payload column stays honestly typed as T.
+  if (await failureTombstoneActive(key, now)) {
+    if (existing) {
+      return { data: existing.payload as T, fetchedAt: existing.fetchedAt, stale: true };
+    }
+    return null;
+  }
+
   try {
     const fresh = await fetcher();
     const expiresAt = new Date(now.getTime() + ttlSeconds * 1000);
@@ -59,6 +71,7 @@ export async function cached<T>(
     return { data: fresh, fetchedAt: now, stale: false };
   } catch (error) {
     console.error(`[integrations] refresh failed for "${key}":`, error);
+    await writeFailureTombstone(key, now);
     if (existing) {
       return { data: existing.payload as T, fetchedAt: existing.fetchedAt, stale: true };
     }
@@ -66,12 +79,49 @@ export async function cached<T>(
   }
 }
 
+/** How long a failed upstream is left alone before we try it again. */
+const NEGATIVE_TTL_SECONDS = 120;
+
+const tombstoneKey = (key: string) => `${key}::fail`;
+
+async function failureTombstoneActive(key: string, now: Date): Promise<boolean> {
+  try {
+    const row = await prisma.integrationCache.findUnique({ where: { key: tombstoneKey(key) } });
+    return !!row && row.expiresAt > now;
+  } catch {
+    // Can't read the tombstone — fall through and attempt the real fetch.
+    // Skipping a refresh is the worse failure mode of the two.
+    return false;
+  }
+}
+
+async function writeFailureTombstone(key: string, now: Date): Promise<void> {
+  const expiresAt = new Date(now.getTime() + NEGATIVE_TTL_SECONDS * 1000);
+  try {
+    await prisma.integrationCache.upsert({
+      where: { key: tombstoneKey(key) },
+      create: { key: tombstoneKey(key), payload: { failedAt: now.toISOString() }, expiresAt },
+      update: { payload: { failedAt: now.toISOString() }, expiresAt },
+    });
+  } catch (error) {
+    console.error(`[integrations] tombstone write failed for "${key}":`, error);
+  }
+}
+
 /**
- * fetch() with a hard timeout.
+ * fetch() with a hard timeout that covers the body, not just the headers.
  *
  * Without this an unresponsive upstream would hold a serverless invocation
  * open until the platform kills it, turning a decorative panel into a page
  * that never finishes rendering.
+ *
+ * The body is buffered *inside* the timeout window and handed back as a fresh
+ * Response. Returning the live one instead would leave the deadline covering
+ * only the response headers: a server that sends `200 OK` and then trickles
+ * bytes forever would sail past the abort, because by the time the caller
+ * reaches `await res.json()` the timer has already been cleared. Callers see
+ * an ordinary Response either way — `.ok`, `.status` and `.json()` all behave
+ * the same.
  */
 export async function fetchWithTimeout(
   url: string,
@@ -81,7 +131,13 @@ export async function fetchWithTimeout(
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    return await fetch(url, { ...init, signal: controller.signal });
+    const response = await fetch(url, { ...init, signal: controller.signal });
+    const body = await response.arrayBuffer();
+    return new Response(body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: response.headers,
+    });
   } finally {
     clearTimeout(timer);
   }

@@ -50,26 +50,31 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
+    // `session` is inherited from authConfig — it must be shared with the
+    // adapter-less instance proxy.ts builds, so it is defined there.
     ...authConfig.callbacks,
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id as string;
         token.role = user.role;
       }
-      return token;
-    },
-    async session({ session, token }) {
-      // Cast explicitly: with both an adapter and { strategy: "jwt" } set,
-      // Auth.js's session-callback param type becomes an intersection
-      // covering the database-session and JWT-session branches at once,
-      // which loses the augmented JWT type's specificity on `token` here
-      // even though it's correctly inferred inside the jwt() callback above.
-      const jwt = token as { id: string; role: import("./lib/generated/prisma/enums").Role };
-      if (session.user) {
-        session.user.id = jwt.id;
-        session.user.role = jwt.role;
+      // Role is otherwise frozen into the JWT at sign-in for its full 30-day
+      // life, so revoking an admin via /api/admin/users/[id]/role would not
+      // take effect until they signed out. Re-reading on session refresh
+      // bounds that staleness without a DB hit on every request.
+      else if (trigger === "update" && token.id) {
+        try {
+          const fresh = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: { role: true },
+          });
+          if (fresh) token.role = fresh.role;
+        } catch (error) {
+          // Keep the existing claim rather than locking the user out.
+          console.error("jwt() role refresh failed:", error);
+        }
       }
-      return session;
+      return token;
     },
   },
 });

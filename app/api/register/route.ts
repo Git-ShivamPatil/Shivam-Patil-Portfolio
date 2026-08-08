@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import { hashPassword } from "../../../lib/password";
 import { registerSchema } from "../../../lib/validations/auth";
+import { takeToken, clientIp } from "../../../lib/rate-limit";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
@@ -10,6 +11,20 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: parsed.error.issues[0]?.message ?? "Invalid input." },
       { status: 400 },
+    );
+  }
+
+  // The 409 below deliberately tells the user *which* kind of account already
+  // exists — without it, someone who signed up with Google gets "registration
+  // failed" forever and no way to work out why. That candour is also an
+  // account-enumeration oracle, so the answer is to make bulk probing
+  // impractical rather than to make the message useless: a handful of tries
+  // per IP is plenty for a real person and far too few to walk a list.
+  const limit = takeToken(`register:ip:${clientIp(request)}`, 5, 1 / 120);
+  if (!limit.ok) {
+    return NextResponse.json(
+      { error: "Too many attempts. Please try again shortly." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfter) } },
     );
   }
 

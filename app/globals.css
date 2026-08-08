@@ -9,6 +9,10 @@
 @import "./theme-visuals.css";
 /* Phase 5-7 surfaces: live stats, chat, newsletter, booking, invoices, map. */
 @import "./features.css";
+/* Additive decoration only — cursor spotlight, gradient rims, aurora, sheen.
+   Imported last so it layers over the rest, and safe to remove entirely: the
+   site renders correctly without it, just plainer. */
+@import "./graphics.css";
 
 :root {
   /* --ink/--paper are intentionally NEVER overridden per theme: several
@@ -219,13 +223,17 @@ button {
   transform: translateY(-2px);
 }
 @media (prefers-reduced-motion: reduce) {
-  .reveal,
-  .reveal-delay,
-  .skill-marquee {
+  /* A named list only ever covers the animations that existed when it was
+     written — every new keyframe added later silently opts out of the user's
+     stated preference. Blanket-cancel instead, so the guarantee holds by
+     default rather than by remembering. `animation: none` (not a near-zero
+     duration) is what stops an infinite loop from running forever. */
+  *,
+  *::before,
+  *::after {
     animation: none !important;
-  }
-  * {
     transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
@@ -688,6 +696,16 @@ h2 em {
   border: 1px solid rgba(17, 17, 16, 0.17);
   border-radius: var(--radius);
   background: #e9e8e1;
+  /* --ink, not --fg. The accent backgrounds below (.project-cyan and friends)
+     are pastel literals that deliberately do NOT change with the theme, so
+     anything sitting on them must stay near-black in both. Inheriting --fg
+     instead meant that in dark theme the card kept its mint background while
+     the text flipped to cream: the titles measured 1.05:1 against it, which
+     is invisible, not merely low-contrast. Descendants that set their own
+     colour (p, .project-card-bottom) already hardcode dark values and are
+     unaffected; this only redirects the ones that inherit — h3, the number,
+     the category, the arrow, and the labels inside the card graphics. */
+  color: var(--ink);
   transition:
     transform 0.3s,
     box-shadow 0.3s;

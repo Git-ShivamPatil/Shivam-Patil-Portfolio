@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { search } from "../../lib/search";
+import { readOrFallback } from "../../lib/db-read";
 
 export const metadata: Metadata = {
   title: "Search — Shivam Patil",
@@ -13,7 +14,10 @@ export default async function SearchPage({
   searchParams: Promise<{ q?: string }>;
 }) {
   const { q = "" } = await searchParams;
-  const results = q.trim() ? await search(q) : [];
+  // The only public read path that used to call the database bare — a Neon
+  // blip turned a search into a 500. Degrading to "no results" keeps the page
+  // and its form usable.
+  const results = q.trim() ? await readOrFallback("search", () => search(q), []) : [];
 
   return (
     <>

@@ -48,3 +48,4 @@ next-env.d.ts
 
 # superseded local files, not part of the deployed site
 /ignore_old
+.env*

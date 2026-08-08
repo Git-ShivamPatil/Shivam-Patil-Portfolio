@@ -467,6 +467,92 @@ model Invoice {
   issuedAt DateTime @default(now())
 }
 
+// ---- Phase 8: growth ----
+
+// A trackable short link: /r/<code> -> destination, with ?ref=<code> appended
+// so the existing referral cookie (lib/referral.ts) picks it up. That is what
+// connects a *click* to a *conversion* — a ContactMessage, Booking or
+// NewsletterSubscriber carrying the same referralRef came from this link, so
+// no separate attribution pipeline is needed.
+model ReferralLink {
+  id          String  @id @default(cuid())
+  code        String  @unique
+  label       String
+  destination String
+  campaign    String?
+  active      Boolean @default(true)
+
+  // Denormalised running total. The ReferralClick rows are the ledger and
+  // stay authoritative; this exists so the admin list can sort and render
+  // without a groupBy across every click ever recorded.
+  clickCount  Int @default(0)
+  uniqueCount Int @default(0)
+
+  clicks ReferralClick[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active, createdAt])
+}
+
+// One row per redirect served.
+//
+// No raw IP is stored. `visitorHash` is a salted SHA-256 of (ip + user-agent +
+// UTC date), which is enough to tell two visits apart within a day without
+// keeping anything that identifies a person — and it rotates daily, so the
+// data cannot be re-joined into a long-term profile.
+model ReferralClick {
+  id     String       @id @default(cuid())
+  linkId String
+  link   ReferralLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
+
+  referer     String?
+  userAgent   String?
+  country     String?
+  device      String  @default("unknown")
+  visitorHash String
+  isUnique    Boolean @default(true)
+
+  createdAt DateTime @default(now())
+
+  @@index([linkId, createdAt])
+  @@index([createdAt])
+  // Serves the "is this visitor new today?" lookup on the redirect path,
+  // which has to stay fast — it runs before the 302 is issued.
+  @@index([linkId, visitorHash])
+}
+
+// ---- Phase 9: storage ----
+
+// An object stored in S3/R2, recorded here so the admin has a browsable
+// library rather than a bucket it has to guess at, and so an upload that
+// half-completed can be told apart from one that never started.
+//
+// `checksum` is the SHA-256 the client computed before requesting a presigned
+// URL. Re-uploading a byte-identical file returns the existing asset instead
+// of a second copy — worth doing when the free tier bills on stored bytes.
+model MediaAsset {
+  id          String @id @default(cuid())
+  key         String @unique
+  url         String
+  filename    String
+  contentType String
+  bytes       Int
+  checksum    String @unique
+
+  width  Int?
+  height Int?
+  alt    String @default("")
+  folder String @default("uploads")
+
+  uploadedById String?
+
+  createdAt DateTime @default(now())
+
+  @@index([folder, createdAt])
+}
+
 // Webhook idempotency ledger. Both Stripe and Razorpay redeliver on any
 // non-2xx, and Stripe explicitly warns that events can arrive more than once —
 // the unique (provider, eventId) is what makes handling exactly-once.

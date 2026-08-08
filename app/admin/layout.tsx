@@ -10,6 +10,8 @@ const tabs = [
   { href: "/admin/inbox", label: "Inbox" },
   { href: "/admin/chat", label: "Chat" },
   { href: "/admin/bookings", label: "Bookings" },
+  { href: "/admin/links", label: "Growth" },
+  { href: "/admin/media", label: "Media" },
   { href: "/admin/analytics", label: "Analytics" },
 ];
 

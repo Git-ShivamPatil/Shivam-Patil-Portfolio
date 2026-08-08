@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import { sendOAuthOnlyNotice, sendPasswordResetEmail } from "../../../lib/mail";
 import { forgotPasswordSchema } from "../../../lib/validations/auth";
+import { takeToken, clientIp } from "../../../lib/rate-limit";
 
 const TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour
 
@@ -28,12 +29,35 @@ export async function POST(request: Request) {
 
   const { email } = parsed.data;
 
+  // Two buckets, because they stop different abuses. The per-email one stops
+  // someone using this endpoint to mail-bomb a specific inbox; the per-IP one
+  // stops a script walking an address list. Both are checked before any DB
+  // work, and a rejection still returns the same generic body — a distinct
+  // 429 here would itself be an enumeration oracle.
+  if (
+    !takeToken(`forgot:email:${email}`, 3, 1 / 900).ok ||
+    !takeToken(`forgot:ip:${clientIp(request)}`, 10, 1 / 60).ok
+  ) {
+    return genericResponse();
+  }
+
   try {
     const user = await prisma.user.findUnique({ where: { email } });
 
     if (user && user.hashedPassword) {
       const rawToken = randomBytes(32).toString("hex");
       const tokenHash = createHash("sha256").update(rawToken).digest("hex");
+
+      // Burn every outstanding token for this user first. Otherwise each
+      // request leaves another live one behind, so a token captured from an
+      // old email (a forwarded message, a shared screenshot) keeps working
+      // for its full hour even after the user requests a new link — and
+      // requesting a new link is exactly what someone does when they suspect
+      // the old one leaked.
+      await prisma.passwordResetToken.updateMany({
+        where: { userId: user.id, usedAt: null },
+        data: { usedAt: new Date() },
+      });
 
       await prisma.passwordResetToken.create({
         data: {

@@ -119,7 +119,63 @@ Free individual plan. Without `CAL_USERNAME` the intro-call section on
 
 ---
 
-## 6. Vercel environment variables
+## 6. Object storage — Cloudflare R2 (optional, Phase 9)
+
+Without this the media library at `/admin/media` still lists existing assets
+but uploading is disabled and says so. Nothing else is affected.
+
+R2's free tier is 10GB stored and **zero egress fees**, which is the reason it
+is the default here rather than S3 — on S3 the bandwidth for serving images is
+what actually costs money.
+
+1. https://dash.cloudflare.com → R2 → **Create bucket** (any name, e.g.
+   `portfolio-media`).
+2. In the bucket → **Settings** → **Public access** → enable the `r2.dev`
+   subdomain, or attach a custom domain. Copy that URL.
+3. R2 → **Manage API tokens** → **Create API token** → _Object Read & Write_,
+   scoped to that one bucket.
+4. Fill in:
+   - `S3_ENDPOINT` → `https://<account-id>.r2.cloudflarestorage.com`
+   - `S3_BUCKET` → the bucket name
+   - `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` → from step 3
+   - `S3_PUBLIC_BASE_URL` → the public URL from step 2.
+     **Set this.** It defaults to `S3_ENDPOINT/S3_BUCKET`, which is not
+     publicly readable, so uploads would appear to work and then render as
+     broken images.
+   - `S3_REGION` → `auto`
+5. Add a CORS rule on the bucket so the browser can upload directly. Without
+   it the presigned `PUT` is blocked by the browser, not by R2:
+
+   ```json
+   [
+     {
+       "AllowedOrigins": ["https://shivamsfolio.com", "http://localhost:3000"],
+       "AllowedMethods": ["PUT", "GET"],
+       "AllowedHeaders": ["content-type"],
+       "MaxAgeSeconds": 3600
+     }
+   ]
+   ```
+
+Images are converted to AVIF or WebP and resized in the browser before upload,
+so what lands in the bucket is already compressed — there is no server-side
+image pipeline to configure or pay for.
+
+---
+
+## 7. Growth links and QR (Phase 8) — nothing to set up
+
+Listed only so it is not mistaken for missing configuration. Create links at
+`/admin/links`; they serve from `/r/<code>` and generate QR codes on demand.
+Both are free and need no third-party account.
+
+One thing worth knowing: unique-visitor counts are keyed on a daily hash
+salted with `AUTH_SECRET`. Rotating that secret resets _today's_ unique counts.
+Cumulative click totals are unaffected.
+
+---
+
+## 8. Vercel environment variables
 
 Every variable in `.env.local` must be added to the Vercel project for
 production. In particular these are **required** or the deploy will not behave:

@@ -7,8 +7,17 @@ import { hashPassword, verifyPassword } from "../lib/password";
  * Slow by design (bcrypt cost 12), so this file is deliberately small — just
  * enough to catch a swapped algorithm, a dropped salt, or a comparison that
  * accidentally returns true.
+ *
+ * The explicit timeout is the point of this comment. `bcryptjs` is pure
+ * JavaScript, so a cost-12 hash is ~900ms of single-threaded CPU here, and the
+ * "salts" case below needs four of them. Vitest runs test files concurrently,
+ * so as the suite grew these started contending for cores and blowing the 5s
+ * default — a flake that looks exactly like a real hang. Raising the ceiling
+ * for this one file is the right lever: lowering the cost factor to make the
+ * clock happy would weaken every stored password, and raising testTimeout
+ * globally would hide genuine hangs everywhere else.
  */
-describe("password hashing", () => {
+describe("password hashing", { timeout: 30_000 }, () => {
   it("verifies a correct password", async () => {
     const hash = await hashPassword("correct horse battery staple");
     await expect(verifyPassword("correct horse battery staple", hash)).resolves.toBe(true);

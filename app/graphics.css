@@ -1,0 +1,312 @@
+/* =========================================================================
+   GRAPHICS LAYER
+
+   Purely additive. Every rule here targets a class that already exists and
+   only adds decoration — no layout, no sizing, no colour that content depends
+   on. Loading this file last means it can be deleted wholesale and the site
+   still renders correctly, just plainer. That constraint is deliberate: it is
+   what makes a visual pass safe to make on a codebase that already works.
+
+   Three rules everything here follows:
+     1. Decoration goes on a pseudo-element with pointer-events:none, so it
+        can never intercept a click.
+     2. Anything that moves is cancelled by the global prefers-reduced-motion
+        block in globals.css.
+     3. Colours come from the existing --lime/--cyan/--violet tokens, so light
+        and dark themes both work without a second set of rules.
+   ========================================================================= */
+
+/* ---- card spotlight ----
+   A specular highlight that follows the cursor across a card, driven by the
+   --spot-x/--spot-y custom properties the tilt handler already publishes
+   (components/providers/interaction-layer.tsx). Free of extra listeners: the
+   handler measures the pointer for the tilt anyway.
+
+   --spot-on is set to 0 on pointerleave so the highlight fades rather than
+   vanishing, and defaults to 0 so a card that never receives a pointer (touch,
+   keyboard) shows nothing. */
+[data-tilt] {
+  --spot-x: 50%;
+  --spot-y: 50%;
+  --spot-on: 0;
+}
+[data-tilt]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 2;
+  opacity: var(--spot-on);
+  transition: opacity 0.35s ease;
+  background: radial-gradient(
+    380px circle at var(--spot-x) var(--spot-y),
+    color-mix(in srgb, var(--lime) 26%, transparent),
+    transparent 62%
+  );
+  mix-blend-mode: soft-light;
+}
+:root[data-theme="dark"] [data-tilt]::after {
+  mix-blend-mode: overlay;
+  background: radial-gradient(
+    380px circle at var(--spot-x) var(--spot-y),
+    color-mix(in srgb, var(--lime) 20%, transparent),
+    transparent 62%
+  );
+}
+
+/* ---- gradient hairline on hover ----
+   The border-mask trick: paint a gradient into the padding box, then punch
+   the content box out of it with a composited mask so only a 1px rim
+   survives. Gives a card a lit edge that a plain border-color cannot. */
+.project-card::before,
+.service-offer-card::before,
+.cert-card::before,
+.skill-group::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  background: linear-gradient(135deg, var(--cyan), var(--lime) 45%, var(--violet));
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+.project-card:hover::before,
+.project-card:focus-within::before,
+.service-offer-card:hover::before,
+.cert-card:hover::before,
+.skill-group:hover::before {
+  opacity: 0.9;
+}
+
+/* ---- aurora ribbon ----
+   A fourth, wider light source layered into the existing ambient field. Sits
+   on ::before so it renders *under* the grain on ::after, which is what keeps
+   it looking like light rather than like a coloured shape. */
+.ambient-backdrop::before {
+  content: "";
+  position: absolute;
+  top: -30vh;
+  left: -20vw;
+  width: 140vw;
+  height: 90vh;
+  pointer-events: none;
+  opacity: 0.5;
+  filter: blur(90px);
+  background:
+    radial-gradient(
+      50% 40% at 20% 50%,
+      color-mix(in srgb, var(--cyan) 34%, transparent),
+      transparent
+    ),
+    radial-gradient(
+      45% 38% at 55% 42%,
+      color-mix(in srgb, var(--lime) 30%, transparent),
+      transparent
+    ),
+    radial-gradient(
+      48% 44% at 82% 56%,
+      color-mix(in srgb, var(--violet) 32%, transparent),
+      transparent
+    );
+  animation: aurora-sway 48s ease-in-out infinite alternate;
+}
+:root[data-theme="dark"] .ambient-backdrop::before {
+  opacity: 0.38;
+}
+@keyframes aurora-sway {
+  to {
+    transform: translate3d(-6vw, 5vh, 0) scale(1.12) rotate(-3deg);
+  }
+}
+
+/* ---- section heading underline ----
+   Draws in on scroll-reveal rather than on hover: these are headings, not
+   controls, so the cue should follow reading position. transform-origin:left
+   makes it read as a stroke being drawn, not a bar being stretched. */
+.section-heading h2::after,
+.page-hero h1::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -0.18em;
+  height: 3px;
+  width: clamp(56px, 22%, 140px);
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--lime), var(--cyan) 60%, transparent);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.15s;
+}
+/* Keyed off the heading's own [data-split-revealed], set by
+   components/providers/split-text.tsx when the heading scrolls into view.
+   These headings are NOT inside a [data-reveal] wrapper — they use the .reveal
+   animation class instead — so hanging this off an ancestor's data-revealed
+   would match nothing and leave the underline collapsed forever. */
+.section-heading h2[data-split-revealed="true"]::after,
+.page-hero h1[data-split-revealed="true"]::after {
+  transform: scaleX(1);
+}
+/* Fallbacks for every path where that attribute never lands: no JS, reduced
+   motion (split-text opts out), or a heading that isn't split at all. An
+   underline that is invisible unless an optional enhancement runs is a bug,
+   not a progressive enhancement. */
+.section-heading h2:not([data-split])::after,
+.page-hero h1:not([data-split])::after,
+html:not([data-reveal-ready="true"]) .section-heading h2::after,
+html:not([data-reveal-ready="true"]) .page-hero h1::after {
+  transform: scaleX(1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .section-heading h2::after,
+  .page-hero h1::after {
+    transform: scaleX(1);
+  }
+}
+
+/* ---- stat + metric sheen ----
+   A single slow pass of light across numeric panels. Long duration and low
+   opacity on purpose: a fast, bright sweep on a page full of panels reads as
+   a loading skeleton. */
+.stat-panel,
+.animated-metric,
+.proof-strip {
+  position: relative;
+  overflow: hidden;
+}
+.stat-panel::after,
+.animated-metric::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 45%;
+  height: 100%;
+  pointer-events: none;
+  transform: skewX(-18deg);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--fg) 7%, transparent),
+    transparent
+  );
+  animation: sheen-pass 7s ease-in-out infinite;
+}
+@keyframes sheen-pass {
+  0%,
+  62% {
+    left: -60%;
+  }
+  92%,
+  100% {
+    left: 130%;
+  }
+}
+
+/* ---- gradient rule between sections ---- */
+.section-divider,
+hr {
+  border: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--fg) 22%, transparent) 18%,
+    color-mix(in srgb, var(--lime) 55%, transparent) 50%,
+    color-mix(in srgb, var(--fg) 22%, transparent) 82%,
+    transparent
+  );
+}
+
+/* ---- project card graphics: depth ----
+   The inline SVG/div diagrams in each card get a soft coloured floor so they
+   sit *in* the card instead of on top of it. */
+.project-card-graphic {
+  position: relative;
+}
+.project-card-graphic::before {
+  content: "";
+  position: absolute;
+  inset: -8% -4%;
+  pointer-events: none;
+  z-index: -1;
+  border-radius: 18px;
+  opacity: 0.55;
+  filter: blur(24px);
+  background: radial-gradient(
+    60% 60% at 50% 55%,
+    color-mix(in srgb, var(--lime) 32%, transparent),
+    transparent 72%
+  );
+  transition: opacity 0.5s ease;
+}
+.project-card:hover .project-card-graphic::before {
+  opacity: 0.85;
+}
+
+/* ---- focus ring ----
+   Keyboard focus deserves to look designed rather than like a browser
+   default, but it must stay unmistakable — hence a solid ring plus a halo,
+   not a subtle glow on its own. */
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--fg);
+  outline-offset: 3px;
+  border-radius: 6px;
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--lime) 38%, transparent);
+}
+
+/* ---- scrollbar ---- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--fg) 28%, transparent) transparent;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+  background-color: color-mix(in srgb, var(--fg) 26%, transparent);
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--fg) 44%, transparent);
+}
+
+/* ---- selection ---- */
+::selection {
+  background: color-mix(in srgb, var(--lime) 55%, transparent);
+  color: var(--ink);
+}
+
+/* ---- mobile ----
+   The blur radii above are the expensive part. Large blurred layers are
+   composited every frame, and on a mid-range phone that is the difference
+   between a smooth scroll and a janky one — so the aurora is dropped and the
+   spotlight, which needs a pointer anyway, goes with it. */
+@media (max-width: 720px) {
+  .ambient-backdrop::before {
+    display: none;
+  }
+  [data-tilt]::after {
+    display: none;
+  }
+  .project-card-graphic::before {
+    filter: blur(16px);
+  }
+}

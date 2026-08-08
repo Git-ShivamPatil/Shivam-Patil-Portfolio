@@ -63,10 +63,19 @@ export function InteractionLayer() {
           // toward the viewer, which is what reads as "physical".
           el.style.setProperty("--tilt-x", `${-py * TILT_MAX_DEG}deg`);
           el.style.setProperty("--tilt-y", `${px * TILT_MAX_DEG}deg`);
+          // Same measurement, re-expressed as a 0-100% point so CSS can put a
+          // specular highlight under the cursor (see .card-spotlight in
+          // graphics.css). Published here rather than from a second listener
+          // because the rect and the coordinates are already in hand — a
+          // separate pointermove handler would double the work per frame.
+          el.style.setProperty("--spot-x", `${(px + 0.5) * 100}%`);
+          el.style.setProperty("--spot-y", `${(py + 0.5) * 100}%`);
+          el.style.setProperty("--spot-on", "1");
         };
         const onLeave = () => {
           el.style.setProperty("--tilt-x", "0deg");
           el.style.setProperty("--tilt-y", "0deg");
+          el.style.setProperty("--spot-on", "0");
         };
         el.addEventListener("pointermove", onMove);
         el.addEventListener("pointerleave", onLeave);

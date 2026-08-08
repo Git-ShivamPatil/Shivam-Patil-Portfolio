@@ -35,9 +35,17 @@ export interface Project {
   images: ProjectImageItem[];
 }
 
-// Prisma's Json columns type as `JsonValue` on read — these fields are only
-// ever written by the admin CRUD form (lib/validations/project.ts), which
-// enforces the tuple/object shape server-side, so this cast is safe.
+// Prisma's Json columns type as `JsonValue` on read. The admin CRUD form
+// (lib/validations/project.ts) enforces the tuple/object shape server-side, so
+// the cast is sound for anything written through the app — but a row seeded by
+// hand, or left behind by an older shape, is still a plain `null` as far as
+// Postgres is concerned. A cast doesn't make that safe: the `.map()` calls
+// downstream in the case-study renderer would throw on it and take the whole
+// page to a 500. Coercing to an array here contains that to one empty section.
+function asArray<T>(value: unknown): T[] {
+  return Array.isArray(value) ? (value as T[]) : [];
+}
+
 function toProject(row: PrismaProject & { images?: ProjectImage[] }): Project {
   return {
     slug: row.slug,
@@ -51,9 +59,9 @@ function toProject(row: PrismaProject & { images?: ProjectImage[] }): Project {
     stack: row.stack,
     tags: row.tags,
     useCase: row.useCase,
-    implemented: row.implemented as [string, string][],
-    architecture: row.architecture as unknown as ArchitectureNode[],
-    steps: row.steps as [string, string, string][],
+    implemented: asArray<[string, string]>(row.implemented),
+    architecture: asArray<ArchitectureNode>(row.architecture),
+    steps: asArray<[string, string, string]>(row.steps),
     images: (row.images ?? [])
       .slice()
       .sort((a, b) => a.order - b.order)

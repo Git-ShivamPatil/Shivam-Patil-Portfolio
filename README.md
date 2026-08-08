@@ -67,6 +67,7 @@ binding when adding dependencies.
 | OpenStreetMap | `/reach-out` map      | Free embed, no key               | No            |
 | Cal.com       | Intro-call scheduling | Free individual plan             | No            |
 | Web Push      | Notifications         | Self-generated VAPID keys        | No            |
+| Cloudflare R2 | Media uploads         | 10GB stored, **no egress fee**   | No            |
 
 **Mapbox was removed** in favour of OpenStreetMap: it is metered and bills past
 a free allowance, which violates the constraint above.
@@ -83,6 +84,16 @@ Every integration degrades rather than failing when its keys are absent:
 - No `CAL_USERNAME` → the intro-call section is not rendered.
 - No VAPID keys → the notification toggle renders nothing at all.
 - No payment keys → `POST /api/bookings` returns 503 and `/services` says so.
+- No `S3_*` keys → `/admin/media` lists existing assets but disables uploading
+  and explains why.
+
+**R2 rather than S3** for the same reason Mapbox was dropped: S3 bills for
+egress, and egress is exactly what serving images is. R2's is zero.
+
+Images are converted to AVIF or WebP and resized **in the browser** before
+upload, and go straight to the bucket via a presigned URL. So there is no
+`sharp` binary in the bundle, no image processing on a serverless function,
+and the bytes never cross one.
 
 ## Pages
 
@@ -96,5 +107,9 @@ Every integration degrades rather than failing when its keys are absent:
 - `/login`, `/register`, `/forgot-password`, `/reset-password/[token]` — authentication
 - `/account` — signed-in user settings (profile, password, linked providers)
 - `/admin` — admin-only user list and role management
+- `/admin/links` — trackable short links, QR generator, click and conversion analytics
+- `/admin/media` — image library with browser-side AVIF/WebP compression
+- `/r/[code]` — short-link redirect; tags the destination so conversions attribute back
+- `/api/qr?data=…` — dynamic QR code as SVG
 
 The latest SDE-II résumé is available at `/Shivam-Patil-SDE-II-Resume.pdf`.
