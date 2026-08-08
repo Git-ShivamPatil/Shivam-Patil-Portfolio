@@ -62,14 +62,38 @@ export function isValidCode(code: string): boolean {
  * destination that already carries one is a deliberate choice.
  */
 export function buildDestination(destination: string, code: string, origin: string): string {
+  // Strip tab/CR/LF before parsing rather than trusting the stored value.
+  // lib/validations/link.ts rejects them on write, but this is the function
+  // that actually performs the redirect, and it must also hold for a row
+  // written before that rule existed or by any path that bypasses the schema.
+  // The URL parser strips these characters itself, which is exactly what makes
+  // "/\t/evil.com" read as a relative path to a `startsWith("//")` check and
+  // then resolve to https://evil.com/ — so removing them here means what we
+  // validate is what we parse.
+  const cleaned = destination.replace(/[\t\r\n]/g, "");
+
+  // Check for protocol-relative form AFTER stripping, not before. "/\t\t//evil.com"
+  // is not protocol-relative as written, but it is once the parser has removed
+  // the tabs — and the parser removes them whether we do or not. Testing the
+  // raw string is exactly the mistake that made this bypassable.
+  const isProtocolRelative = cleaned.startsWith("//") || cleaned.startsWith("/\\");
+
   let url: URL;
   try {
-    url = new URL(destination, origin);
+    url = isProtocolRelative ? new URL("/", origin) : new URL(cleaned, origin);
   } catch {
     // A destination that won't parse is a data problem, not a reason to 500
     // on a visitor — send them to the homepage with the tag intact.
     url = new URL("/", origin);
   }
+
+  // Final gate: only http(s) ever leaves this function. A stored
+  // "javascript:" or "data:" destination would otherwise be handed straight
+  // to a browser by the redirect.
+  if (url.protocol !== "https:" && url.protocol !== "http:") {
+    url = new URL("/", origin);
+  }
+
   if (!url.searchParams.has("ref")) url.searchParams.set("ref", code);
   return url.toString();
 }

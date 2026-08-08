@@ -14,7 +14,23 @@ const destinationSchema = z
   .max(500)
   .refine(
     (value) => {
-      if (value.startsWith("/")) return !value.startsWith("//");
+      // Reject ASCII tab, CR and LF outright, before any other check.
+      //
+      // This is not defensive tidiness — without it the rule below is
+      // bypassable. The WHATWG URL parser *strips* those three characters
+      // before parsing, so "/\t/evil.com" does not start with "//" as far as
+      // String.startsWith is concerned, passes as a site-relative path, and
+      // then resolves to https://evil.com/ inside buildDestination. That is
+      // precisely the laundering step this allowlist exists to prevent, and
+      // it turns a stored destination into a permanent open redirect on the
+      // production domain. Verified: new URL("/\t/evil.com", origin) ===
+      // "https://evil.com/".
+      if (/[\t\r\n]/.test(value)) return false;
+
+      if (value.startsWith("/")) {
+        // Both "//host" and "/\host" are protocol-relative to a browser.
+        return !value.startsWith("//") && !value.startsWith("/\\");
+      }
       try {
         const url = new URL(value);
         return url.protocol === "https:" || url.protocol === "http:";

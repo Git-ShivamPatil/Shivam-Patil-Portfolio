@@ -58,6 +58,38 @@ describe("buildDestination", () => {
     }
   });
 
+  it("keeps a relative-looking destination on our origin even with a tab, CR or LF", () => {
+    // The WHATWG URL parser strips those three characters BEFORE parsing, so
+    // "/\t/evil.com" does not start with "//" as far as String.startsWith is
+    // concerned — it sails past a naive relative-path check and then resolves
+    // to https://evil.com/. That was a live bypass in the first cut of this
+    // function, not a hypothetical, which is why the protocol-relative test
+    // has to happen AFTER stripping rather than on the raw string.
+    for (const hostile of ["/\t/evil.com", "/\n/evil.com", "/\r/evil.com", "/\t\t//evil.com"]) {
+      const result = new URL(buildDestination(hostile, "abc123", origin));
+      expect(result.host).toBe("shivamsfolio.com");
+    }
+  });
+
+  it("still allows a genuine off-site absolute destination", () => {
+    // Linking out to GitHub or LinkedIn is the feature, not the bug — the
+    // guard above must not be so broad that it breaks it. A destination is
+    // only forced home when it *looks* relative but resolves elsewhere.
+    expect(new URL(buildDestination("https://github.com/x", "abc123", origin)).host).toBe(
+      "github.com",
+    );
+  });
+
+  it("refuses to emit a non-http(s) scheme even if one is stored", () => {
+    // A row written before the validation rule existed must not be handed to
+    // a browser as javascript:/data:.
+    for (const scheme of ["javascript:alert(1)", "data:text/html,<script>", "file:///etc/passwd"]) {
+      const result = new URL(buildDestination(scheme, "abc123", origin));
+      expect(["https:", "http:"]).toContain(result.protocol);
+      expect(result.host).toBe("shivamsfolio.com");
+    }
+  });
+
   it("keeps a blank destination on our own origin", () => {
     // An empty string resolves to the base URL, not to somewhere else — this
     // pins that a half-filled row can't become an off-site redirect.
@@ -187,6 +219,46 @@ describe("renderQrSvg", () => {
   it("emits a gradient only when an accent is given", () => {
     expect(renderQrSvg("hello", { accent: "#7fb800" })).toContain("linearGradient");
     expect(renderQrSvg("hello")).not.toContain("linearGradient");
+  });
+
+  it("encodes non-ASCII as UTF-8, not Latin-1", async () => {
+    const { toUtf8ByteString } = await import("../lib/growth/qr");
+    const qrcode = (await import("qrcode-generator")).default;
+
+    // The encoder is Latin-1: charCodeAt(i) & 0xff. Feeding it the raw string
+    // silently maps U+4E2D to 0x2D ('-') — a valid, scannable QR that decodes
+    // to the wrong text, with no exception and nothing visibly wrong.
+    expect(qrcode.stringToBytes("café 中")).toEqual([99, 97, 102, 233, 32, 45]);
+
+    // Pre-encoding makes that same Latin-1 pass emit the real UTF-8 bytes.
+    const bytes = qrcode.stringToBytes(toUtf8ByteString("café 中"));
+    expect(Buffer.from(bytes).toString("utf8")).toBe("café 中");
+  });
+
+  it("round-trips emoji and CJK through the byte encoding", async () => {
+    const { toUtf8ByteString } = await import("../lib/growth/qr");
+    for (const value of ["café", "中文", "🚀 ship", "Ω≈ç√"]) {
+      const bytes = Uint8Array.from(toUtf8ByteString(value), (c) => c.charCodeAt(0));
+      expect(Buffer.from(bytes).toString("utf8")).toBe(value);
+    }
+  });
+
+  it("leaves pure ASCII byte-identical", async () => {
+    const { toUtf8ByteString } = await import("../lib/growth/qr");
+    const ascii = "https://shivamsfolio.com/r/abc123";
+    expect(toUtf8ByteString(ascii)).toBe(ascii);
+  });
+
+  it("stays small enough that one request cannot be an amplifier", () => {
+    // Output grows fast with payload length at error correction level H, and
+    // /api/qr is anonymous with an attacker-controlled cache key — so the
+    // route's 200-character cap is a cost control, not a cosmetic limit.
+    // Measured: 200 chars -> ~151KB, versus ~590KB at the original 900.
+    const atCap = renderQrSvg("https://shivamsfolio.com/?q=" + "a".repeat(172));
+    expect(atCap.length).toBeLessThan(160_000);
+
+    // A realistic short link — the only payload this endpoint actually serves.
+    expect(renderQrSvg("https://shivamsfolio.com/r/abc1234").length).toBeLessThan(40_000);
   });
 });
 

@@ -1,6 +1,6 @@
 import { NextResponse, after } from "next/server";
 import { prisma } from "../../../lib/prisma";
-import { clientIp } from "../../../lib/rate-limit";
+import { clientIp, takeToken } from "../../../lib/rate-limit";
 import { buildDestination, recordClick } from "../../../lib/growth/links";
 
 // Reads headers and writes click rows — never static, never cached.
@@ -40,6 +40,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ code
 
   const target = buildDestination(link.destination, link.code, origin);
   const linkId = link.id;
+  const ip = clientIp(request);
 
   const context = {
     referer: request.headers.get("referer"),
@@ -47,10 +48,22 @@ export async function GET(request: Request, { params }: { params: Promise<{ code
     // Set by Vercel's edge; absent locally, which is fine — it is a nullable
     // display column, not something any logic depends on.
     country: request.headers.get("x-vercel-ip-country"),
-    ip: clientIp(request),
+    ip,
   };
 
-  after(() => recordClick(linkId, context));
+  // Meter the *write*, not the redirect. A visitor always gets sent on their
+  // way; past the burst we simply stop recording. That split matters because
+  // this is an anonymous endpoint that writes a row carrying up to 800 bytes
+  // of caller-controlled Referer and User-Agent: unmetered, a loop is an
+  // unbounded insert into the same database that serves auth, projects and
+  // search, and each write also takes a row lock on the parent link's
+  // counters. Metering on IP alone is deliberate — the visitor hash mixes in
+  // the User-Agent, so a caller rotating that header would otherwise mint a
+  // fresh bucket (and a fresh "unique" visitor) on every request.
+  const budget = takeToken(`r:${ip}`, 20, 1 / 3);
+  if (budget.ok) {
+    after(() => recordClick(linkId, context));
+  }
 
   // 302, not 301: a permanent redirect gets cached by the browser and every
   // intermediary, after which the click stops reaching us at all and the

@@ -1,6 +1,34 @@
 import qrcode from "qrcode-generator";
 
 /**
+ * Re-express a string so the encoder writes its UTF-8 bytes.
+ *
+ * qrcode-generator's byte encoder is Latin-1 — it does `charCodeAt(i) & 0xff`.
+ * Feed it "中" and it writes 0x2D ('-'): the QR is valid, scannable, and
+ * decodes to the wrong string, with no exception and nothing visibly wrong.
+ *
+ * The library ships a UTF-8 encoder as `stringToBytesFuncs["UTF-8"]`, but only
+ * in its CommonJS build; the ESM build this project resolves exposes just
+ * `stringToBytes` and `createStringToBytes`, so patching that field throws on
+ * undefined. Encoding here instead sidesteps the library's internals
+ * altogether: TextEncoder produces the real UTF-8 bytes, and mapping each byte
+ * to the code unit of the same value means the Latin-1 pass reproduces them
+ * exactly.
+ *
+ * Note the matrix-fidelity test cannot catch this class of bug — it compares
+ * our SVG against this same encoder, so it would agree with the corruption.
+ * The byte-level test is what covers it.
+ */
+export function toUtf8ByteString(value: string): string {
+  const bytes = new TextEncoder().encode(value);
+  let out = "";
+  // Built one char at a time rather than via spread: a long payload would
+  // otherwise blow the argument limit on String.fromCharCode.
+  for (const byte of bytes) out += String.fromCharCode(byte);
+  return out;
+}
+
+/**
  * P8 — dynamic QR rendering.
  *
  * `qrcode-generator` does the encoding (Reed-Solomon, masking, version fit)
@@ -55,7 +83,7 @@ export function renderQrSvg(data: string, options: QrOptions = {}): string {
 
   // typeNumber 0 = "pick the smallest version that fits the data".
   const qr = qrcode(0, ECC_LEVEL);
-  qr.addData(data);
+  qr.addData(toUtf8ByteString(data));
   qr.make();
 
   const count = qr.getModuleCount();
