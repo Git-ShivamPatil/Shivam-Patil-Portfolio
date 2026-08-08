@@ -20,6 +20,7 @@
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed:services": "tsx prisma/seed-services.ts",
+    "db:make-admin": "tsx prisma/make-admin.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
