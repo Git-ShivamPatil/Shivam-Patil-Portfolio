@@ -23,10 +23,26 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      # Installs pnpm directly rather than relying on `corepack enable`.
+      #
+      # Corepack's shims stopped landing on PATH on GitHub's runners, which
+      # failed every run from #6 onward with "Unable to locate executable
+      # file: pnpm" — 9 seconds in, before a single check had run. Nothing
+      # about the project changed; the runner image did, which is exactly why
+      # a toolchain this load-bearing should not depend on a Node feature
+      # being enabled by default.
+      #
+      # No `version:` here on purpose — the action reads `packageManager` from
+      # package.json, so the pinned pnpm version has one source of truth
+      # instead of two that can silently drift apart.
+      - uses: pnpm/action-setup@v4
+
+      # Must come AFTER pnpm is installed: `cache: pnpm` shells out to
+      # `pnpm store path`, which fails if the binary does not exist yet.
       - uses: actions/setup-node@v5
         with:
           node-version: 24
-      - run: corepack enable
+          cache: pnpm
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
