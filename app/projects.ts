@@ -1,4 +1,5 @@
 import { prisma } from "../lib/prisma";
+import { readOrFallback } from "../lib/db-read";
 import type { Project as PrismaProject, ProjectImage } from "../lib/generated/prisma/client";
 
 export type ProjectAccent = "cyan" | "violet" | "orange" | "lime" | "blue" | "pink";
@@ -62,24 +63,42 @@ function toProject(row: PrismaProject & { images?: ProjectImage[] }): Project {
 
 /** Published projects, in admin-defined order — used by the homepage list, sitemap, and next-project pagination. */
 export async function getProjects(): Promise<Project[]> {
-  const rows = await prisma.project.findMany({
-    where: { published: true },
-    orderBy: { order: "asc" },
-    include: { images: true },
-  });
-  return rows.map(toProject);
+  return readOrFallback(
+    "getProjects",
+    async () => {
+      const rows = await prisma.project.findMany({
+        where: { published: true },
+        orderBy: { order: "asc" },
+        include: { images: true },
+      });
+      return rows.map(toProject);
+    },
+    [],
+  );
 }
 
 export async function getProjectBySlug(slug: string): Promise<Project | undefined> {
-  const row = await prisma.project.findUnique({ where: { slug }, include: { images: true } });
-  return row && row.published ? toProject(row) : undefined;
+  return readOrFallback(
+    "getProjectBySlug",
+    async () => {
+      const row = await prisma.project.findUnique({ where: { slug }, include: { images: true } });
+      return row && row.published ? toProject(row) : undefined;
+    },
+    undefined,
+  );
 }
 
 /** All distinct tags across published projects, for the homepage filter UI. */
 export async function getProjectTags(): Promise<string[]> {
-  const rows = await prisma.project.findMany({
-    where: { published: true },
-    select: { tags: true },
-  });
-  return Array.from(new Set(rows.flatMap((row) => row.tags))).sort();
+  return readOrFallback(
+    "getProjectTags",
+    async () => {
+      const rows = await prisma.project.findMany({
+        where: { published: true },
+        select: { tags: true },
+      });
+      return Array.from(new Set(rows.flatMap((row) => row.tags))).sort();
+    },
+    [],
+  );
 }

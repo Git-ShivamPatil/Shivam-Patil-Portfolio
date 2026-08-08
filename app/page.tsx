@@ -18,6 +18,11 @@ const personJsonLd = {
   },
 };
 
+// The content below is read from the database behind a fallback. A build that
+// cannot reach the database prerenders this empty, so the page must be able
+// to re-render rather than being frozen as static output.
+export const revalidate = 300;
+
 export default async function Home() {
   const [projects, skills] = await Promise.all([getProjects(), getSkillNames()]);
   return (

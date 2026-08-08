@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { prisma } from "../../lib/prisma";
+import { readOrFallback } from "../../lib/db-read";
 
 export const metadata: Metadata = {
   title: "Blog — Shivam Patil",
@@ -8,12 +9,20 @@ export const metadata: Metadata = {
   alternates: { canonical: "/blog" },
 };
 
+// See app/page.tsx - fallback-backed content must not be frozen static.
+export const revalidate = 300;
+
 export default async function BlogIndexPage() {
-  const posts = await prisma.blogPost.findMany({
-    where: { published: true },
-    orderBy: { publishedAt: "desc" },
-    select: { slug: true, title: true, excerpt: true, tags: true, publishedAt: true },
-  });
+  const posts = await readOrFallback(
+    "blog/list",
+    () =>
+      prisma.blogPost.findMany({
+        where: { published: true },
+        orderBy: { publishedAt: "desc" },
+        select: { slug: true, title: true, excerpt: true, tags: true, publishedAt: true },
+      }),
+    [],
+  );
 
   return (
     <>

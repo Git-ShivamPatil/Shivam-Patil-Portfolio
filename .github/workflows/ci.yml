@@ -10,18 +10,20 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      # Non-secret placeholders: `next build` doesn't execute route handlers,
-      # but module-scope Prisma client construction must not throw during the
-      # route-collection pass once Prisma is wired in (Milestone 4+).
+      # Deliberately unreachable placeholders. `next build` prerenders pages
+      # and runs generateStaticParams, both of which touch the database — and
+      # this job asserts that a build SURVIVES having no database, degrading to
+      # on-demand rendering instead of failing. That is the same resilience a
+      # Vercel deploy needs when Neon has a blip mid-build.
       DATABASE_URL: "postgresql://user:pass@localhost:5432/db"
       DIRECT_URL: "postgresql://user:pass@localhost:5432/db"
       AUTH_SECRET: "ci-placeholder-secret"
       AUTH_URL: "http://localhost:3000"
       NEXT_PUBLIC_SITE_URL: "https://shivamsfolio.com"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 24
       - run: corepack enable
@@ -34,6 +36,9 @@ jobs:
 
       - name: Typecheck
         run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
 
       - name: Build
         run: pnpm build

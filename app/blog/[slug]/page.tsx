@@ -2,18 +2,39 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "../../../lib/prisma";
+import { readOrFallback } from "../../../lib/db-read";
+
+// Revalidate rather than prerender-once: if the build could not reach the
+// database, the empty prerender heals on the next revalidation instead of
+// being frozen into the deployment.
+export const revalidate = 300;
 
 export async function generateStaticParams() {
-  const posts = await prisma.blogPost.findMany({
-    where: { published: true },
-    select: { slug: true },
-  });
-  return posts.map(({ slug }) => ({ slug }));
+  // An empty list is a valid answer here - it just means "prerender nothing,
+  // render these on demand", which is exactly the right behaviour when the
+  // database is unreachable at build time (CI has no database at all).
+  return readOrFallback(
+    "blog/generateStaticParams",
+    async () => {
+      const posts = await prisma.blogPost.findMany({
+        where: { published: true },
+        select: { slug: true },
+      });
+      return posts.map(({ slug }) => ({ slug }));
+    },
+    [] as { slug: string }[],
+  );
 }
 
 async function getPost(slug: string) {
-  const post = await prisma.blogPost.findUnique({ where: { slug } });
-  return post && post.published ? post : null;
+  return readOrFallback(
+    "blog/getPost",
+    async () => {
+      const post = await prisma.blogPost.findUnique({ where: { slug } });
+      return post && post.published ? post : null;
+    },
+    null,
+  );
 }
 
 export async function generateMetadata({

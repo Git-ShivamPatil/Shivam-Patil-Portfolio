@@ -1,0 +1,341 @@
+/* =========================================================================
+   VISUAL SYSTEM
+   Elevation, gradient accents, grain, ambient light, and the cross-theme
+   transition. Layered on top of the base tokens in globals.css rather than
+   replacing them — the editorial paper/ink identity stays, this gives it
+   depth and colour.
+   ========================================================================= */
+
+:root {
+  /* --- accent ramp ---
+     One gradient reused across the site so highlights read as a family
+     rather than as unrelated one-off colours. */
+  --grad-accent: linear-gradient(115deg, var(--lime) 0%, var(--cyan) 55%, var(--violet) 100%);
+  --grad-warm: linear-gradient(115deg, var(--orange) 0%, var(--pink) 100%);
+  --grad-cool: linear-gradient(115deg, var(--cyan) 0%, var(--blue) 100%);
+
+  /* --- elevation ---
+     Light theme uses real shadows. Dark theme overrides these below with a
+     rim-light instead: a drop shadow on a near-black surface is invisible,
+     so depth there has to come from a lighter edge, not a darker one. */
+  --elev-1: 0 1px 2px rgba(17, 17, 16, 0.06), 0 4px 12px rgba(17, 17, 16, 0.05);
+  --elev-2: 0 2px 4px rgba(17, 17, 16, 0.07), 0 12px 28px rgba(17, 17, 16, 0.09);
+  --elev-3: 0 4px 8px rgba(17, 17, 16, 0.08), 0 24px 56px rgba(17, 17, 16, 0.14);
+  --rim: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+
+  /* --- ambient light ---
+     Tinted washes behind the page. Deliberately low-alpha; they should be
+     felt rather than seen. */
+  --ambient-1: rgba(216, 254, 103, 0.16);
+  --ambient-2: rgba(96, 234, 216, 0.14);
+  --ambient-3: rgba(169, 151, 255, 0.12);
+  --ambient-blur: 90px;
+
+  --glow-accent: 0 0 0 1px rgba(216, 254, 103, 0.35), 0 8px 30px rgba(216, 254, 103, 0.22);
+}
+
+:root[data-theme="dark"] {
+  --elev-1: 0 1px 2px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.35);
+  --elev-2: 0 2px 6px rgba(0, 0, 0, 0.55), 0 14px 34px rgba(0, 0, 0, 0.45);
+  --elev-3: 0 6px 14px rgba(0, 0, 0, 0.6), 0 28px 64px rgba(0, 0, 0, 0.55);
+  --rim: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+
+  --ambient-1: rgba(216, 254, 103, 0.1);
+  --ambient-2: rgba(96, 234, 216, 0.09);
+  --ambient-3: rgba(169, 151, 255, 0.1);
+
+  --glow-accent: 0 0 0 1px rgba(216, 254, 103, 0.28), 0 8px 34px rgba(216, 254, 103, 0.16);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --elev-1: 0 1px 2px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.35);
+    --elev-2: 0 2px 6px rgba(0, 0, 0, 0.55), 0 14px 34px rgba(0, 0, 0, 0.45);
+    --elev-3: 0 6px 14px rgba(0, 0, 0, 0.6), 0 28px 64px rgba(0, 0, 0, 0.55);
+    --rim: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    --ambient-1: rgba(216, 254, 103, 0.1);
+    --ambient-2: rgba(96, 234, 216, 0.09);
+    --ambient-3: rgba(169, 151, 255, 0.1);
+    --glow-accent: 0 0 0 1px rgba(216, 254, 103, 0.28), 0 8px 34px rgba(216, 254, 103, 0.16);
+  }
+}
+
+/* ---- cross-theme transition ----
+   The circular wipe is driven by components/theme-toggle.tsx via the View
+   Transitions API. The default cross-fade is switched off so the clip-path
+   animation is the only thing the eye follows; without this you get a fade
+   AND a wipe fighting each other. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(root) {
+  z-index: 1;
+}
+::view-transition-new(root) {
+  z-index: 2;
+}
+
+/* Fallback for browsers without View Transitions (currently Firefox): give
+   the themed properties a real transition so the swap eases instead of
+   snapping. Scoped to the properties that actually change with the theme —
+   a blanket `transition: all` would fight every other animation on the page. */
+@supports not (view-transition-name: none) {
+  body,
+  .site-header,
+  .site-footer,
+  .project-card,
+  .stat-panel,
+  .skill-group,
+  .cert-card,
+  .capabilities,
+  .booking-offering,
+  .service-offer-card,
+  .chat-panel,
+  .next-project,
+  input,
+  textarea,
+  .button {
+    transition:
+      background-color 0.42s cubic-bezier(0.4, 0, 0.2, 1),
+      border-color 0.42s cubic-bezier(0.4, 0, 0.2, 1),
+      color 0.42s cubic-bezier(0.4, 0, 0.2, 1),
+      box-shadow 0.42s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+.theme-toggle {
+  position: relative;
+  overflow: hidden;
+}
+.theme-toggle-icon {
+  display: inline-flex;
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.theme-toggle:hover .theme-toggle-icon {
+  transform: rotate(35deg) scale(1.1);
+}
+
+/* ---- grain ----
+   An SVG feTurbulence tile as a data URI: a few hundred bytes, no network
+   request, and it stops the large flat fields from banding on wide gamut
+   displays. */
+.ambient-backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.4;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.28'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+:root[data-theme="dark"] .ambient-backdrop::after {
+  opacity: 0.22;
+  mix-blend-mode: soft-light;
+}
+
+/* ---- ambient light field ----
+   Three slow-drifting tinted blobs behind everything. Fixed so they don't
+   reflow on scroll, and pointer-events:none so they never intercept a click. */
+.ambient-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.ambient-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(var(--ambient-blur));
+  will-change: transform;
+}
+.ambient-blob-1 {
+  top: -12vh;
+  left: -8vw;
+  width: 46vw;
+  height: 46vw;
+  background: var(--ambient-1);
+  animation: ambient-drift-1 34s ease-in-out infinite alternate;
+}
+.ambient-blob-2 {
+  top: 28vh;
+  right: -12vw;
+  width: 40vw;
+  height: 40vw;
+  background: var(--ambient-2);
+  animation: ambient-drift-2 42s ease-in-out infinite alternate;
+}
+.ambient-blob-3 {
+  bottom: -18vh;
+  left: 22vw;
+  width: 38vw;
+  height: 38vw;
+  background: var(--ambient-3);
+  animation: ambient-drift-3 38s ease-in-out infinite alternate;
+}
+@keyframes ambient-drift-1 {
+  to {
+    transform: translate3d(6vw, 8vh, 0) scale(1.15);
+  }
+}
+@keyframes ambient-drift-2 {
+  to {
+    transform: translate3d(-7vw, -6vh, 0) scale(1.1);
+  }
+}
+@keyframes ambient-drift-3 {
+  to {
+    transform: translate3d(4vw, -9vh, 0) scale(1.18);
+  }
+}
+
+/* ---- elevated surfaces ----
+   Applied to the existing card classes so every panel picks up real depth
+   and a gradient hairline instead of a flat 1px border. */
+.project-card,
+.stat-panel,
+.skill-group,
+.cert-card,
+.service-offer-card,
+.next-project,
+.newsletter-done,
+.booking-summary {
+  box-shadow: var(--elev-1), var(--rim);
+}
+.stat-panel:hover,
+.skill-group:hover,
+.service-offer-card:hover {
+  box-shadow: var(--elev-2), var(--rim);
+}
+.project-card:hover {
+  box-shadow: var(--elev-3);
+}
+
+/* Gradient hairline on the key panels: a pseudo-element border painted with
+   the accent ramp, masked so only the 1px edge shows. */
+.stat-panel,
+.service-offer-card {
+  position: relative;
+}
+.stat-panel::before,
+.service-offer-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--grad-accent);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+.stat-panel:hover::before,
+.service-offer-card:hover::before {
+  opacity: 0.85;
+}
+
+/* ---- gradient text for the serif emphasis ----
+   The <em> spans in headings already carry the Playfair italic; giving them
+   the accent ramp ties the type to the accent system. Kept off the dark-by-
+   design sections, which already use solid lime for contrast. */
+.hero h1 em,
+.page-hero h1 em,
+.section-heading h2 em,
+.about-statement h2 em {
+  background: var(--grad-accent);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  /* Fallback for the split-char spans, which each need their own clip. */
+  -webkit-text-fill-color: transparent;
+}
+.hero h1 em .split-char,
+.page-hero h1 em .split-char,
+.section-heading h2 em .split-char {
+  background: inherit;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ---- richer orbital hero ---- */
+.orbital-field {
+  background:
+    radial-gradient(circle at 32% 28%, rgba(96, 234, 216, 0.18) 0%, transparent 45%),
+    radial-gradient(circle at 68% 72%, rgba(169, 151, 255, 0.16) 0%, transparent 45%),
+    radial-gradient(circle at center, #23231f 0 15%, #1a1a18 38%, #0e0e0d 78%);
+}
+.orbit-one {
+  border-color: rgba(216, 254, 103, 0.42);
+}
+.orbit-two {
+  border-color: rgba(96, 234, 216, 0.3);
+}
+.orbit-three {
+  border-color: rgba(169, 151, 255, 0.26);
+}
+.orbit-two::after {
+  background: var(--cyan);
+  box-shadow: 0 0 12px 2px rgba(96, 234, 216, 0.7);
+}
+.orbit-three::after {
+  background: var(--violet);
+  box-shadow: 0 0 12px 2px rgba(169, 151, 255, 0.7);
+}
+.center-core {
+  background: var(--grad-accent);
+}
+
+/* ---- buttons ---- */
+.button-solid {
+  background: var(--ink);
+  box-shadow: var(--elev-1);
+}
+.button-solid:hover {
+  box-shadow: var(--elev-2);
+}
+.button-light {
+  background: var(--grad-accent);
+  color: var(--ink);
+  box-shadow: var(--elev-1);
+}
+.button-light:hover {
+  box-shadow: var(--glow-accent);
+}
+.nav-cta:hover {
+  box-shadow: var(--glow-accent);
+}
+
+/* ---- scroll progress picks up the full ramp ---- */
+.scroll-progress span {
+  background: var(--grad-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ambient-blob {
+    animation: none !important;
+  }
+  .theme-toggle-icon {
+    transition: none !important;
+  }
+}
+
+/* The ambient field is decorative and costs real GPU time on low-end
+   devices; drop it where the payoff is smallest. */
+@media (max-width: 620px) {
+  .ambient-blob-3 {
+    display: none;
+  }
+  :root {
+    --ambient-blur: 60px;
+  }
+}

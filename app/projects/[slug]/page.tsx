@@ -6,6 +6,11 @@ import { CopyButton } from "../../../components/copy-button";
 import { ImageGallery } from "../../../components/image-gallery";
 import { getProjectBySlug, getProjects } from "../../projects";
 
+// See the note in app/blog/[slug]/page.tsx - getProjects() already falls back
+// to [] when the database is unreachable, so this degrades to on-demand
+// rendering rather than failing the build.
+export const revalidate = 300;
+
 export async function generateStaticParams() {
   const projects = await getProjects();
   return projects.map(({ slug }) => ({ slug }));
@@ -32,7 +37,11 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
   const [project, projects] = await Promise.all([getProjectBySlug(slug), getProjects()]);
   if (!project) notFound();
   const projectIndex = projects.findIndex((item) => item.slug === slug);
-  const nextProject = projects[(projectIndex + 1) % projects.length];
+  // Guard the modulo: getProjects() falls back to an empty array when the
+  // database is unreachable, and a modulo by zero is NaN, which would index
+  // undefined and take the whole page down on a transient outage.
+  const nextProject =
+    projects.length > 0 ? projects[(projectIndex + 1) % projects.length] : undefined;
 
   return (
     <>
@@ -184,14 +193,18 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
         </div>
       </section>
 
-      <section className="next-project shell">
-        <p className="eyebrow">Continue exploring</p>
-        <Link href={`/projects/${nextProject.slug}`}>
-          <span>Next project</span>
-          <h2>{nextProject.shortTitle}</h2>
-          <ArrowUpRight />
-        </Link>
-      </section>
+      {/* Omitted entirely when the project list is unavailable, rather than
+          rendering a link to nowhere. */}
+      {nextProject && (
+        <section className="next-project shell">
+          <p className="eyebrow">Continue exploring</p>
+          <Link href={`/projects/${nextProject.slug}`}>
+            <span>Next project</span>
+            <h2>{nextProject.shortTitle}</h2>
+            <ArrowUpRight />
+          </Link>
+        </section>
+      )}
     </>
   );
 }

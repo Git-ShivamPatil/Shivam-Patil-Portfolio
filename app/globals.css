@@ -5,6 +5,8 @@
 @import "./motion.css";
 /* Split-text reveals, cursor follower, parallax, animated card graphics. */
 @import "./motion-bold.css";
+/* Elevation, gradient accents, grain, ambient light, theme wipe. */
+@import "./theme-visuals.css";
 /* Phase 5-7 surfaces: live stats, chat, newsletter, booking, invoices, map. */
 @import "./features.css";
 

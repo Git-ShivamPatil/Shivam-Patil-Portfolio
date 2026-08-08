@@ -69,7 +69,12 @@ export function contactFormEmail({
   `;
   return {
     subject: `New contact form message from ${name}`,
-    html: emailLayout({ previewText: `${name} sent a message via shivamsfolio.com`, bodyHtml }),
+    // safeName, not name: previewText is interpolated into the email HTML
+    // too, and mail clients render it as the inbox preview line.
+    html: emailLayout({
+      previewText: `${safeName} sent a message via shivamsfolio.com`,
+      bodyHtml,
+    }),
   };
 }
 

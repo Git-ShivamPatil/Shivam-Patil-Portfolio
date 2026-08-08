@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { getProjects } from "./projects";
 import { prisma } from "../lib/prisma";
+import { readOrFallback } from "../lib/db-read";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://shivamsfolio.com";
 
@@ -22,10 +23,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
   const [projects, blogPosts] = await Promise.all([
     getProjects(),
-    prisma.blogPost.findMany({
-      where: { published: true },
-      select: { slug: true, updatedAt: true },
-    }),
+    readOrFallback(
+      "sitemap/blogPosts",
+      () =>
+        prisma.blogPost.findMany({
+          where: { published: true },
+          select: { slug: true, updatedAt: true },
+        }),
+      [] as { slug: string; updatedAt: Date }[],
+    ),
   ]);
 
   const staticEntries: MetadataRoute.Sitemap = staticRoutes.map((route) => ({

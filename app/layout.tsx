@@ -66,6 +66,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <InteractionLayer />
             <ScrollProgress />
             <CursorFollower />
+            {/* Decorative light field behind everything. Sits below the
+                grid so the two textures layer rather than compete. */}
+            <div className="ambient-backdrop" aria-hidden="true">
+              <span className="ambient-blob ambient-blob-1" />
+              <span className="ambient-blob ambient-blob-2" />
+              <span className="ambient-blob ambient-blob-3" />
+            </div>
             <div className="page-grid" aria-hidden="true" />
             <Header />
             <main id="main-content">
