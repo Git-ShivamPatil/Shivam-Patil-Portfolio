@@ -68,37 +68,19 @@ degraded state.
 
 ---
 
-## 2. Payments — Stripe
+## 2. Payments — Razorpay
 
-You said you already have an account.
+**Stripe was dropped from the plan.** Its adapter remains in the codebase but
+stays inert without keys; Razorpay is the only intended provider.
 
-1. Go to https://dashboard.stripe.com/test/apikeys (test mode, top-right toggle).
-2. Copy the **Secret key** (`sk_test_…`) → `STRIPE_SECRET_KEY`.
-3. Go to https://dashboard.stripe.com/test/webhooks → **Add endpoint**.
-   - URL: `https://<your-domain>/api/webhooks/stripe`
-   - Events to send — exactly these four:
-     - `checkout.session.completed`
-     - `checkout.session.async_payment_succeeded`
-     - `checkout.session.async_payment_failed`
-     - `charge.refunded`
-4. Copy the endpoint's **Signing secret** (`whsec_…`) → `STRIPE_WEBHOOK_SECRET`.
-
-To test locally without a public URL:
-
-```bash
-stripe listen --forward-to localhost:3000/api/webhooks/stripe
-```
-
-That prints its own `whsec_…` — use it for local runs only.
-
----
-
-## 3. Payments — Razorpay
-
-You said you already have an account.
+**Do this only AFTER the site is deployed.** Your Razorpay account is live and
+activated, and that dashboard has no Test/Live toggle — the key you generate
+will be a **live** key. Registering it before the webhook endpoint exists means
+a real customer can be charged with no webhook to confirm the booking: money
+taken, booking stuck at PENDING_PAYMENT, no invoice.
 
 1. Go to https://dashboard.razorpay.com/app/website-app-settings/api-keys
-2. Switch to **Test Mode**, then **Generate Test Key**.
+2. Click **Generate Key**.
    - Key Id (`rzp_test_…`) → `RAZORPAY_KEY_ID`
    - Key Secret → `RAZORPAY_KEY_SECRET` (shown once — copy it immediately)
 3. Go to https://dashboard.razorpay.com/app/webhooks → **Add New Webhook**.
