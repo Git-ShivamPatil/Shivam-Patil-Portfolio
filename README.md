@@ -109,7 +109,32 @@ and the bytes never cross one.
 - `/admin` — admin-only user list and role management
 - `/admin/links` — trackable short links, QR generator, click and conversion analytics
 - `/admin/media` — image library with browser-side AVIF/WebP compression
+- `/admin/analytics` — traffic, geo, devices, scroll reach, click heatmaps, download counters
 - `/r/[code]` — short-link redirect; tags the destination so conversions attribute back
+- `/d/[slug]` — counted download redirect; the résumé's real download number
 - `/api/qr?data=…` — dynamic QR code as SVG
 
 The latest SDE-II résumé is available at `/Shivam-Patil-SDE-II-Resume.pdf`.
+
+## Analytics
+
+First-party and cookieless. `@vercel/analytics` answers "how many views"; this
+answers the three questions it structurally cannot see from outside the origin:
+
+- **Where do people click?** A click heatmap per page and device class, stored
+  as a sparse grid of counters rather than as raw coordinates — a per-click
+  `(x, y, timestamp)` trail is a behavioural fingerprint, and an aggregate is
+  not.
+- **How far do they read?** Deepest scroll position and visible dwell time per
+  page. A page with many views and 20% reach is a different problem from a page
+  nobody opens, and a view count cannot tell them apart.
+- **Did they take the résumé?** `/d/<slug>` counts downloads server-side, so
+  the number survives content blockers, `Save link as…`, and scripting being
+  off entirely.
+
+What it never stores: an IP address, a cookie, a cross-day identifier, or the
+URL of an off-site page anyone visited. Visitors are counted by a SHA-256 of
+(salt + UTC date + IP + user agent), which distinguishes two people today and
+cannot be joined to yesterday. `DNT: 1` and `Sec-GPC: 1` are honoured before
+the request reaches any code that records, and rows are pruned on a schedule
+(`vercel.json` → `/api/cron/prune-analytics`).

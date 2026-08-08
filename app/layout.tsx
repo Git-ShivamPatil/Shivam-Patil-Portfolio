@@ -8,6 +8,7 @@ import { PageTransition } from "../components/providers/page-transition";
 import { SessionProvider } from "../components/providers/session-provider";
 import { BackToTop } from "../components/back-to-top";
 import { ReferralCapture } from "../components/referral-capture";
+import { AnalyticsTracker } from "../components/analytics-tracker";
 import { ScrollReveal } from "../components/providers/scroll-reveal";
 import { InteractionLayer } from "../components/providers/interaction-layer";
 import { ScrollProgress } from "../components/scroll-progress";
@@ -61,6 +62,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <ThemeProvider>
           <SessionProvider>
             <ReferralCapture />
+            {/* P10. Sits beside ReferralCapture rather than replacing Vercel's
+                <Analytics /> below: that one answers "how many views", this one
+                answers "where did they click, how far did they read, and did
+                they take the résumé" — questions no third party can see. */}
+            <AnalyticsTracker />
             <ScrollReveal />
             <SplitText />
             <InteractionLayer />

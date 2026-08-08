@@ -31,14 +31,22 @@ off-site one; `/r/<unknown>` 302; `/admin/*` 307 to login when anonymous.
 email, web push, paid booking and media upload are inert until you add them —
 see §5.
 
-**Phases 1–9 are implemented.** Local verification, all green:
+**Phases 1–10 are implemented.** Local verification, all green:
 
-- `pnpm test` → 122 tests, 11 files, pass
+- `pnpm test` → 184 tests, 12 files, pass
 - `pnpm typecheck` → 0
 - `pnpm lint` → 0
 - `pnpm build` → exit 0, 51/51 pages
 - `pnpm build` **with `.env.local` removed and an unreachable DB** → exit 0.
   This is the CI condition and it still holds.
+
+**One pre-existing flaky test**, unrelated to any phase's logic:
+`tests/p7-booking-invariants.test.ts` asserts 2000 `generateReference()` calls
+are all distinct. The suffix is `randomBytes(3)` — 24 bits — so by the birthday
+bound the collision probability at that sample size is **~11%**. It failed once
+and passed on three consecutive re-runs. `Booking.reference` is `@unique`, so
+this is arguably a real (if rare) production defect and not only a test bug.
+Not fixed here because it is outside P10.
 
 `pnpm format:check` reports ~54 files. That is pre-existing CRLF-vs-LF noise
 from the Windows checkout, not a code issue, and **CI does not run it** — the
@@ -155,6 +163,76 @@ hierarchy. Left for you to decide.
   original, and keeps the original when re-encoding would be larger.
 - `/admin/media` — drag-drop library with per-file compression savings.
 
+### P10 — Analytics
+
+First-party, cookieless, and **additive to `@vercel/analytics`, not a
+replacement**. Vercel Analytics answers "how many views"; it structurally
+cannot see where on the page people click, how far they read, or whether they
+took the résumé. Those three questions are the phase.
+
+Four tables. `PageView`, `AnalyticsEvent` (the ledgers), `AnalyticsCounter`
+and `HeatmapCell` (the aggregates) — the same ledger-plus-denormalised-counter
+split P8 already uses for `ReferralClick`/`ReferralLink`.
+
+- **`lib/analytics/normalize.ts` is the whole safety story** and is where the
+  tests concentrate. It runs on both sides: in the browser for correctness (so
+  `/services` and `/services/?utm=x` are one page rather than two), and again
+  on the server because `/api/analytics/collect` is anonymous, so every field
+  arriving from it is attacker-controlled.
+- **Heatmaps are a sparse aggregate, never raw points.** A row per click
+  coordinate is unbounded _and_ a re-identification surface — an exact
+  (x, y, timestamp) trail is a behavioural fingerprint. `HeatmapCell` holds a
+  counter per grid cell, created lazily, so the table's size tracks _where
+  people click_ rather than how much traffic there is.
+- **x is normalised against the centred content column, not the viewport.**
+  `.shell` is `min(1180px, 100% - 64px)`, so the same button sits at a
+  different fraction of the viewport on a 1280px screen than on a 1920px one.
+  Normalising by viewport width would smear one element across several columns
+  and make the aggregate meaningless. There is a test that pins exactly this.
+  y is normalised against document height, not the viewport, or every click
+  would pile into the top band.
+- **Downloads are counted server-side at `/d/<slug>`**, shaped like P8's
+  `/r/<code>`: 302 first, counter written in `after()`. A download counted only
+  by client JS is invisible to content blockers, `Save link as…`, and scripting
+  being off. The slug is a **closed allowlist**
+  (`lib/analytics/downloads.ts`) — a slug that could name its own destination
+  would be an open redirect on the production domain. Bot UAs are dropped, and
+  `/d/` is disallowed in robots.txt, so "47 people took my résumé" means 47
+  people.
+- **`PageView.viewId` is the idempotency key.** The tracker flushes on
+  `pagehide` _and_ `visibilitychange` because iOS fires only one of the two
+  depending on how the tab goes away, so the same view is regularly reported
+  twice. Engagement columns are monotonic via a guarded `updateMany` (`where:
+{ durationMs: { lt: n } }`), so an out-of-order beacon is a no-op rather than
+  rewriting a two-minute read as a bounce.
+- **`PageView.day` is deliberately redundant** against `createdAt`. Prisma's
+  `groupBy` has no date truncation, so a daily chart otherwise means either
+  pulling every row into the app (what P8 does, and what stops scaling) or raw
+  SQL. Materialising the bucket key costs 10 bytes a row and makes the read
+  proportional to the number of _days_, not to traffic.
+- **Privacy is enforced, not just claimed.** No IP and no cookie. `visitorHash`
+  is P8's — salted with `AUTH_SECRET` and bucketed by UTC date, so it counts
+  uniques without being joinable across days. Reusing it rather than
+  reimplementing it means a person is the same hash in both ledgers on a given
+  day, and there is one place where those properties are defined. `DNT: 1` and
+  `Sec-GPC: 1` are honoured _before_ the rate limiter and the parser. Outbound
+  clicks record the hostname only, never the path.
+- **Retention is enforced.** `RETENTION_DAYS = 180`, pruned by
+  `/api/cron/prune-analytics` (`vercel.json`, daily), in bounded batches — one
+  unbounded `deleteMany` over months of rows is a statement timeout, and a
+  timed-out delete rolls back entirely, so the job would make no progress while
+  appearing to run. Guarded by `CRON_SECRET` (constant-time compare) or an
+  admin session. Aggregates are kept: they are the safe form.
+- `/admin/analytics` gained the P10 dashboard above the existing inbox/content
+  stats, with a 7/30/90-day switcher. Charts are hand-written SVG in a server
+  component, as in P8 — `smoothPath` moved to `lib/chart-path.ts` and both
+  phases now share it. The heatmap viewer is the one client component, because
+  switching maps is a filter rather than a navigation.
+
+**Known dev-only artefact:** React StrictMode runs effects twice, so local
+development records two `PageView` rows per navigation. Production is
+unaffected.
+
 ### Graphics
 
 `app/graphics.css` is new and **purely additive** — every rule targets a class
@@ -204,6 +282,27 @@ confirmed**. Correct order:
    presigned PUT without it is blocked by the browser, not by R2.
 6. Optional: Cal.com, GitHub PAT.
 
+### P10 deployment steps
+
+1. **Push the schema.** P10 adds four tables and changes none. Verified with
+   `prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma
+--script`: 18 `CREATE` statements, zero `DROP`, zero `ALTER` on an existing
+   table. Nothing on the site works until this runs:
+
+   ```
+   pnpm prisma db push
+   ```
+
+2. **Set `CRON_SECRET`** on the Vercel project (any long random string). Vercel
+   then sends it as a bearer token on its own cron invocations. Without it the
+   prune endpoint is unreachable except to a signed-in admin, so analytics rows
+   are never deleted — that degrades rather than breaks, but on a free database
+   tier it eventually matters.
+3. `vercel.json` is new and declares the daily cron. It contains **only** the
+   `crons` key, so every existing dashboard build setting is untouched.
+4. Nothing else. There is no account to create and no key to obtain — that is
+   the point of the phase being first-party.
+
 ## 6. Never independently audited
 
 P6 comms and P7 payments still have not had a full adversarial sweep — the
@@ -228,3 +327,10 @@ resolves to their own thread via their cookie.
 - QR module styling must never change which modules are set. There is a test
   (`tests/p8-growth.test.ts`) that reconstructs the matrix from the rendered
   SVG and compares it against the encoder's, module by module.
+- P10 analytics is **first-party and stays that way**. No third-party script,
+  no IP geolocation call (every provider is metered), no cookie, no
+  cross-day identifier. Geo comes from edge headers the CDN already resolved,
+  which is why it is empty in local development — that is correct, not a bug.
+- The résumé preview on `/resume` points at the file directly and must keep
+  doing so. Routing an `<object data>` through `/d/resume` would count a
+  download for everyone who merely opened the page.

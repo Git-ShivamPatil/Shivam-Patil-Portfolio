@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ArrowUpRight } from "../../components/icons";
 import { CopyButton } from "../../components/copy-button";
 import { LocationMap } from "../../components/location-map";
+import { downloadHref } from "../../lib/analytics/downloads";
 
 export const metadata: Metadata = {
   title: "Reach out — Shivam Patil",
@@ -127,10 +128,12 @@ export default function ReachOutPage() {
           </h2>
         </div>
         <a
-          href="/Shivam-Patil-SDE-II-Resume.pdf"
+          href={downloadHref("resume")}
           target="_blank"
           className="button button-solid"
           data-magnetic
+          data-analytics-id="resume-reach-out"
+          data-analytics-id-label="Résumé — from /reach-out"
         >
           View latest résumé <ArrowUpRight />
         </a>

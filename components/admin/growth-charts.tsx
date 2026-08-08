@@ -1,4 +1,5 @@
 import type { GrowthAnalytics } from "../../lib/growth/links";
+import { smoothPath } from "../../lib/chart-path";
 
 /**
  * P8 — the growth dashboard's visuals.
@@ -15,28 +16,6 @@ import type { GrowthAnalytics } from "../../lib/growth/links";
 
 const CHART_W = 720;
 const CHART_H = 180;
-
-/** Catmull-Rom → cubic Bézier, so the trend line curves instead of zig-zagging. */
-function smoothPath(points: [number, number][]): string {
-  if (points.length === 0) return "";
-  if (points.length < 3) return `M ${points.map((p) => p.join(" ")).join(" L ")}`;
-
-  let path = `M ${points[0][0]} ${points[0][1]}`;
-  for (let i = 0; i < points.length - 1; i++) {
-    const p0 = points[Math.max(0, i - 1)];
-    const p1 = points[i];
-    const p2 = points[i + 1];
-    const p3 = points[Math.min(points.length - 1, i + 2)];
-    // 1/6 is the standard Catmull-Rom tension; higher overshoots on spikes,
-    // which on a clicks chart would draw negative values.
-    const c1x = p1[0] + (p2[0] - p0[0]) / 6;
-    const c1y = p1[1] + (p2[1] - p0[1]) / 6;
-    const c2x = p2[0] - (p3[0] - p1[0]) / 6;
-    const c2y = p2[1] - (p3[1] - p1[1]) / 6;
-    path += ` C ${c1x} ${c1y}, ${c2x} ${c2y}, ${p2[0]} ${p2[1]}`;
-  }
-  return path;
-}
 
 function ClicksChart({ daily }: { daily: GrowthAnalytics["daily"] }) {
   const max = Math.max(1, ...daily.map((d) => d.clicks));

@@ -553,6 +553,149 @@ model MediaAsset {
   @@index([folder, createdAt])
 }
 
+// ---- Phase 10: analytics ----
+
+// One row per page view.
+//
+// Privacy carries over unchanged from P8: no raw IP is ever written.
+// `visitorHash` is the same salted, UTC-day-bucketed SHA-256, so a visitor can
+// be counted once per day without the data being joinable across days. Geo is
+// stored at city granularity at most — the resolution Vercel's edge headers
+// already give us — and never alongside anything that identifies a person.
+model PageView {
+  id String @id @default(cuid())
+
+  // Minted by the browser, one per navigation, and UNIQUE.
+  //
+  // This is the phase's idempotency key. The tracker flushes on `pagehide`
+  // *and* on `visibilitychange`, because iOS fires only one of the two
+  // depending on how the tab goes away — so the same view is regularly
+  // reported twice. Keying on viewId means the second beacon updates the
+  // engagement columns instead of inventing a second visit.
+  viewId String @unique
+
+  path         String
+  referrerHost String?
+  device       String  @default("unknown")
+
+  country  String?
+  region   String?
+  city     String?
+  timezone String?
+
+  visitorHash String
+  isUnique    Boolean @default(true)
+
+  // The UTC date as "YYYY-MM-DD", written at ingest.
+  //
+  // Redundant against createdAt, and deliberately so. Prisma's groupBy has no
+  // date truncation, which leaves two options for a daily chart: pull every
+  // row in the window into the app and bucket in JS (what P8 does, and what
+  // stops scaling the moment a page gets real traffic), or drop to raw SQL for
+  // one query. Materialising the bucket key at write time is the third option
+  // and costs 10 bytes a row — the read becomes a plain indexed groupBy whose
+  // cost is proportional to the number of *days* shown, not to traffic.
+  day String
+
+  // Patched in by the final beacon: milliseconds the tab was actually visible
+  // (not wall-clock — a backgrounded tab is not a reader), and the deepest
+  // scroll position reached as a percentage of document height.
+  durationMs  Int @default(0)
+  scrollDepth Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([day])
+  @@index([path, createdAt])
+  @@index([country, createdAt])
+  // Serves "has this visitor been seen today?", which runs on the ingest path
+  // before the row is written.
+  @@index([visitorHash, createdAt])
+}
+
+enum AnalyticsEventType {
+  CLICK
+  DOWNLOAD
+  OUTBOUND
+  RAGE
+}
+
+// The interaction ledger: one row per tracked click, download or outbound
+// navigation. Kept alongside the rolled-up AnalyticsCounter for the same
+// reason ReferralClick is kept alongside ReferralLink.clickCount — the ledger
+// answers "when, from where, on what device", the counter answers "how many"
+// without a groupBy over every event ever recorded.
+model AnalyticsEvent {
+  id   String             @id @default(cuid())
+  type AnalyticsEventType
+
+  path String
+  // Stable identity for the thing interacted with: a data-analytics-id, a
+  // download slug, or an outbound hostname. Never free-form user text.
+  target String
+  label  String?
+
+  device      String  @default("unknown")
+  country     String?
+  visitorHash String
+
+  createdAt DateTime @default(now())
+
+  @@index([type, createdAt])
+  @@index([target, createdAt])
+  @@index([path, createdAt])
+}
+
+// Rolled-up totals per (kind, key) — downloads, outbound destinations, tracked
+// UI elements. Denormalised on purpose: the admin page reads these directly,
+// so adding a hundred thousand events never slows the dashboard down.
+model AnalyticsCounter {
+  id    String @id @default(cuid())
+  kind  String
+  key   String
+  label String @default("")
+
+  total       Int @default(0)
+  uniqueTotal Int @default(0)
+
+  lastAt    DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  @@unique([kind, key])
+  @@index([kind, total])
+}
+
+// Click heatmap, stored as a sparse aggregate rather than as raw points.
+//
+// A row per click coordinate is unbounded and, worse, is a re-identification
+// surface: an exact (x, y, timestamp) trail is a behavioural fingerprint. This
+// stores only a counter per grid cell, so the table's ceiling is
+// paths x devices x cells and no individual path through the page survives.
+// Cells are created lazily, so in practice it holds only the handful of cells
+// anyone has actually clicked.
+//
+// x is normalised against the centred content column and y against total
+// document height — see lib/analytics/constants.ts for why.
+model HeatmapCell {
+  id String @id @default(cuid())
+
+  path String
+  // Layout differs enough between form factors that cells are not comparable
+  // across them; mixing a phone's single column into a desktop grid would
+  // smear the map rather than add to it.
+  device String
+  x      Int
+  y      Int
+
+  count Int @default(0)
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([path, device, x, y])
+  @@index([path, device])
+}
+
 // Webhook idempotency ledger. Both Stripe and Razorpay redeliver on any
 // non-2xx, and Stripe explicitly warns that events can arrive more than once —
 // the unique (provider, eventId) is what makes handling exactly-once.
