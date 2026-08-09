@@ -1856,16 +1856,34 @@ h2 em {
 .resume-download .eyebrow {
   margin-bottom: 17px;
 }
+/* `.reveal` is used by above-the-fold content — the hero copy and hero visual —
+   so unlike the scroll-triggered [data-reveal] sections it runs immediately on
+   load, and whatever it does to opacity is paid for in LCP.
+
+   The opacity ramp therefore finishes at 28% of the timeline (~150ms) while the
+   translate keeps running to the end. Largest Contentful Paint is only recorded
+   once the element actually renders its text, so a slow fade on the hero means
+   the browser reports the headline as "painted" a third of a second later than
+   the pixels were ready. Front-loading opacity separates the two: the copy is
+   legible almost at once, and the movement still lands.
+
+   This is the same reason the duration came down from 0.7s: above-the-fold
+   content should feel like it arrives *with* the page, not on a timeline the
+   reader has to wait out. Below-the-fold [data-reveal] sections are unchanged —
+   they are scroll-triggered, so they cost nothing at load. */
 .reveal {
-  animation: reveal 0.7s both;
+  animation: reveal 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 .reveal-delay {
-  animation-delay: 0.13s;
+  animation-delay: 0.1s;
 }
 @keyframes reveal {
   from {
     opacity: 0;
     transform: translateY(16px);
+  }
+  28% {
+    opacity: 1;
   }
   to {
     opacity: 1;
