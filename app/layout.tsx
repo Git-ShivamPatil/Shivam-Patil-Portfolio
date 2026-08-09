@@ -6,16 +6,14 @@ import { Footer } from "../components/footer";
 import { ThemeProvider } from "../components/providers/theme-provider";
 import { PageTransition } from "../components/providers/page-transition";
 import { SessionProvider } from "../components/providers/session-provider";
-import { BackToTop } from "../components/back-to-top";
 import { ReferralCapture } from "../components/referral-capture";
 import { AnalyticsTracker } from "../components/analytics-tracker";
 import { ScrollReveal } from "../components/providers/scroll-reveal";
-import { InteractionLayer } from "../components/providers/interaction-layer";
-import { ScrollProgress } from "../components/scroll-progress";
-import { ChatWidget } from "../components/chat/chat-widget";
 import { SplitText } from "../components/providers/split-text";
-import { CursorFollower } from "../components/cursor-follower";
-import { Toaster } from "sonner";
+// Everything that isn't needed for the first frame — cursor, tilt, scroll
+// progress, back-to-top, chat launcher, toaster — moved behind an idle gate.
+// See the file for what stayed behind and why.
+import { DeferredLayer } from "../components/providers/deferred-layer";
 import { Analytics } from "@vercel/analytics/next";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://shivamsfolio.com";
@@ -69,9 +67,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <AnalyticsTracker />
             <ScrollReveal />
             <SplitText />
-            <InteractionLayer />
-            <ScrollProgress />
-            <CursorFollower />
             {/* Decorative light field behind everything. Sits below the
                 grid so the two textures layer rather than compete. */}
             <div className="ambient-backdrop" aria-hidden="true">
@@ -85,21 +80,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <PageTransition>{children}</PageTransition>
             </main>
             <Footer />
-            <BackToTop />
-            <ChatWidget />
-            <Toaster
-              position="bottom-right"
-              // Lifted clear of the chat launcher, which occupies the same
-              // corner — otherwise a toast lands on top of it.
-              offset="92px"
-              toastOptions={{
-                style: {
-                  background: "var(--bg)",
-                  color: "var(--fg)",
-                  border: "1px solid var(--line)",
-                },
-              }}
-            />
+            <DeferredLayer />
             <Analytics />
           </SessionProvider>
         </ThemeProvider>

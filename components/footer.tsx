@@ -27,8 +27,15 @@ export function Footer() {
       <div className="shell footer-inner">
         <p>© {new Date().getFullYear()} Shivam Patil. Built with clarity and intent.</p>
         <div className="footer-links">
-          <Link href="/services">Work with me</Link>
-          <Link href="/stats">Live stats</Link>
+          {/* Same rule as the header: prefetch off for `ƒ` dynamic routes only.
+              The footer is also on every page, so these two were a second
+              server render + DB round trip per page load. */}
+          <Link href="/services" prefetch={false}>
+            Work with me
+          </Link>
+          <Link href="/stats" prefetch={false}>
+            Live stats
+          </Link>
           <Link href="/skills">Skills</Link>
           <Link href="/experience">Experience</Link>
           <Link href="/certifications">Certifications</Link>
