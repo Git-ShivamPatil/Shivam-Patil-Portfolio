@@ -138,6 +138,14 @@
      High contrast is the whole point of the look, so the accessible choice
      and the intended one agree here rather than fighting. */
   --bg: #050805;
+  /* --ink means "always dark regardless of theme", and light theme's value is
+     a PINK-tinted near-black (#1a0a10). Left unoverridden here it makes the
+     back-to-top button, the chat launcher and every .button-solid render as
+     faint maroon discs on a green-black page — a stray hue under the
+     two-colour rule, and visible once you look for it.
+     Green-tinted near-black instead: still "always dark", still >= 15:1 under
+     the white and neon-lime labels those components carry. */
+  --ink: #101a10;
   --fg: #e8ffe8;
   --warm: #0a0f0a;
   --line: #1d2b1d;
@@ -201,6 +209,14 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #050805;
+    /* --ink means "always dark regardless of theme", and light theme's value is
+       a PINK-tinted near-black (#1a0a10). Left unoverridden here it makes the
+       back-to-top button, the chat launcher and every .button-solid render as
+       faint maroon discs on a green-black page — a stray hue under the
+       two-colour rule, and visible once you look for it.
+       Green-tinted near-black instead: still "always dark", still >= 15:1 under
+       the white and neon-lime labels those components carry. */
+    --ink: #101a10;
     --fg: #e8ffe8;
     --warm: #0a0f0a;
     --line: #1d2b1d;
