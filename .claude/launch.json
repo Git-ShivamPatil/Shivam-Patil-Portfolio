@@ -6,6 +6,13 @@
       "runtimeExecutable": "corepack",
       "runtimeArgs": ["pnpm", "dev"],
       "port": 3000
+    },
+    {
+      "name": "portfolio-prod",
+      "comment": "Serves the output of `pnpm build`. Use this — not portfolio-dev — for any performance measurement: dev mode compiles on demand and ships an unminified bundle, so its timings mean nothing. Calls pnpm directly rather than through corepack, for the same reason CI stopped relying on corepack shims.",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["start"],
+      "port": 3000
     }
   ]
 }
