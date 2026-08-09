@@ -1,4 +1,9 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600;1,700&display=swap");
+/* Manrope, Playfair Display and DM Mono are loaded by next/font in
+   app/layout.tsx and exposed as --font-manrope / --font-playfair /
+   --font-dm-mono. They are deliberately NOT @import-ed from Google here: an
+   @import is invisible to the preload scanner, so it added two serial
+   cross-origin round trips to the critical path and pushed LCP from ~400ms to
+   ~830ms via the font swap repaint. See the comment in layout.tsx. */
 @import "tailwindcss";
 /* Motion/interaction layer lives in its own file — it is a self-contained
    concern driven by data-attributes, not part of the base design system. */
@@ -152,7 +157,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--fg);
-  font-family: Manrope, Arial, sans-serif;
+  font-family: var(--font-manrope), Manrope, Arial, sans-serif;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   transition:
@@ -314,7 +319,7 @@ h2 {
 }
 h1 em,
 h2 em {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: var(--font-playfair), "Playfair Display", Georgia, serif;
   font-weight: 600;
   letter-spacing: -0.07em;
 }
