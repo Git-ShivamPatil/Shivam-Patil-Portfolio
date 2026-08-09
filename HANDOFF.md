@@ -40,13 +40,19 @@ see §5.
 - `pnpm build` **with `.env.local` removed and an unreachable DB** → exit 0.
   This is the CI condition and it still holds.
 
-**One pre-existing flaky test**, unrelated to any phase's logic:
-`tests/p7-booking-invariants.test.ts` asserts 2000 `generateReference()` calls
-are all distinct. The suffix is `randomBytes(3)` — 24 bits — so by the birthday
-bound the collision probability at that sample size is **~11%**. It failed once
-and passed on three consecutive re-runs. `Booking.reference` is `@unique`, so
-this is arguably a real (if rare) production defect and not only a test bug.
-Not fixed here because it is outside P10.
+**A P7 defect was found and fixed while chasing a red CI run.**
+`generateReference()` used a `randomBytes(3)` suffix — 24 bits — against a
+`@unique` `Booking.reference`, so by the birthday bound 2,000 references
+carried an **~11% chance** of a collision. `app/api/bookings/route.ts` passes
+the value straight into `booking.create()` **with no retry**, so a collision
+surfaced as a 500 for a customer at the moment they were trying to pay. The
+test that kept failing was not flaky; it was correctly reporting that.
+
+Widened to `randomBytes(5)` (40 bits), which puts the same burst at ~1 in
+550,000. References are now `BK-2608-4F2A9C1B2D` — 18 characters, still inside
+Razorpay's 40-character receipt limit. Existing references are unaffected;
+nothing parses them by length. A retry on unique-constraint violation in the
+booking route would be belt-and-braces on top and is **still not there**.
 
 `pnpm format:check` reports ~54 files. That is pre-existing CRLF-vs-LF noise
 from the Windows checkout, not a code issue, and **CI does not run it** — the

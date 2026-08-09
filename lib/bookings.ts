@@ -5,11 +5,25 @@ import { sendBookingConfirmation } from "./mail";
 import { notifyOwnerOfBooking } from "./push/notify";
 import type { PaymentProvider, PaymentStatus } from "./generated/prisma/enums";
 
-/** Human-facing booking reference: BK-2608-4F2A9C. */
+/**
+ * Human-facing booking reference: BK-2608-4F2A9C1B2D.
+ *
+ * The random suffix is 5 bytes, not 3. At 3 bytes it was 24 bits — 16.7M
+ * values — and `Booking.reference` is `@unique`, so by the birthday bound a
+ * mere 2,000 references carried an **11% chance** of a collision. That is not
+ * a theoretical concern: app/api/bookings/route.ts passes this straight into
+ * `booking.create()` with no retry, so a collision surfaces as a 500 for a
+ * customer at the exact moment they are trying to pay. It also made
+ * tests/p7-booking-invariants.test.ts fail roughly one run in nine.
+ *
+ * 5 bytes is 40 bits, which puts the same 2,000-reference collision
+ * probability at about 1 in 550,000. The result is 18 characters, still well
+ * inside Razorpay's 40-character receipt limit.
+ */
 export function generateReference(): string {
   const now = new Date();
   const stamp = `${String(now.getUTCFullYear()).slice(2)}${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
-  return `BK-${stamp}-${randomBytes(3).toString("hex").toUpperCase()}`;
+  return `BK-${stamp}-${randomBytes(5).toString("hex").toUpperCase()}`;
 }
 
 /**

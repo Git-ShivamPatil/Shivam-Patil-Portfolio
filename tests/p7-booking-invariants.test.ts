@@ -41,8 +41,8 @@ describe("checkoutIdempotencyKey", () => {
 });
 
 describe("generateReference", () => {
-  it("matches the documented BK-YYMM-XXXXXX shape", () => {
-    expect(generateReference()).toMatch(/^BK-\d{4}-[0-9A-F]{6}$/);
+  it("matches the documented BK-YYMM-XXXXXXXXXX shape", () => {
+    expect(generateReference()).toMatch(/^BK-\d{4}-[0-9A-F]{10}$/);
   });
 
   it("fits Razorpay's 40-character receipt limit", () => {
@@ -50,8 +50,26 @@ describe("generateReference", () => {
   });
 
   it("does not collide across a realistic burst", () => {
+    // This assertion is only honest because the suffix is 40 bits wide. At the
+    // original 24 bits the birthday bound put the collision probability here at
+    // ~11%, so the test failed about one run in nine — and because
+    // app/api/bookings/route.ts creates the row with no retry, each of those
+    // failures represented a real 500 a paying customer could have hit. The
+    // test was not flaky so much as it was correctly reporting a defect.
+    //
+    // At 40 bits the same burst collides with probability ~1.8e-6, so a
+    // failure here now means the generator genuinely regressed.
     const seen = new Set(Array.from({ length: 2000 }, () => generateReference()));
     expect(seen.size).toBe(2000);
+  });
+
+  it("uses the full random width, not a truncated or constant suffix", () => {
+    // Guards the actual regression risk: someone shortening the suffix again,
+    // or a refactor that accidentally makes it deterministic. The shape test
+    // above would still pass for a constant suffix.
+    const suffixes = Array.from({ length: 200 }, () => generateReference().split("-")[2]);
+    expect(new Set(suffixes).size).toBe(200);
+    expect(suffixes.every((s) => s.length === 10)).toBe(true);
   });
 });
 
