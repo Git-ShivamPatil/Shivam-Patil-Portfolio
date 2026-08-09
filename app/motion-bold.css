@@ -17,9 +17,20 @@
   transform: translateY(0.55em) rotateX(-55deg);
 }
 [data-split][data-split-revealed="true"] .split-char {
-  animation: split-char-in 0.62s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-  /* Capped so a long heading doesn't take three seconds to finish. */
-  animation-delay: calc(min(var(--char-index) * 26ms, 900ms));
+  animation: split-char-in 0.46s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  /* Capped so a long heading doesn't take three seconds to finish.
+
+     The cap and the per-character step were both roughly halved (26ms/900ms ->
+     12ms/380ms, duration 0.62s -> 0.46s). The hero H1 is above the fold and
+     every .split-char starts at opacity 0, so this timeline is exactly how long
+     the headline stays partly unreadable: it ran ~1.5s end to end, which is a
+     long time to withhold the first thing a visitor is trying to read.
+
+     It now completes in ~0.84s. The stagger is still clearly perceptible — the
+     characters still cascade rather than appearing together — but the heading
+     is done before a reader has finished orienting on the page instead of well
+     after. */
+  animation-delay: calc(min(var(--char-index) * 12ms, 380ms));
 }
 @keyframes split-char-in {
   to {
