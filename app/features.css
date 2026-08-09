@@ -15,7 +15,8 @@
 .booking-field label {
   color: var(--muted);
   font:
-    500 10px "DM Mono",
+    500 10px var(--font-dm-mono),
+    "DM Mono",
     monospace;
   text-transform: uppercase;
   letter-spacing: 0.07em;
@@ -78,7 +79,8 @@
   gap: 6px;
   color: var(--fg);
   font:
-    500 11px "DM Mono",
+    500 11px var(--font-dm-mono),
+    "DM Mono",
     monospace;
   border-bottom: 1px solid transparent;
   transition: border-color 0.2s;
@@ -107,7 +109,8 @@
   display: block;
   color: var(--fg);
   font:
-    500 32px/1 "DM Mono",
+    500 32px/1 var(--font-dm-mono),
+    "DM Mono",
     monospace;
   letter-spacing: -0.06em;
 }
@@ -123,7 +126,8 @@
   margin: 0 0 12px;
   color: var(--muted);
   font:
-    500 9px "DM Mono",
+    500 9px var(--font-dm-mono),
+    "DM Mono",
     monospace;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -177,7 +181,8 @@
 .stat-bar-row b {
   color: var(--muted);
   font:
-    500 11px "DM Mono",
+    500 11px var(--font-dm-mono),
+    "DM Mono",
     monospace;
   text-align: right;
 }
@@ -214,7 +219,8 @@
   flex-shrink: 0;
   color: var(--muted);
   font:
-    500 10px "DM Mono",
+    500 10px var(--font-dm-mono),
+    "DM Mono",
     monospace;
 }
 .stat-footnote {
@@ -231,7 +237,8 @@
   border-top: 1px solid var(--line);
   color: var(--muted);
   font:
-    500 10px "DM Mono",
+    500 10px var(--font-dm-mono),
+    "DM Mono",
     monospace;
 }
 .stat-provenance.is-stale {
@@ -319,7 +326,8 @@
   background: var(--orange);
   color: var(--ink);
   font:
-    600 10px "DM Mono",
+    600 10px var(--font-dm-mono),
+    "DM Mono",
     monospace;
   font-style: normal;
 }
@@ -367,7 +375,8 @@
   gap: 5px;
   color: var(--muted);
   font:
-    500 9px "DM Mono",
+    500 9px var(--font-dm-mono),
+    "DM Mono",
     monospace;
   text-transform: uppercase;
   letter-spacing: 0.07em;
@@ -424,7 +433,8 @@
   gap: 6px;
   margin-top: 5px;
   font:
-    500 9px "DM Mono",
+    500 9px var(--font-dm-mono),
+    "DM Mono",
     monospace;
   opacity: 0.65;
 }
@@ -566,7 +576,8 @@
 .admin-chat-list span {
   color: var(--muted);
   font:
-    500 10px "DM Mono",
+    500 10px var(--font-dm-mono),
+    "DM Mono",
     monospace;
 }
 .admin-chat-list i {
@@ -581,7 +592,8 @@
   background: var(--orange);
   color: var(--ink);
   font:
-    600 10px "DM Mono",
+    600 10px var(--font-dm-mono),
+    "DM Mono",
     monospace;
   font-style: normal;
 }
@@ -733,14 +745,16 @@
 }
 .service-offer-foot strong {
   font:
-    500 22px "DM Mono",
+    500 22px var(--font-dm-mono),
+    "DM Mono",
     monospace;
   letter-spacing: -0.05em;
 }
 .service-offer-foot span {
   color: var(--muted);
   font:
-    500 10px "DM Mono",
+    500 10px var(--font-dm-mono),
+    "DM Mono",
     monospace;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -811,12 +825,14 @@
 .booking-offering span {
   color: var(--muted);
   font:
-    500 10px "DM Mono",
+    500 10px var(--font-dm-mono),
+    "DM Mono",
     monospace;
 }
 .booking-offering b {
   font:
-    500 15px "DM Mono",
+    500 15px var(--font-dm-mono),
+    "DM Mono",
     monospace;
   letter-spacing: -0.04em;
 }
@@ -842,7 +858,8 @@
 .booking-summary dt {
   color: var(--muted);
   font:
-    500 9px "DM Mono",
+    500 9px var(--font-dm-mono),
+    "DM Mono",
     monospace;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -915,7 +932,8 @@
   margin-bottom: 6px !important;
   color: var(--muted) !important;
   font:
-    500 9px "DM Mono",
+    500 9px var(--font-dm-mono),
+    "DM Mono",
     monospace !important;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -930,7 +948,8 @@
   border-bottom: 1px solid var(--fg);
   color: var(--muted);
   font:
-    500 9px "DM Mono",
+    500 9px var(--font-dm-mono),
+    "DM Mono",
     monospace;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -953,7 +972,8 @@
   border-bottom: none;
   color: var(--muted);
   font:
-    500 12px "DM Mono",
+    500 12px var(--font-dm-mono),
+    "DM Mono",
     monospace;
   padding: 8px 10px;
 }
@@ -1081,7 +1101,8 @@
   margin-top: 6px;
   color: var(--muted);
   font:
-    500 10px "DM Mono",
+    500 10px var(--font-dm-mono),
+    "DM Mono",
     monospace;
   letter-spacing: 0.06em;
 }
@@ -1115,7 +1136,8 @@
   border-top: 1px solid var(--line);
   color: var(--muted);
   font:
-    500 10px "DM Mono",
+    500 10px var(--font-dm-mono),
+    "DM Mono",
     monospace;
   text-transform: uppercase;
   letter-spacing: 0.08em;
