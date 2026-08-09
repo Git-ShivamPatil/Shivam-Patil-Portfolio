@@ -36,6 +36,7 @@ export function Footer() {
           <Link href="/stats" prefetch={false}>
             Live stats
           </Link>
+          <Link href="/system-design">System design</Link>
           <Link href="/skills">Skills</Link>
           <Link href="/experience">Experience</Link>
           <Link href="/certifications">Certifications</Link>
