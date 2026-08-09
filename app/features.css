@@ -388,8 +388,12 @@
   border-radius: 50%;
   background: var(--muted);
 }
+/* The chat "live" pip. Was a hardcoded olive green, the last colour on the
+   site outside the two-colour palettes — it read as a third hue in light
+   theme. Routed through --accent so it is pink in light and neon green in
+   dark, matching .live-dot in the hero. */
 .chat-status.is-live::before {
-  background: #8eba00;
+  background: var(--accent);
   box-shadow: 0 0 0 3px rgba(142, 186, 0, 0.18);
 }
 .chat-messages {

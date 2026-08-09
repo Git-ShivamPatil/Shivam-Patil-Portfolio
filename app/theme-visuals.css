@@ -14,6 +14,18 @@
   --grad-warm: linear-gradient(115deg, var(--orange) 0%, var(--pink) 100%);
   --grad-cool: linear-gradient(115deg, var(--cyan) 0%, var(--blue) 100%);
 
+  /* --grad-accent is clipped to TEXT on the heading italics and used as a FILL
+     everywhere else (.button-light, .center-core, .scroll-progress, a 1px
+     border ramp). Those two jobs want opposite things: a fill behind dark text
+     must stay pale, while text drawn in the ramp must be dark enough to read.
+     Sharing one gradient meant the heading italics rendered as pale peach on
+     cream — decorative, and effectively unreadable.
+
+     So the heading gets its own ramp. Light stays inside the rose family and
+     every stop is >= 7:1 on cream; dark uses the neon set, where the same
+     stops are already high-contrast against near-black. */
+  --grad-heading: linear-gradient(115deg, #7d1039 0%, #a81e52 52%, #5e0a2a 100%);
+
   /* --- elevation ---
      Light theme uses real shadows. Dark theme overrides these below with a
      rim-light instead: a drop shadow on a near-black surface is invisible,
@@ -26,12 +38,16 @@
   /* --- ambient light ---
      Tinted washes behind the page. Deliberately low-alpha; they should be
      felt rather than seen. */
-  --ambient-1: rgba(216, 254, 103, 0.16);
-  --ambient-2: rgba(96, 234, 216, 0.14);
-  --ambient-3: rgba(169, 151, 255, 0.12);
+  /* Rose, blush and warm cream. These were lime/cyan/violet, which is what
+     actually made the page read mint: three 46vw blurred washes tint far more
+     of the viewport than any accent element does, so they, not the tokens,
+     decide the theme's overall cast. */
+  --ambient-1: rgba(232, 122, 168, 0.17);
+  --ambient-2: rgba(250, 190, 214, 0.16);
+  --ambient-3: rgba(214, 138, 176, 0.14);
   --ambient-blur: 90px;
 
-  --glow-accent: 0 0 0 1px rgba(216, 254, 103, 0.35), 0 8px 30px rgba(216, 254, 103, 0.22);
+  --glow-accent: 0 0 0 1px rgba(125, 16, 57, 0.3), 0 8px 30px rgba(125, 16, 57, 0.17);
 }
 
 :root[data-theme="dark"] {
@@ -40,11 +56,20 @@
   --elev-3: 0 6px 14px rgba(0, 0, 0, 0.6), 0 28px 64px rgba(0, 0, 0, 0.55);
   --rim: inset 0 1px 0 rgba(255, 255, 255, 0.07);
 
-  --ambient-1: rgba(216, 254, 103, 0.1);
-  --ambient-2: rgba(96, 234, 216, 0.09);
-  --ambient-3: rgba(169, 151, 255, 0.1);
+  --grad-heading: linear-gradient(
+    115deg,
+    var(--neon-cyan) 0%,
+    var(--neon-violet) 52%,
+    var(--neon-magenta) 100%
+  );
 
-  --glow-accent: 0 0 0 1px rgba(216, 254, 103, 0.28), 0 8px 34px rgba(216, 254, 103, 0.16);
+  /* Neon washes, pushed harder than light theme's. On a near-black ground a
+     low-alpha tint disappears, and the bloom is the point of this theme. */
+  --ambient-1: rgba(77, 255, 106, 0.15);
+  --ambient-2: rgba(34, 224, 67, 0.17);
+  --ambient-3: rgba(124, 255, 146, 0.12);
+
+  --glow-accent: 0 0 0 1px rgba(77, 255, 106, 0.42), 0 8px 34px rgba(77, 255, 106, 0.26);
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -52,10 +77,16 @@
     --elev-2: 0 2px 6px rgba(0, 0, 0, 0.55), 0 14px 34px rgba(0, 0, 0, 0.45);
     --elev-3: 0 6px 14px rgba(0, 0, 0, 0.6), 0 28px 64px rgba(0, 0, 0, 0.55);
     --rim: inset 0 1px 0 rgba(255, 255, 255, 0.07);
-    --ambient-1: rgba(216, 254, 103, 0.1);
-    --ambient-2: rgba(96, 234, 216, 0.09);
-    --ambient-3: rgba(169, 151, 255, 0.1);
-    --glow-accent: 0 0 0 1px rgba(216, 254, 103, 0.28), 0 8px 34px rgba(216, 254, 103, 0.16);
+    --grad-heading: linear-gradient(
+      115deg,
+      var(--neon-cyan) 0%,
+      var(--neon-violet) 52%,
+      var(--neon-magenta) 100%
+    );
+    --ambient-1: rgba(77, 255, 106, 0.15);
+    --ambient-2: rgba(34, 224, 67, 0.17);
+    --ambient-3: rgba(124, 255, 146, 0.12);
+    --glow-accent: 0 0 0 1px rgba(77, 255, 106, 0.42), 0 8px 34px rgba(77, 255, 106, 0.26);
   }
 }
 
@@ -251,7 +282,7 @@
 .page-hero h1 em,
 .section-heading h2 em,
 .about-statement h2 em {
-  background: var(--grad-accent);
+  background: var(--grad-heading);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;

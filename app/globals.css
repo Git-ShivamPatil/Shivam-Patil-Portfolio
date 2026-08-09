@@ -25,19 +25,60 @@
      banner) hardcode them to mean "always near-black" / "always near-white"
      regardless of theme. --bg/--fg are the indirection layer that actually
      switches with the theme; body and new components should read those. */
-  --ink: #111110;
-  --paper: #f4f3ee;
+  /* Light theme is a TWO-COLOUR system: pink and cream white, nothing else.
+     Every value below is a shade of one or the other — verified by hue, not
+     by intent. All text tokens sit at 337-341deg (pink); the surfaces run from
+     cream white (22deg) down through blush to pink (347deg). Any value outside
+     that range is a stray hue and does not belong here.
+
+     Contrast was calculated, not eyeballed: every text token clears WCAG AAA
+     (7:1) against EVERY surface it can land on — paper, warm, surface,
+     surface-2 and chip — not merely against the page background. The weakest
+     pairing in the theme is 7.63:1. That floor is the brief: this theme has to
+     stay comfortable for an eighty-year-old reader, and AA (4.5:1) is a
+     threshold for "legible", not for "easy". */
+  /* --ink must stay a near-black, because it is NOT a text colour — it is the
+     "always dark regardless of theme" surface: the back-to-top button, the
+     chat launcher, solid buttons, and the filled nodes inside the project card
+     graphics all use it as a `background`. Setting it to the light theme's
+     pink body colour turned every one of those into a maroon blob floating on
+     the neon-green dark theme.
+
+     It is still inside the two-colour rule: #1a0a10 is hue 330deg, a very dark
+     shade of the same pink, and in dark theme it simply reads as the black
+     that theme is built from. One value, correct in both.
+
+     Light body text is --fg below, which is what actually switches per theme.
+     Previously --fg aliased --ink; separating them is what lets --ink stay
+     dark while light-theme copy goes pink. */
+  --ink: #1a0a10;
+  --paper: #fdf8f5;
   --bg: var(--paper);
-  --fg: var(--ink);
-  --warm: #eae8e0;
-  --line: #d6d4ca;
-  --muted: #6d6c66;
-  --lime: #d8fe67;
-  --cyan: #60ead8;
-  --violet: #a997ff;
-  --orange: #ffad74;
-  --blue: #8dccff;
-  --pink: #ffabcf;
+  --fg: #4a1226;
+  --warm: #f9eae9;
+  --line: #eccdd4;
+  --muted: #6e2440;
+  /* The six decorative accent slots. The NAMES are historical — they are used
+     for live dots, badges, marquee highlights, icon fills and gradient ramps,
+     never for the .project-* card fills (those are their own hardcoded hexes
+     further down). So they are free to change hue per theme, and they must:
+     a lime-and-cyan accent set is what made this theme read as mint rather
+     than as the pink-and-cream it is supposed to be.
+
+     Under the two-colour rule all six collapse to shades of pink. They keep
+     six distinct steps so anything relying on them to differentiate (project
+     cards, chart series, icon sets) still can — but the difference is now
+     lightness within one hue, not six competing hues.
+
+     They stay pastel because two separate rules depend on it: they sit as
+     fills under var(--ink) text, and they are used as bright text ON the
+     always-near-black sections. A saturated value would break the second. */
+  --lime: #ffe3ee;
+  --cyan: #ffd7e7;
+  --violet: #f9cadd;
+  --orange: #ffcfe0;
+  --blue: #f2c3d6;
+  --pink: #ffc2da;
   --radius: 20px;
 }
 
@@ -53,82 +94,154 @@
      aren't semantic enough to route through --bg/--fg/--line/--muted. Kept
      as named tokens (rather than duplicating whole rule blocks per theme)
      so each component stays a single rule referencing var(...). */
-  --header-bg: rgba(244, 243, 238, 0.8);
-  --header-border: rgba(17, 17, 16, 0.1);
-  --grid-line: rgba(17, 17, 16, 0.052);
-  --hero-em: #3c3b37;
-  --hero-intro-fg: #4f4e49;
-  --footer-fg: #77766f;
-  --nav-fg: #55544f;
-  --project-hero-bg: #f0efe9;
+  --header-bg: rgba(253, 248, 245, 0.84);
+  --header-border: rgba(74, 18, 38, 0.14);
+  --grid-line: rgba(74, 18, 38, 0.055);
+  /* The one place light theme carries real colour rather than a tint: the
+     Playfair italics in headings. 7.27:1 — the lowest ratio in the theme, and
+     still AAA. */
+  --hero-em: #7d1039;
+  --hero-intro-fg: #5c1a31;
+  --footer-fg: #6e2440;
+  --nav-fg: #5c1a31;
+  --project-hero-bg: #f9eae9;
   /* Raised surfaces (capability strip, skill/cert cards, next-project) and
      long-form prose. These used to be hardcoded light literals, which meant
      dark theme rendered near-white --fg text on a near-white panel — the
      "Working set" strip was the worst case, and was unreadable. */
-  --surface: #e9e8e1;
-  --surface-2: #dfded7;
-  --surface-line: rgba(17, 17, 16, 0.17);
-  --prose-fg: #42413c;
-  --prose-soft: #5e5d56;
-  --marquee-accent: #779200;
-  --chip-bg: rgba(255, 255, 255, 0.5);
-  --chip-fg: #3a3934;
-  --chip-line: rgba(17, 17, 16, 0.25);
+  --surface: #f8e6e7;
+  --surface-2: #f2d6dc;
+  --surface-line: rgba(74, 18, 38, 0.2);
+  --prose-fg: #5c1a31;
+  --prose-soft: #70253d;
+  --marquee-accent: #7d1039;
+  --chip-bg: rgba(255, 255, 255, 0.55);
+  --chip-fg: #5c1a31;
+  --chip-line: rgba(74, 18, 38, 0.28);
   --watermark-opacity: 0.05;
   --watermark-blend: multiply;
+  /* Interactive accent — links, focus, active states. rose-deep is the
+     stronger pairing for small text on the tinted surfaces. */
+  --accent: #7d1039;
+  --accent-strong: #5e0a2a;
+  --accent-soft: rgba(125, 16, 57, 0.11);
+  /* Dark theme turns these into real glows. In light theme a neon bloom would
+     look cheap against cream, so they resolve to nothing. */
+  --glow-soft: none;
+  --glow-strong: none;
+  --neon-line: var(--line);
 }
 :root[data-theme="dark"] {
-  --bg: #171716;
-  --fg: #ede9dd;
-  --warm: #232320;
-  --line: #34342f;
-  --muted: #9a988d;
-  --header-bg: rgba(23, 23, 22, 0.8);
-  --header-border: rgba(237, 233, 221, 0.1);
-  --grid-line: rgba(237, 233, 221, 0.045);
-  --hero-em: #cfcabb;
-  --hero-intro-fg: #b9b6ab;
-  --footer-fg: #939186;
-  --nav-fg: #a9a79c;
-  --project-hero-bg: #1c1c19;
-  --surface: #1f1f1c;
-  --surface-2: #24241f;
-  --surface-line: rgba(237, 233, 221, 0.14);
-  --prose-fg: #c9c6bb;
-  --prose-soft: #a8a59b;
-  --marquee-accent: #b7e02f;
-  --chip-bg: rgba(255, 255, 255, 0.05);
-  --chip-fg: #ddd9cd;
-  --chip-line: rgba(237, 233, 221, 0.2);
+  /* Dark theme is the counterpart, not a desaturated copy: near-black with a
+     violet cast, lit by four saturated neons. Same discipline as light —
+     every text token clears AAA (7:1) against every surface, weakest 7.11:1.
+     High contrast is the whole point of the look, so the accessible choice
+     and the intended one agree here rather than fighting. */
+  --bg: #050805;
+  --fg: #e8ffe8;
+  --warm: #0a0f0a;
+  --line: #1d2b1d;
+  --muted: #8bd28b;
+  --header-bg: rgba(5, 8, 5, 0.84);
+  --header-border: rgba(232, 255, 232, 0.13);
+  --grid-line: rgba(77, 255, 106, 0.07);
+  --hero-em: #4dff6a;
+  --hero-intro-fg: #cdf5cd;
+  --footer-fg: #8bd28b;
+  --nav-fg: #cdf5cd;
+  --project-hero-bg: #0b120b;
+  --surface: #0b120b;
+  --surface-2: #101a10;
+  --surface-line: rgba(77, 255, 106, 0.2);
+  --prose-fg: #cdf5cd;
+  --prose-soft: #a6e6a6;
+  --marquee-accent: #4dff6a;
+  --chip-bg: rgba(77, 255, 106, 0.09);
+  --chip-fg: #cdf5cd;
+  --chip-line: rgba(77, 255, 106, 0.3);
   --watermark-opacity: 0.08;
   --watermark-blend: screen;
+  /* The neon set. Cyan is the primary accent because it is the brightest of
+     the four (12.95:1 at its worst) and reads cleanly at small sizes. */
+  --neon-cyan: #4dff6a;
+  --neon-magenta: #22e043;
+  --neon-lime: #7cff92;
+  --neon-violet: #35f05a;
+  --accent: #4dff6a;
+  --accent-strong: #7cff92;
+  --accent-soft: rgba(77, 255, 106, 0.13);
+  /* The same six decorative slots, resolved to the neon set. These were left
+     as pastels before, which is why dark theme read as "dark mode" rather than
+     as neon — the accents were the muted part of a theme whose entire premise
+     is that they are not. Each is >= 7:1 on every dark surface, so they stay
+     legible where they are used as text. */
+  --lime: #7cff92;
+  --cyan: #4dff6a;
+  --violet: #35f05a;
+  --orange: #9dffae;
+  --blue: #2bd94a;
+  --pink: #22e043;
+  /* Real bloom, only in dark. Kept to two tiers so components share one
+     vocabulary instead of inventing per-element shadow stacks. */
+  --glow-soft: 0 0 12px rgba(77, 255, 106, 0.3);
+  --glow-strong:
+    0 0 6px rgba(77, 255, 106, 0.6), 0 0 20px rgba(77, 255, 106, 0.38),
+    0 0 44px rgba(34, 224, 67, 0.24);
+  --neon-line: rgba(77, 255, 106, 0.45);
 }
+/* No-JS fallback for a visitor whose OS prefers dark. next-themes writes
+   data-theme before first paint, so with JS this never applies — the
+   :not([data-theme="light"]) guard is what stops it fighting the explicit
+   light default and causing a flash.
+
+   This MUST be kept in sync with :root[data-theme="dark"] above. It is a
+   verbatim duplicate rather than a shared definition because custom
+   properties cannot be aliased across a media query and an attribute
+   selector without a wrapper element to hang them on. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #171716;
-    --fg: #ede9dd;
-    --warm: #232320;
-    --line: #34342f;
-    --muted: #9a988d;
-    --header-bg: rgba(23, 23, 22, 0.8);
-    --header-border: rgba(237, 233, 221, 0.1);
-    --grid-line: rgba(237, 233, 221, 0.045);
-    --hero-em: #cfcabb;
-    --hero-intro-fg: #b9b6ab;
-    --footer-fg: #939186;
-    --nav-fg: #a9a79c;
-    --project-hero-bg: #1c1c19;
-    --surface: #1f1f1c;
-    --surface-2: #24241f;
-    --surface-line: rgba(237, 233, 221, 0.14);
-    --prose-fg: #c9c6bb;
-    --prose-soft: #a8a59b;
-    --marquee-accent: #b7e02f;
-    --chip-bg: rgba(255, 255, 255, 0.05);
-    --chip-fg: #ddd9cd;
-    --chip-line: rgba(237, 233, 221, 0.2);
+    --bg: #050805;
+    --fg: #e8ffe8;
+    --warm: #0a0f0a;
+    --line: #1d2b1d;
+    --muted: #8bd28b;
+    --header-bg: rgba(5, 8, 5, 0.84);
+    --header-border: rgba(232, 255, 232, 0.13);
+    --grid-line: rgba(77, 255, 106, 0.07);
+    --hero-em: #4dff6a;
+    --hero-intro-fg: #cdf5cd;
+    --footer-fg: #8bd28b;
+    --nav-fg: #cdf5cd;
+    --project-hero-bg: #0b120b;
+    --surface: #0b120b;
+    --surface-2: #101a10;
+    --surface-line: rgba(77, 255, 106, 0.2);
+    --prose-fg: #cdf5cd;
+    --prose-soft: #a6e6a6;
+    --marquee-accent: #4dff6a;
+    --chip-bg: rgba(77, 255, 106, 0.09);
+    --chip-fg: #cdf5cd;
+    --chip-line: rgba(77, 255, 106, 0.3);
     --watermark-opacity: 0.08;
     --watermark-blend: screen;
+    --neon-cyan: #4dff6a;
+    --neon-magenta: #22e043;
+    --neon-lime: #7cff92;
+    --neon-violet: #35f05a;
+    --accent: #4dff6a;
+    --accent-strong: #7cff92;
+    --accent-soft: rgba(77, 255, 106, 0.13);
+    --lime: #7cff92;
+    --cyan: #4dff6a;
+    --violet: #35f05a;
+    --orange: #9dffae;
+    --blue: #2bd94a;
+    --pink: #22e043;
+    --glow-soft: 0 0 12px rgba(77, 255, 106, 0.3);
+    --glow-strong:
+      0 0 6px rgba(77, 255, 106, 0.6), 0 0 20px rgba(77, 255, 106, 0.38),
+      0 0 44px rgba(34, 224, 67, 0.24);
+    --neon-line: rgba(77, 255, 106, 0.45);
   }
 }
 
@@ -290,13 +403,26 @@ main,
 .achievement-card .eyebrow span:not(.live-dot) {
   color: #fff;
 }
+/* The availability pip. It was a hardcoded olive green, which was the last
+   thing still tinting the light theme outside the pink-and-cream palette.
+   Green is the conventional "live" colour, but the pip reads as a status
+   indicator from its position and pulse rather than its hue, so matching the
+   theme costs nothing legibility-wise and keeps the palette honest. */
 .live-dot {
   display: inline-block;
   width: 7px;
   height: 7px;
   border-radius: 100%;
-  background: #8eba00;
-  box-shadow: 0 0 0 4px rgba(142, 186, 0, 0.15);
+  background: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+/* In dark it becomes a lit pip rather than a flat dot — same element, but on
+   near-black a 7px flat circle reads as a speck without the bloom. */
+:root[data-theme="dark"] .live-dot {
+  background: var(--neon-lime);
+  box-shadow:
+    0 0 0 4px rgba(77, 255, 106, 0.15),
+    0 0 10px rgba(77, 255, 106, 0.6);
 }
 h1,
 h2,
@@ -736,11 +862,23 @@ h2 em {
   text-transform: uppercase;
   letter-spacing: 0.07em;
 }
-.project-number {
-  color: #66655f;
-}
+/* Card metadata — the index and the category label.
+
+   These were #66655f / #76756f, warm greys carried over from the old palette.
+   Two problems: they are not in the pink family, and an audit of the rendered
+   page measured them at 3.25:1 and 4.11:1 — the only text on the site below
+   WCAG AA. HANDOFF.md had them recorded as a known, deliberate choice about
+   muted metadata, to be decided later.
+
+   Deciding it: this theme's brief is that it stays readable for an
+   eighty-year-old, and 3.25:1 is not that. They move to --prose-soft, which is
+   the token that already means "quieter than body copy" and is >= 7.5:1 on
+   every surface. The hierarchy is preserved by size, letter-spacing and
+   uppercase treatment — all still intact — rather than by being too faint to
+   read. */
+.project-number,
 .project-category {
-  color: #76756f;
+  color: var(--prose-soft);
 }
 .project-arrow {
   display: grid;
@@ -792,22 +930,142 @@ h2 em {
   font-weight: 500;
 }
 .project-cyan {
-  background: #d4f5ee;
+  background: #ffd7e7;
 }
 .project-violet {
-  background: #ded6ff;
+  background: #f9cadd;
 }
 .project-orange {
-  background: #ffd9bf;
+  background: #ffcfe0;
 }
 .project-lime {
-  background: #e8f5b9;
+  background: #ffe3ee;
 }
 .project-blue {
-  background: #cce7fb;
+  background: #f2c3d6;
 }
 .project-pink {
-  background: #ffd4e6;
+  background: #ffc2da;
+}
+
+/* ---- Dark theme: the card illustrations ----
+
+   These graphics were drawn as dark-on-light diagrams for a pastel card: they
+   hardcode pale fills and rgba(17,17,16,...) strokes, and several set no
+   `color` at all, so their labels inherit --fg.
+
+   On a dark card that combination is the exact failure mode this file has hit
+   before. Measured on the live page before this block existed: the
+   "Plan"/"Find"/"Act" chips rendered near-white --fg text on a #f0ecff fill —
+   about 1.1:1, i.e. invisible. That bug PREDATES the two-colour work: the old
+   dark theme put #ede9dd on the same fill, ~1.03:1. Pastel cards hid it.
+
+   Every rule below either flips a light fill to a dark one or pins a `color`
+   that was previously inherited. None of it is decorative. */
+:root[data-theme="dark"] .agent-graphic b,
+:root[data-theme="dark"] .exam-graphic i,
+:root[data-theme="dark"] .rag-graphic span {
+  background: rgba(77, 255, 106, 0.1);
+  border-color: rgba(77, 255, 106, 0.55);
+  color: var(--neon-lime);
+}
+/* Connector strokes: rgba(17,17,16,x) on a near-black card is nothing. */
+:root[data-theme="dark"] .agent-graphic:before,
+:root[data-theme="dark"] .agent-graphic:after {
+  background: rgba(77, 255, 106, 0.45);
+}
+:root[data-theme="dark"] .rag-graphic i {
+  background: rgba(77, 255, 106, 0.28);
+}
+:root[data-theme="dark"] .grid-icon i {
+  background: rgba(77, 255, 106, 0.12);
+  border-color: rgba(77, 255, 106, 0.45);
+}
+/* The filled counterparts sit on var(--ink) — a near-black in both themes — so
+   on a dark card they need a neon edge to separate from the surface, and their
+   label has to stop being `white` on near-black-over-near-black. */
+:root[data-theme="dark"] .grid-icon i:nth-child(2),
+:root[data-theme="dark"] .grid-icon i:nth-child(3),
+:root[data-theme="dark"] .agent-graphic b:nth-child(4),
+:root[data-theme="dark"] .exam-graphic b,
+:root[data-theme="dark"] .rag-graphic b {
+  background: var(--neon-lime);
+  border-color: var(--neon-lime);
+  color: #050805;
+}
+
+/* ---- Dark theme: project accents become edges, not fills ----
+
+   Light theme is unchanged above: pastel fill carrying var(--ink) text. In the
+   neon theme a block of mint or lilac reads as a hole punched in the page, so
+   the same accent becomes a rim light and a wash on a dark surface instead.
+
+   Every light-tuned literal inside the card is overridden here, not just the
+   background. That is the specific failure this file has already had once:
+   flipping the card surface without also flipping `.project-card p` (#53524c),
+   `.project-card-bottom` (#63625b), its border and the arrow left text sitting
+   at 1.05:1 against its own card — invisible, not merely low contrast. Each
+   override below exists because something concrete would otherwise be
+   unreadable; none of them are decorative.
+
+   --card-accent is set per accent class so a single set of rules covers all
+   six, and the neon values match the palette tokens rather than inventing a
+   seventh and eighth hue. */
+:root[data-theme="dark"] .project-cyan {
+  --card-accent: 77, 255, 106;
+}
+:root[data-theme="dark"] .project-violet {
+  --card-accent: 53, 240, 90;
+}
+:root[data-theme="dark"] .project-orange {
+  --card-accent: 157, 255, 174;
+}
+:root[data-theme="dark"] .project-lime {
+  --card-accent: 124, 255, 146;
+}
+:root[data-theme="dark"] .project-blue {
+  --card-accent: 43, 217, 74;
+}
+:root[data-theme="dark"] .project-pink {
+  --card-accent: 34, 224, 67;
+}
+:root[data-theme="dark"] .project-card {
+  /* Accent wash from the top edge only — a full tint would wash out the text
+     it has to carry. */
+  background:
+    radial-gradient(
+      130% 90% at 50% -25%,
+      rgba(var(--card-accent, 77, 255, 106), 0.16),
+      transparent 68%
+    ),
+    var(--surface);
+  border-color: rgba(var(--card-accent, 77, 255, 106), 0.4);
+  color: var(--fg);
+}
+:root[data-theme="dark"] .project-card:hover {
+  border-color: rgba(var(--card-accent, 77, 255, 106), 0.75);
+  box-shadow:
+    0 0 0 1px rgba(var(--card-accent, 77, 255, 106), 0.25),
+    0 18px 44px rgba(0, 0, 0, 0.55),
+    0 0 34px rgba(var(--card-accent, 77, 255, 106), 0.22);
+}
+/* --prose-soft is 8.74:1 on --surface; the #53524c it replaces would have been
+   about 1.4:1 there. */
+:root[data-theme="dark"] .project-card p {
+  color: var(--prose-soft);
+}
+:root[data-theme="dark"] .project-card-bottom {
+  border-top-color: rgba(var(--card-accent, 77, 255, 106), 0.22);
+  color: var(--muted);
+}
+:root[data-theme="dark"] .project-card-bottom span:last-child {
+  color: rgba(var(--card-accent, 77, 255, 106), 1);
+}
+/* The arrow is the one element that keeps a filled accent, because at 30px it
+   needs the mass to register. Its glyph flips to near-black to sit on it. */
+:root[data-theme="dark"] .project-card:hover .project-arrow {
+  background: rgba(var(--card-accent, 77, 255, 106), 1);
+  color: #050805;
 }
 .grid-icon {
   position: absolute;
@@ -893,7 +1151,7 @@ h2 em {
   height: 27px;
   border: 1px solid rgba(17, 17, 16, 0.65);
   border-radius: 999px;
-  background: #f0ecff;
+  background: #ffeef5;
   font:
     500 8px "DM Mono",
     monospace;
@@ -1014,7 +1272,7 @@ h2 em {
   aspect-ratio: 1;
   border: 1px solid var(--ink);
   border-radius: 50%;
-  background: #dff0fb;
+  background: #ffe6f0;
   font:
     500 8px "DM Mono",
     monospace;
@@ -1045,7 +1303,7 @@ h2 em {
   aspect-ratio: 1;
   border: 1px solid var(--ink);
   border-radius: 50%;
-  background: #fff1f7;
+  background: #ffedf4;
   font:
     600 23px Georgia,
     serif;
@@ -1240,19 +1498,37 @@ h2 em {
   position: relative;
   overflow: hidden;
   padding: 62px 0 76px;
-  background: #d7f6f0;
+  background: #ffdcea;
+}
+/* Same treatment as the cards, for the same reason: `body:has(.project-hero)`
+   paints the whole page --project-hero-bg, so a pastel band across the top of
+   an otherwise near-black page is the most conspicuous thing on it. The hero's
+   own text already reads from --fg/--prose-fg, so only the surface changes. */
+:root[data-theme="dark"] .project-hero,
+:root[data-theme="dark"] .project-hero.project-violet,
+:root[data-theme="dark"] .project-hero.project-orange,
+:root[data-theme="dark"] .project-hero.project-lime,
+:root[data-theme="dark"] .project-hero.project-blue,
+:root[data-theme="dark"] .project-hero.project-pink {
+  background:
+    radial-gradient(
+      100% 130% at 50% -30%,
+      rgba(var(--card-accent, 77, 255, 106), 0.18),
+      transparent 70%
+    ),
+    var(--project-hero-bg);
 }
 .project-hero.project-violet {
-  background: #dcd3ff;
+  background: #fbcfe0;
 }
 .project-hero.project-orange {
-  background: #ffd7bd;
+  background: #ffd2e3;
 }
 .project-hero.project-lime {
-  background: #e6f5b5;
+  background: #ffe6f0;
 }
 .project-hero.project-blue {
-  background: #cbe7fc;
+  background: #f5c8d9;
 }
 .project-hero.project-pink {
   background: #ffd4e5;
@@ -2521,7 +2797,7 @@ h2 em {
   align-self: flex-start;
   padding: 6px 10px;
   border-radius: 999px;
-  background: #e8f5b9;
+  background: #ffe3ee;
   color: #4c5817;
   font:
     500 9px "DM Mono",
