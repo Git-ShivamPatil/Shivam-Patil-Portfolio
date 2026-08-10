@@ -92,6 +92,25 @@ export function ScrollReveal() {
 
     scan(document);
 
+    // A second pass on the next frame, because the first one measures a layout
+    // that has not settled. A freshly-mounted subtree is measured before fonts
+    // have applied and before images have taken their space, so an element can
+    // report a `top` well below its final position, miss the immediate-reveal
+    // threshold, and get handed to the IntersectionObserver instead.
+    //
+    // That is a trap for anything straddling the fold: it is on screen, but not
+    // by the 12% the observer requires, so it stays invisible until the visitor
+    // scrolls. Seen on /reach-out, where `.channel-list` settles at top 485
+    // against a 492 threshold and was left unrevealed.
+    //
+    // `arm` is idempotent, so re-scanning costs a querySelectorAll and nothing
+    // else.
+    let raf = 0;
+    const rescan = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => scan(document));
+    };
+
     // Catches the subtree AnimatePresence mounts after its exit animation, and
     // anything else that arrives late.
     const mo = new MutationObserver((records) => {
@@ -102,10 +121,13 @@ export function ScrollReveal() {
           scan(node);
         }
       }
+      rescan();
     });
     mo.observe(document.body, { childList: true, subtree: true });
+    rescan();
 
     return () => {
+      cancelAnimationFrame(raf);
       mo.disconnect();
       io?.disconnect();
     };
