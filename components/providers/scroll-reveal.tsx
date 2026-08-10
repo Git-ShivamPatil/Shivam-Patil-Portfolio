@@ -13,53 +13,102 @@ import { usePathname } from "next/navigation";
  *
  * Elements are unobserved once shown: these are one-shot entrances, so there's
  * no reason to keep paying for intersection callbacks on the way back up.
+ *
+ * ---
+ *
+ * Why there is a MutationObserver here as well as a pathname effect.
+ *
+ * Keying the scan on `usePathname()` alone is not enough, and the failure was
+ * total rather than cosmetic: **every client-side navigation rendered a
+ * completely blank page**, and only a hard refresh brought content back.
+ *
+ * The ordering is the problem. `PageTransition` wraps the route in
+ * `<AnimatePresence mode="wait">`, and "wait" means the outgoing page stays
+ * mounted until its exit animation finishes — the *incoming* page is not in the
+ * DOM yet. But `pathname` updates as soon as the navigation commits. So the
+ * effect fired, queried `[data-reveal]`, found only the outgoing page's
+ * elements (already revealed), and cleaned up. When the new content finally
+ * mounted a couple of hundred milliseconds later, nothing was left watching it,
+ * so its sections kept the `opacity: 0` start state indefinitely.
+ *
+ * Reproduced on production across `/services`, `/about` and `/contact`: six
+ * targets, six at `opacity: 0`, including a `.page-hero` sitting at `top: 101`
+ * — comfortably above the fold and still invisible.
+ *
+ * The fix deliberately does not depend on transition timing. Rather than
+ * guessing when the new subtree lands (a `setTimeout` race) or dropping
+ * `mode="wait"` (which changes how the site feels), the observer watches the
+ * document for added nodes and arms whatever appears, whenever it appears.
+ * That also covers any future content that mounts late for an unrelated reason.
  */
 export function ScrollReveal() {
-  // App Router keeps the layout mounted across navigations, so a fresh scan is
-  // needed per route — otherwise a new page's elements are never observed and
-  // stay stuck at their hidden start state.
   const pathname = usePathname();
 
   useEffect(() => {
-    // [data-stagger] containers are observed too. They don't fade themselves —
-    // only their children do, via nth-child delays — but they still need the
-    // data-revealed flag flipped to start that cascade.
-    const targets = Array.from(
-      document.querySelectorAll<HTMLElement>("[data-reveal], [data-stagger]"),
-    );
-    if (targets.length === 0) return;
-
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (prefersReducedMotion || typeof IntersectionObserver === "undefined") {
-      targets.forEach((el) => el.setAttribute("data-revealed", "true"));
-      return;
-    }
+    const canObserve = typeof IntersectionObserver !== "undefined";
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (!entry.isIntersecting) continue;
-          const el = entry.target as HTMLElement;
-          el.setAttribute("data-revealed", "true");
-          observer.unobserve(el);
-        }
-      },
-      // A negative bottom margin holds the reveal until the element is properly
-      // on screen rather than firing the moment one pixel clears the fold.
-      { threshold: 0.12, rootMargin: "0px 0px -8% 0px" },
-    );
+    // One shared IntersectionObserver for the life of the effect; `arm` is
+    // idempotent, so an element handed to it twice is a no-op.
+    const io =
+      prefersReducedMotion || !canObserve
+        ? null
+        : new IntersectionObserver(
+            (entries) => {
+              for (const entry of entries) {
+                if (!entry.isIntersecting) continue;
+                const el = entry.target as HTMLElement;
+                el.setAttribute("data-revealed", "true");
+                io?.unobserve(el);
+              }
+            },
+            // A negative bottom margin holds the reveal until the element is
+            // properly on screen rather than firing the moment one pixel
+            // clears the fold.
+            { threshold: 0.12, rootMargin: "0px 0px -8% 0px" },
+          );
 
-    targets.forEach((el) => {
-      // Anything already in view on load reveals immediately — no observer
-      // round-trip, so above-the-fold content never flashes as hidden.
+    const arm = (el: HTMLElement) => {
+      if (el.dataset.revealed === "true") return;
+      if (!io) {
+        el.setAttribute("data-revealed", "true");
+        return;
+      }
+      // Anything already in view reveals immediately — no observer round-trip,
+      // so above-the-fold content never flashes as hidden. This is also what
+      // makes a freshly-mounted page correct: its hero is on screen the moment
+      // it lands, so it is revealed synchronously rather than waiting for a
+      // scroll that may never come.
       if (el.getBoundingClientRect().top < window.innerHeight * 0.92) {
         el.setAttribute("data-revealed", "true");
         return;
       }
-      observer.observe(el);
-    });
+      io.observe(el);
+    };
 
-    return () => observer.disconnect();
+    const scan = (root: ParentNode) => {
+      root.querySelectorAll<HTMLElement>("[data-reveal], [data-stagger]").forEach(arm);
+    };
+
+    scan(document);
+
+    // Catches the subtree AnimatePresence mounts after its exit animation, and
+    // anything else that arrives late.
+    const mo = new MutationObserver((records) => {
+      for (const record of records) {
+        for (const node of record.addedNodes) {
+          if (!(node instanceof HTMLElement)) continue;
+          if (node.matches("[data-reveal], [data-stagger]")) arm(node);
+          scan(node);
+        }
+      }
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+
+    return () => {
+      mo.disconnect();
+      io?.disconnect();
+    };
   }, [pathname]);
 
   return null;
