@@ -19,11 +19,44 @@ export function SplitText() {
   const pathname = usePathname();
 
   useEffect(() => {
-    const targets = Array.from(document.querySelectorAll<HTMLElement>("[data-split]"));
-    if (targets.length === 0) return;
-
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+    // Same ordering trap as ScrollReveal: AnimatePresence mode="wait" mounts
+    // the incoming page *after* pathname has already changed, so a one-shot
+    // scan here runs before the new headings exist and they never get split.
+    // Unlike ScrollReveal this degrades gracefully — an unsplit heading is
+    // plain visible text, not an invisible one — but it meant the signature
+    // character reveal only ever played on a full page load. The observer
+    // makes it fire on client-side navigation too.
+    const run = () => {
+      const targets = Array.from(document.querySelectorAll<HTMLElement>("[data-split]"));
+      if (targets.length === 0) return;
+      split(targets, prefersReducedMotion);
+    };
+
+    run();
+
+    const mo = new MutationObserver((records) => {
+      for (const record of records) {
+        for (const node of record.addedNodes) {
+          if (node instanceof HTMLElement) {
+            run();
+            return;
+          }
+        }
+      }
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+
+    return () => mo.disconnect();
+  }, [pathname]);
+
+  return null;
+}
+
+/** Extracted so both the initial scan and the observer share one code path. */
+function split(targets: HTMLElement[], prefersReducedMotion: boolean) {
+  {
     for (const el of targets) {
       if (el.dataset.splitDone === "true") continue;
 
@@ -93,9 +126,5 @@ export function SplitText() {
       }
       observer.observe(el);
     }
-
-    return () => observer.disconnect();
-  }, [pathname]);
-
-  return null;
+  }
 }

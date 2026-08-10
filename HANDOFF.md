@@ -210,6 +210,53 @@ http://localhost:3000/api/auth/callback/github
 
 ---
 
+## 2z. The bug that mattered most (10 Aug) — client-side navigation rendered blank
+
+**Every internal link on the site led to a blank page.** Content was in the DOM
+and correct; it was simply invisible. Only a hard refresh recovered it. This was
+**pre-existing**, not introduced by the performance or theme work — reproduced
+identically on `/about` and `/contact`, whose `prefetch` was never touched.
+
+Root cause is an ordering trap between two components that are individually
+correct:
+
+- `PageTransition` wraps the route in `<AnimatePresence mode="wait">`. "wait"
+  means the **outgoing** page stays mounted until its exit animation finishes —
+  the incoming page is not in the DOM yet.
+- `ScrollReveal` ran `useEffect(..., [pathname])`, and `pathname` updates the
+  moment navigation commits.
+
+So the effect fired, queried `[data-reveal]`, found only the outgoing page's
+elements, and cleaned up. When the new subtree mounted ~200ms later nothing was
+watching it, so its sections kept the `opacity: 0` start state forever.
+Measured on production: six targets, six at `opacity: 0`, including a
+`.page-hero` at `top: 101` — above the fold and invisible.
+
+**Fixed with a `MutationObserver`** in both `ScrollReveal` and `SplitText`,
+watching `document.body` for added nodes and arming whatever appears whenever it
+appears. Deliberately not a `setTimeout` (a race) and deliberately not dropping
+`mode="wait"` (changes how the site feels). The observer also covers any future
+content that mounts late for an unrelated reason.
+
+`SplitText` had the identical flaw. Its failure was cosmetic — an unsplit
+heading is plain visible text — but it meant the signature character reveal
+**only ever played on a full page load**, never on a navigation.
+
+**Two lessons worth carrying:**
+
+1. **`fetch()` sweeps cannot catch this.** Every route audit in this file up to
+   now used `fetch()`, which tests server responses. The pages returned 200 and
+   full HTML the entire time they were rendering blank to a human. Click
+   through the nav after any change to routing, transitions, or reveal.
+2. **`getComputedStyle` lies in a non-fronted browser pane.** A pane that is not
+   displayed produces no frames, so CSS transitions never advance and opacity
+   reads as its pre-transition value. After the fix, `opacity: 0` readings
+   persisted while screenshots showed the page fully rendered. The reliable
+   signal is the **`data-revealed` attribute**, not computed opacity: `null`
+   means the driver never ran (a real bug), `"true"` means it did.
+
+---
+
 ## 2a. Performance work (10 Aug) — what was real and what was not
 
 **The headline fix was the fonts, and it was not what anyone suspected first.**
@@ -329,6 +376,17 @@ source. The spec's ambitions live in the divergence table instead.
 Styles are in `app/features.css` under a `SYSTEM DESIGN PAGE` banner. Every
 stroke and fill reads a theme token; there is no colour literal on that page,
 and there should not be.
+
+Linked from the **header nav** (between Blog and About) as well as the footer —
+it was footer-only at first and effectively undiscoverable.
+
+### The header wordmark
+
+The circular "SP" lettermark is now `public/logo.jpeg`, rendered through
+`next/image` at 62px for a 31px slot so it stays sharp on 2x displays, with
+`priority` because it sits in the header of every page. Its `alt` is empty on
+purpose: the parent link already carries `aria-label="Shivam Patil home"`, so
+describing the image would make a screen reader announce the same thing twice.
 
 ---
 
@@ -602,6 +660,13 @@ thread via their cookie.
   times in `globals.css`. See §2b.
 - **Screenshot before believing a colour change.** Seven defects, zero caught by
   the build, the tests or the contrast maths.
+- **`ScrollReveal` and `SplitText` need their `MutationObserver`.** It is not
+  defensive padding — without it every client-side navigation renders a blank
+  page, because `AnimatePresence mode="wait"` mounts the incoming route after
+  `pathname` has already changed. See §2z before simplifying either file.
+- **Verify navigation by clicking, not by `fetch()`.** A route can return 200
+  with complete HTML and still render blank to a human. That is exactly how the
+  blank-navigation bug survived several route audits.
 - Light is the default theme, `enableSystem={false}` so the default is honoured
   rather than overridden by the OS.
 - Fonts are self-hosted via `next/font`. Do **not** reintroduce a Google Fonts

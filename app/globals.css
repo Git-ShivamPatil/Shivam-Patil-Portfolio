@@ -492,18 +492,17 @@ h2 em {
   font-weight: 800;
   letter-spacing: -0.04em;
 }
+/* The photo, not the old "SP" lettermark. object-fit stops it stretching
+   whatever aspect ratio the source happens to have, and the hairline ring reads
+   from --line so the avatar sits in both palettes as a deliberate element
+   rather than a photo dropped onto the page. */
 .wordmark-mark {
-  display: grid;
-  place-items: center;
   width: 31px;
+  height: 31px;
   aspect-ratio: 1;
   border-radius: 50%;
-  background: var(--ink);
-  color: var(--lime);
-  font:
-    500 9px "DM Mono",
-    monospace;
-  letter-spacing: -0.08em;
+  object-fit: cover;
+  box-shadow: 0 0 0 1px var(--line);
 }
 .primary-nav {
   display: flex;
