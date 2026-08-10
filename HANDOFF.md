@@ -242,6 +242,23 @@ content that mounts late for an unrelated reason.
 heading is plain visible text — but it meant the signature character reveal
 **only ever played on a full page load**, never on a navigation.
 
+**A second-order bug the first fix exposed.** With the observer in place, six of
+seven routes were correct but `/reach-out` still left one element unrevealed:
+`.channel-list` settles at `top: 485` against a `492` immediate-reveal
+threshold, so it should have armed. It did not, because the observer measures
+**before layout settles** — fonts have not applied and images have not taken
+their space — so the element reported a lower position, missed the threshold,
+and fell through to the IntersectionObserver, whose `0.12` requirement an
+element straddling the fold cannot meet until the visitor scrolls.
+
+Fixed with a `requestAnimationFrame` re-scan after each mutation batch, so
+everything is re-evaluated against settled layout. `arm()` is idempotent, so the
+second pass costs one `querySelectorAll`. All nine routes verified clean after.
+
+This one was easy to dismiss: "on screen but not revealed" reads like the design
+working. It is not — it is an element whose space the visitor can see but whose
+content they cannot.
+
 **Two lessons worth carrying:**
 
 1. **`fetch()` sweeps cannot catch this.** Every route audit in this file up to
