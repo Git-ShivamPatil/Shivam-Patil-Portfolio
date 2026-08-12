@@ -2,6 +2,7 @@ import { prisma } from "../../../../lib/prisma";
 import { resolveIdentity, getVisitorConversation, toPayload } from "../../../../lib/chat";
 import { subscribe } from "../../../../lib/realtime/hub";
 import { encodeSSE, type ChatEvent } from "../../../../lib/realtime/events";
+import { isOwnerOnline } from "../../../../lib/realtime/presence";
 
 // Must be Node, not Edge: this holds a long-lived stream and talks to Prisma.
 export const runtime = "nodejs";
@@ -75,6 +76,10 @@ export async function GET(request: Request) {
       const emitted = new Set(history.map((m) => m.id));
       let lastTypingSignature = "";
       let lastReadSignature = "";
+      // null, not false: the first poll must always emit, so a visitor who
+      // opens the widget while the owner is away is told so rather than left
+      // with whatever the markup happened to default to.
+      let lastOwnerOnline: boolean | null = null;
 
       send({ type: "ready", conversationId, messages: history.map(toPayload) });
 
@@ -144,6 +149,19 @@ export async function GET(request: Request) {
               ids: readRows.map((r) => r.id),
               at: (readRows[0].readAt ?? new Date()).toISOString(),
             });
+          }
+
+          // P11. The `presence` event has been in the ChatEvent union since
+          // P6 and nothing ever emitted it — this is where it comes from.
+          // Only the visitor's stream carries it: the owner already knows
+          // whether they are online, and telling them would cost a query per
+          // poll to answer a question nobody asked.
+          if (identity.role !== "OWNER") {
+            const ownerOnline = await isOwnerOnline();
+            if (ownerOnline !== lastOwnerOnline) {
+              lastOwnerOnline = ownerOnline;
+              send({ type: "presence", ownerOnline });
+            }
           }
         } catch (error) {
           console.error("[chat/stream] poll failed:", error);

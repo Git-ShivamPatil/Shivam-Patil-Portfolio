@@ -3,6 +3,7 @@ import { timingSafeEqual } from "node:crypto";
 import { auth } from "../../../../auth";
 import { prisma } from "../../../../lib/prisma";
 import { RETENTION_DAYS } from "../../../../lib/analytics/constants";
+import { prunePresence } from "../../../../lib/realtime/presence";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -98,10 +99,16 @@ export async function GET(request: Request) {
         }),
     );
 
+    // P11 presence rows expire on a window of minutes, not days, so they are
+    // pruned on their own cutoff rather than the retention one. They are swept
+    // opportunistically by the heartbeat too; this is the guarantee that the
+    // sweep happens even during a stretch with no traffic at all.
+    const presence = await prunePresence(Date.now());
+
     return NextResponse.json({
       retentionDays: RETENTION_DAYS,
       cutoff: cutoff.toISOString(),
-      pruned: { pageViews: views, events },
+      pruned: { pageViews: views, events, presence },
     });
   } catch (error) {
     console.error("GET /api/cron/prune-analytics failed:", error);

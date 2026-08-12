@@ -1,4 +1,5 @@
 import type { ChatAuthor } from "../generated/prisma/enums";
+import { sseFrame } from "./sse";
 
 export interface ChatMessagePayload {
   id: string;
@@ -23,7 +24,13 @@ export type ChatEvent =
   | { type: "read"; ids: string[]; at: string }
   | { type: "presence"; ownerOnline: boolean };
 
-/** Serialise one event as an SSE frame. */
+/**
+ * Serialise one event as an SSE frame.
+ *
+ * The frame's event name is the payload's own `type`, so a client's
+ * `addEventListener("message", ...)` and the discriminant it switches on can
+ * never disagree.
+ */
 export function encodeSSE(event: ChatEvent): string {
-  return `event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`;
+  return sseFrame(event.type, event);
 }

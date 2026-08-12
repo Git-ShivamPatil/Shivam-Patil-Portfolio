@@ -331,6 +331,37 @@
     monospace;
   font-style: normal;
 }
+/* P11. "The owner is around" on the closed launcher. Ringed in --bg rather
+   than left bare so it stays legible where it overlaps the button's own fill,
+   and routed through --accent like .chat-status.is-live so it is pink in light
+   and neon green in dark — a literal here would be the third hue the theme
+   brief forbids. */
+.chat-online-pip {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .chat-online-pip {
+    animation: chat-pip-pulse 2.4s ease-in-out infinite;
+  }
+}
+@keyframes chat-pip-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.18);
+    opacity: 0.72;
+  }
+}
 .chat-panel {
   display: flex;
   width: min(370px, calc(100vw - 40px));

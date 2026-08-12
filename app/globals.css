@@ -273,6 +273,11 @@
   --color-app-line: var(--line);
   --color-app-muted: var(--muted);
   --color-app-lime: var(--lime);
+  /* Registered for P11's live dashboard, which is the first Tailwind-authored
+     surface that needs the accent as a fill rather than as text. Same
+     indirection as the rest: the variable is named, not resolved, so it still
+     flips with the theme. */
+  --color-app-accent: var(--accent);
 }
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 

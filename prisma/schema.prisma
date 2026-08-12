@@ -696,6 +696,51 @@ model HeatmapCell {
   @@index([path, device])
 }
 
+// ---- Phase 11: realtime ----
+
+enum PresenceRole {
+  VISITOR
+  OWNER
+}
+
+// Who is on the site right now.
+//
+// This table exists because module-scope memory is not shared between
+// serverless invocations: a Set of "currently connected" tokens held by the
+// instance serving the heartbeat is invisible to the instance rendering the
+// live dashboard, so presence has to be state, not memory. Postgres is the
+// only store both instances can see.
+//
+// `token` is minted per *document*, held only in the page's own module scope,
+// and never written to storage — so it dies with the tab and is never reused.
+// That is deliberately weaker than the daily-rotating `visitorHash` P8/P10 use:
+// presence answers "how many tabs are open on this path right now", a question
+// that must not survive the visit. Nothing here is joinable to a PageView, a
+// ReferralClick or a person.
+//
+// Liveness is a freshness window on `lastSeenAt` (PRESENCE_TTL_MS) rather than
+// an online boolean, for the same reason ChatConversation stores typing
+// deadlines rather than flags: a closed laptop never sends "I left", so a flag
+// would stay true forever while a deadline simply lapses.
+model PresenceSession {
+  id    String       @id @default(cuid())
+  token String       @unique
+  role  PresenceRole @default(VISITOR)
+
+  path    String  @default("/")
+  device  String  @default("unknown")
+  country String?
+  userId  String?
+
+  startedAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+
+  // Serves the only two reads there are: "who is fresh" and "is the owner
+  // fresh", both of which are a range scan on lastSeenAt.
+  @@index([lastSeenAt])
+  @@index([role, lastSeenAt])
+}
+
 // Webhook idempotency ledger. Both Stripe and Razorpay redeliver on any
 // non-2xx, and Stripe explicitly warns that events can arrive more than once —
 // the unique (provider, eventId) is what makes handling exactly-once.
