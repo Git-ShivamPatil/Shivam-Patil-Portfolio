@@ -2008,12 +2008,31 @@ h2 em {
   padding: 49px;
   border-radius: var(--radius);
   background: var(--lime);
+  /* The third time this exact defect has appeared, after the project card
+     titles at 1.05:1 and the Plan/Find/Act chips at ~1.1:1 — see HANDOFF §2b.
+     The pattern is always the same: a pale fill that does not follow the theme,
+     and text that inherits --fg, which flips to cream in dark. The h2 here
+     measured 1.23:1 against the neon --lime: present, and unreadable.
+
+     Set on the container so everything inside inherits it, exactly as
+     .project-card was fixed. 15.96:1 light, 14.08:1 dark. */
+  color: var(--ink);
 }
 .contact-quick h2 {
   margin: 0;
 }
+/* Was `color: #5f6d21` — an olive literal, and two separate defects in one
+   declaration. It measured 4.73:1 on the light --lime fill, under the 7:1 floor
+   every text token on this site holds, and axe flags it as a serious contrast
+   violation. And its hue is 71deg, in a light theme whose text must sit at
+   337-341deg: the third-hue defect §9 forbids, and the same stray olive already
+   removed once from the chat live pip.
+
+   --ink is the token for exactly this case: a pale background that does not
+   change with the theme needs text that is dark in both. 15.96:1 light,
+   14.08:1 dark. */
 .contact-quick .eyebrow {
-  color: #5f6d21;
+  color: var(--ink);
 }
 
 /* ===== contact form ===== */

@@ -54,12 +54,22 @@ export async function POST(request: Request) {
   }
 
   const ip = clientIp(request);
-  // One beat per 20s per tab is the design; 12 burst with a 0.2/s refill leaves
-  // room for several tabs from one address without letting a script hold the
-  // table open. Metered on IP alone — keying on the token would let a caller
-  // rotate it to mint unlimited buckets, which is exactly what the limiter is
-  // supposed to stop.
-  if (!(await consume(`presence:${ip}`, 12, 0.2)).ok) {
+  // One beat per 20s per tab is the design, so the sustained rate from one
+  // address is (tabs / 20) per second. The original 12 burst with a 0.2/s
+  // refill supported four tabs before it started throttling *legitimate*
+  // visitors — anyone behind a shared NAT, an office, a university, or a
+  // household with a few devices. That is a real ceiling on a real deployment
+  // and it surfaced as the only flaky test in the E2E suite, where every
+  // parallel worker shares 127.0.0.1.
+  //
+  // 30 burst at 1/s carries roughly twenty simultaneous tabs from one address
+  // and still caps a script at one request a second. The right size for a
+  // limiter is set by what the endpoint costs — one upsert of one small row —
+  // not by copying the numbers from a signup form.
+  //
+  // Metered on IP alone: keying on the token would let a caller rotate it to
+  // mint unlimited buckets, which is exactly what the limiter is here to stop.
+  if (!(await consume(`presence:${ip}`, 30, 1)).ok) {
     return NextResponse.json(
       { ownerOnline: false, intervalMs: PRESENCE_HEARTBEAT_MS },
       { status: 429 },

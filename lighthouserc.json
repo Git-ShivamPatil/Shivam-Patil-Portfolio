@@ -1,0 +1,60 @@
+{
+  "$comment": [
+    "P15 — the performance budget, asserted rather than admired.",
+    "",
+    "HANDOFF records an honest gap: the P12 font work is structurally verified —",
+    "zero external origins is not a matter of measurement — but its effect on LCP",
+    "was never independently confirmed, because PageSpeed Insights rate-limited",
+    "every attempt from that network. This is the fix for that: the number gets",
+    "measured on every run instead of being asked for once and never again.",
+    "",
+    "Three runs per URL because Lighthouse's own variance on a shared CI runner is",
+    "several points; a single run would fail the build on noise. The median is what",
+    "is asserted.",
+    "",
+    "The categories are thresholds, not aspirations. Accessibility and best",
+    "practices are pinned at 1.0 because both are pass/fail checklists where a",
+    "miss is a real defect — and because axe already covers accessibility in the",
+    "E2E suite, so a Lighthouse a11y regression means something the E2E excluded."
+  ],
+  "ci": {
+    "collect": {
+      "url": [
+        "http://127.0.0.1:3210/",
+        "http://127.0.0.1:3210/about",
+        "http://127.0.0.1:3210/system-design"
+      ],
+      "startServerCommand": "pnpm exec next start -p 3210",
+      "startServerReadyPattern": "Ready in",
+      "numberOfRuns": 3,
+      "settings": {
+        "preset": "desktop"
+      }
+    },
+    "assert": {
+      "assertions": {
+        "categories:performance": ["error", { "minScore": 0.95 }],
+        "categories:accessibility": ["error", { "minScore": 1 }],
+        "categories:best-practices": ["error", { "minScore": 1 }],
+        "categories:seo": ["error", { "minScore": 1 }],
+
+        "$comment-cls": "0 today, and the metric the vendored fonts' size-adjust fallback exists to protect. A regression here means the fallback metrics stopped matching.",
+        "cumulative-layout-shift": ["error", { "maxNumericValue": 0.02 }],
+
+        "$comment-lcp": "The number P12 was aiming at and never got to confirm.",
+        "largest-contentful-paint": ["error", { "maxNumericValue": 1800 }],
+        "total-blocking-time": ["error", { "maxNumericValue": 200 }],
+
+        "$comment-css": "Render-blocking CSS went 114.6KB -> 96.2KB when the route-scoped stylesheets were split out. This is the guard that stops it creeping back.",
+        "unused-css-rules": ["warn", { "maxLength": 2 }],
+        "uses-long-cache-ttl": ["warn", { "maxLength": 2 }],
+
+        "$comment-fonts": "Vendored in P12. A third-party font origin reappearing is the exact regression that broke the build.",
+        "third-party-summary": ["error", { "maxLength": 0 }]
+      }
+    },
+    "upload": {
+      "target": "temporary-public-storage"
+    }
+  }
+}
