@@ -1,0 +1,158 @@
+/* =========================================================================
+   LOCATION MAP
+
+   Imported by the component rather than by /reach-out, so the map's styling
+   follows the map wherever it is used.
+   ========================================================================= */
+
+.reach-map {
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr;
+  gap: 50px;
+  align-items: center;
+  margin-bottom: 96px;
+}
+.reach-map-copy h2 {
+  margin: 0 0 18px;
+  font-size: clamp(28px, 3.4vw, 44px);
+}
+.reach-map-copy p {
+  max-width: 340px;
+  margin: 0;
+  color: var(--prose-soft);
+  font-size: 14px;
+  line-height: 1.7;
+}
+.location-map {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--warm);
+}
+.location-map-frame {
+  display: block;
+  width: 100%;
+  height: 320px;
+  border: 0;
+}
+/* OSM only ships light tiles. Inverting + rotating the hue back is the
+   standard way to get a dark basemap out of them without hosting a tile
+   server, which would not be free. */
+:root[data-theme="dark"] .location-map-frame {
+  filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.95);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .location-map-frame {
+    filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.95);
+  }
+}
+.location-map-placeholder {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 320px;
+  overflow: hidden;
+  color: var(--fg);
+}
+.location-map-placeholder svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.location-map-pin {
+  fill: var(--lime);
+}
+.location-map-pin-halo {
+  fill: var(--lime);
+  fill-opacity: 0.18;
+  animation: map-pin-pulse 2.6s ease-in-out infinite;
+  transform-origin: 150px 118px;
+}
+@keyframes map-pin-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    fill-opacity: 0.18;
+  }
+  50% {
+    transform: scale(1.5);
+    fill-opacity: 0.05;
+  }
+}
+.location-map-placeholder-copy {
+  position: relative;
+  text-align: center;
+}
+.location-map-placeholder-copy strong {
+  display: block;
+  font-size: 28px;
+  letter-spacing: -0.05em;
+}
+.location-map-placeholder-copy span {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font:
+    500 10px var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+  letter-spacing: 0.06em;
+}
+.location-map-cta {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  padding: 9px 15px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 999px;
+  background: rgba(17, 17, 16, 0.72);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    transform 0.2s;
+}
+.location-map-cta:hover {
+  background: var(--ink);
+  transform: translateY(-1px);
+}
+.location-map-caption {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  padding: 14px 18px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font:
+    500 10px var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.location-map-caption a {
+  margin-left: auto;
+  color: var(--muted);
+  border-bottom: 1px solid transparent;
+  transition:
+    color 0.2s,
+    border-color 0.2s;
+}
+.location-map-caption a:hover {
+  color: var(--fg);
+  border-bottom-color: var(--fg);
+}
+
+/* ---------- responsive ---------- */
+@media (max-width: 900px) {
+  .reach-map {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+}

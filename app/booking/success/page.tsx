@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { prisma } from "../../../lib/prisma";
 import { formatMoney } from "../../../lib/money";
 import { ArrowUpRight } from "../../../components/icons";
+import "../../services/services.css";
 
 export const metadata: Metadata = {
   title: "Booking received — Shivam Patil",

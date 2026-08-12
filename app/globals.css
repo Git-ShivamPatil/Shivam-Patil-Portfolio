@@ -12,7 +12,12 @@
 @import "./motion-bold.css";
 /* Elevation, gradient accents, grain, ambient light, theme wipe. */
 @import "./theme-visuals.css";
-/* Phase 5-7 surfaces: live stats, chat, newsletter, booking, invoices, map. */
+/* What is left of the Phase 5-7 surfaces after P12: the shared field styling
+   and the newsletter/push footer, both of which really are on every page.
+   The rest — /stats, the chat widget, the admin console, services, invoices,
+   the map, /system-design — moved into stylesheets imported by the page or
+   component that owns them, so Next scopes each one to its own route chunk
+   instead of shipping ~22KB of single-route CSS to every visitor. */
 @import "./features.css";
 /* Additive decoration only — cursor spotlight, gradient rims, aurora, sheen.
    Imported last so it layers over the rest, and safe to remove entirely: the

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ChatEvent, ChatMessagePayload } from "../../lib/realtime/events";
+import "./admin-chat.css";
 
 export interface ConversationSummary {
   id: string;

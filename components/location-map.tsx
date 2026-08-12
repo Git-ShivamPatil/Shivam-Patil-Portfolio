@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import "./location-map.css";
 
 // Mumbai, India.
 const LAT = 19.076;

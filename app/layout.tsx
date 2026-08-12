@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Manrope, Playfair_Display, DM_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { Header } from "../components/header";
 import { Footer } from "../components/footer";
@@ -18,51 +18,70 @@ import { DeferredLayer } from "../components/providers/deferred-layer";
 import { Analytics } from "@vercel/analytics/next";
 
 /**
- * Fonts are self-hosted via next/font rather than pulled from Google.
+ * Fonts are vendored into the repo and loaded with `next/font/local`.
  *
- * globals.css used to open with an `@import url(fonts.googleapis.com/...)`,
- * which is the slowest possible way to load a webfont: an `@import` is not
- * discoverable by the preload scanner, so the browser only finds it *after*
- * parsing globals.css, and then has to make two more serial round trips — one
- * to fonts.googleapis.com for the @font-face CSS, another to fonts.gstatic.com
- * for the files — each paying its own DNS + TLS handshake to an origin the
- * page had not otherwise contacted.
+ * The history matters, because two different things have been fixed here and
+ * only the second one is visible in this file's imports.
  *
- * The visible cost was the LCP gap: production measured FCP at 396ms but LCP
- * at ~830ms, because the hero paragraph painted first in the fallback face and
- * then *repainted* when Manrope finally swapped in, which re-registers LCP at
- * the swap. The fonts were also invisible to our own performance timing
- * (`fontResources: []`) because they were declared in a cross-origin sheet.
+ * **First (10 Aug): the `@import` had to go.** globals.css used to open with
+ * `@import url(fonts.googleapis.com/...)`, which is the slowest possible way to
+ * load a webfont. An `@import` is invisible to the preload scanner, so the
+ * browser only found it *after* parsing globals.css and then made two more
+ * serial cross-origin round trips — googleapis for the `@font-face` CSS,
+ * gstatic for the files — each paying its own DNS and TLS handshake. Production
+ * measured FCP at 396ms and LCP at ~830ms, because the hero paragraph painted
+ * in the fallback face and then *repainted* when Manrope swapped in, which
+ * re-registers LCP at the swap.
  *
- * next/font downloads these at build time and serves them from our own origin,
- * so there is no third-party DNS, no serial CSS chain, and `adjustFontFallback`
- * generates a metric-matched fallback so the swap does not shift layout.
+ * **Second (13 Aug): `next/font/google` had to go too.** It fixed the runtime
+ * but kept a build-time dependency on Google, and that dependency broke: Google
+ * began returning 404 for four of the Playfair Display files its own stylesheet
+ * points at, and `next build` failed with "Module not found:
+ * @vercel/turbopack-next/internal/font/google/font". Reproducible, not
+ * transient — every build failed the same four faces while the equivalent URLs
+ * fetched by hand returned 200. A build that cannot run because a third party
+ * is having a bad day is the same class of problem CI's missing database was
+ * built to rule out.
  *
- * Weights are pinned to exactly what the CSS asks for — shipping the full
- * family would waste bytes on faces nothing references.
+ * So the files live in `app/fonts/` and the build touches no network at all.
+ * Manrope and Playfair are variable fonts — one file covers the whole weight
+ * range, which is why there is no file per weight — and only the latin subset
+ * is vendored, since nothing on this site renders cyrillic or vietnamese.
+ *
+ * `adjustFontFallback` still generates a metric-matched fallback from the font
+ * file's own metrics, which is what protects the existing CLS of 0.
  */
-const manrope = Manrope({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+const manrope = localFont({
+  src: [{ path: "./fonts/manrope-variable.woff2", weight: "400 800", style: "normal" }],
   variable: "--font-manrope",
   display: "swap",
+  adjustFontFallback: "Arial",
+  fallback: ["Arial", "sans-serif"],
 });
 
-// Italic is included because `h1 em` / `h2 em` are the Playfair italics the
-// design leans on; without it the browser would synthesise an oblique.
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  weight: ["600", "700"],
-  style: ["normal", "italic"],
+// Italic is vendored because `h1 em` / `h2 em` are the Playfair italics the
+// design leans on; without a real italic the browser synthesises an oblique.
+const playfair = localFont({
+  src: [
+    { path: "./fonts/playfair-display-variable.woff2", weight: "600 700", style: "normal" },
+    { path: "./fonts/playfair-display-variable-italic.woff2", weight: "600 700", style: "italic" },
+  ],
   variable: "--font-playfair",
   display: "swap",
+  adjustFontFallback: "Times New Roman",
+  fallback: ["Georgia", "serif"],
 });
 
-const dmMono = DM_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500"],
+// DM Mono is not a variable font, so it genuinely needs a file per weight.
+const dmMono = localFont({
+  src: [
+    { path: "./fonts/dm-mono-400.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/dm-mono-500.woff2", weight: "500", style: "normal" },
+  ],
   variable: "--font-dm-mono",
   display: "swap",
+  adjustFontFallback: "Arial",
+  fallback: ["ui-monospace", "monospace"],
 });
 
 const fontVariables = `${manrope.variable} ${playfair.variable} ${dmMono.variable}`;

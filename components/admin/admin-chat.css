@@ -1,0 +1,105 @@
+/* =========================================================================
+   ADMIN CHAT CONSOLE (/admin/chat)
+
+   Split out of app/features.css. Admin-only styling has no business being
+   parsed by a visitor who will never see it.
+   ========================================================================= */
+
+.admin-chat {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 18px;
+  height: min(620px, 70vh);
+}
+.admin-chat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.admin-chat-list button {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: transparent;
+  color: var(--fg);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
+}
+.admin-chat-list button:hover {
+  border-color: var(--fg);
+}
+.admin-chat-list button.is-active {
+  background: var(--warm);
+  border-color: var(--fg);
+}
+.admin-chat-list strong {
+  font-size: 13px;
+}
+.admin-chat-list small,
+.admin-chat-list span {
+  color: var(--muted);
+  font:
+    500 10px var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+}
+.admin-chat-list i {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  min-width: 19px;
+  height: 19px;
+  border-radius: 999px;
+  background: var(--orange);
+  color: var(--ink);
+  font:
+    600 10px var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+  font-style: normal;
+}
+.admin-chat-thread {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--bg);
+}
+.admin-chat-thread > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--warm);
+}
+
+/* ---------- responsive ---------- */
+@media (max-width: 900px) {
+  .admin-chat {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  .admin-chat-list {
+    flex-direction: row;
+    overflow-x: auto;
+  }
+  .admin-chat-list button {
+    min-width: 190px;
+  }
+  .admin-chat-thread {
+    height: 480px;
+  }
+}

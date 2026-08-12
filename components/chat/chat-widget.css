@@ -1,0 +1,299 @@
+/* =========================================================================
+   CHAT WIDGET
+
+   Imported by the widget component rather than by a page, because the widget
+   renders on every route but is loaded through next/dynamic behind the idle
+   gate (components/providers/deferred-layer.tsx). Attaching the CSS to the
+   component means it travels with that deferred chunk instead of blocking the
+   first paint of every page on the site.
+
+   `.chat-visually-hidden` deliberately stays behind in features.css: the
+   newsletter form uses it too, and a utility that two unrelated features
+   depend on is not part of either one.
+   ========================================================================= */
+
+.chat-widget {
+  position: fixed;
+  z-index: 40;
+  right: 24px;
+  bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 14px;
+}
+.chat-launcher {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 54px;
+  aspect-ratio: 1;
+  border: none;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--lime);
+  font-size: 21px;
+  cursor: pointer;
+  box-shadow: 0 10px 26px rgba(17, 17, 16, 0.32);
+}
+.chat-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--orange);
+  color: var(--ink);
+  font:
+    600 10px var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+  font-style: normal;
+}
+/* P11. "The owner is around" on the closed launcher. Ringed in --bg rather
+   than left bare so it stays legible where it overlaps the button's own fill,
+   and routed through --accent like .chat-status.is-live so it is pink in light
+   and neon green in dark — a literal here would be the third hue the theme
+   brief forbids. */
+.chat-online-pip {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .chat-online-pip {
+    animation: chat-pip-pulse 2.4s ease-in-out infinite;
+  }
+}
+@keyframes chat-pip-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.18);
+    opacity: 0.72;
+  }
+}
+.chat-panel {
+  display: flex;
+  width: min(370px, calc(100vw - 40px));
+  height: min(520px, calc(100vh - 160px));
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--bg);
+  box-shadow: 0 24px 60px rgba(17, 17, 16, 0.28);
+  animation: chat-panel-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes chat-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.97);
+  }
+}
+.chat-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--warm);
+}
+.chat-panel-head strong {
+  display: block;
+  font-size: 14px;
+  letter-spacing: -0.02em;
+}
+.chat-panel-head button {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 14px;
+}
+.chat-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+  font:
+    500 9px var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+.chat-status::before {
+  content: "";
+  width: 6px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--muted);
+}
+/* The chat "live" pip. Was a hardcoded olive green, the last colour on the
+   site outside the two-colour palettes — it read as a third hue in light
+   theme. Routed through --accent so it is pink in light and neon green in
+   dark, matching .live-dot in the hero. */
+.chat-status.is-live::before {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px rgba(142, 186, 0, 0.18);
+}
+.chat-messages {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  overflow-y: auto;
+}
+.chat-empty {
+  margin: auto 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.65;
+  text-align: center;
+}
+.chat-bubble {
+  max-width: 84%;
+  padding: 10px 13px;
+  border-radius: 14px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  animation: chat-bubble-in 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes chat-bubble-in {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+}
+.chat-bubble p {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.chat-bubble footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 5px;
+  font:
+    500 9px var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+  opacity: 0.65;
+}
+.chat-bubble-visitor {
+  align-self: flex-end;
+  background: var(--ink);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+.chat-bubble-owner,
+.chat-bubble-system {
+  align-self: flex-start;
+  border: 1px solid var(--line);
+  background: var(--warm);
+  color: var(--fg);
+  border-bottom-left-radius: 4px;
+}
+.chat-ticks {
+  letter-spacing: -2px;
+}
+.chat-ticks.is-read {
+  color: var(--cyan);
+  opacity: 1;
+}
+.chat-typing {
+  align-self: flex-start;
+  display: flex;
+  gap: 4px;
+  padding: 11px 13px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--warm);
+}
+.chat-typing span {
+  width: 6px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--muted);
+  animation: typing-bounce 1.3s ease-in-out infinite;
+}
+.chat-typing span:nth-child(2) {
+  animation-delay: 0.18s;
+}
+.chat-typing span:nth-child(3) {
+  animation-delay: 0.36s;
+}
+@keyframes typing-bounce {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.45;
+  }
+  30% {
+    transform: translateY(-5px);
+    opacity: 1;
+  }
+}
+.chat-composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--line);
+}
+.chat-composer textarea {
+  flex: 1;
+  max-height: 110px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--fg);
+  font: inherit;
+  font-size: 13.5px;
+  resize: none;
+  outline: none;
+}
+.chat-composer textarea:focus {
+  border-color: var(--fg);
+}
+.chat-composer button {
+  padding: 10px 15px;
+  border: none;
+  border-radius: 12px;
+  background: var(--ink);
+  color: var(--lime);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.chat-composer button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ---------- responsive ---------- */
+@media (max-width: 620px) {
+  .chat-widget {
+    right: 16px;
+    bottom: 16px;
+  }
+}

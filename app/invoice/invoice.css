@@ -1,0 +1,132 @@
+/* =========================================================================
+   INVOICE (/invoice/[token])
+
+   Split out of app/features.css. The @media print block travels with it: it
+   hides the site chrome, and the only page anyone prints is this one.
+   ========================================================================= */
+
+.invoice-page {
+  max-width: 860px;
+  padding: 110px 0 120px;
+}
+.invoice-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 28px;
+  border-bottom: 2px solid var(--fg);
+}
+.invoice-head h1 {
+  margin: 0;
+  font-size: clamp(34px, 5vw, 54px);
+}
+.invoice-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 30px;
+  padding: 32px 0;
+}
+.invoice-meta p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--fg);
+}
+.invoice-label {
+  margin-bottom: 6px !important;
+  color: var(--muted) !important;
+  font:
+    500 9px var(--font-dm-mono),
+    "DM Mono",
+    monospace !important;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.invoice-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+}
+.invoice-table th {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--fg);
+  color: var(--muted);
+  font:
+    500 9px var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-align: right;
+}
+.invoice-table th:first-child,
+.invoice-table td:first-child {
+  text-align: left;
+}
+.invoice-table td {
+  padding: 16px 10px;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+  text-align: right;
+}
+.invoice-table td small {
+  color: var(--muted);
+}
+.invoice-table tfoot td {
+  border-bottom: none;
+  color: var(--muted);
+  font:
+    500 12px var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+  padding: 8px 10px;
+}
+.invoice-table tfoot .invoice-total td {
+  padding-top: 16px;
+  border-top: 1px solid var(--fg);
+  color: var(--fg);
+  font-size: 16px;
+  font-weight: 600;
+}
+.invoice-footnote {
+  margin: 34px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+@media print {
+  /* The site chrome is noise on a printed invoice. */
+  .site-header,
+  .site-footer,
+  .chat-widget,
+  .back-to-top,
+  .scroll-progress,
+  .page-grid,
+  .invoice-print {
+    display: none !important;
+  }
+  .invoice-page {
+    padding: 0;
+    max-width: none;
+  }
+  body {
+    background: #fff;
+    color: #000;
+  }
+}
+
+/* ---------- responsive ---------- */
+@media (max-width: 900px) {
+  .invoice-meta {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+}
+
+@media (max-width: 620px) {
+  .invoice-table th,
+  .invoice-table td {
+    padding: 10px 6px;
+    font-size: 12px;
+  }
+}

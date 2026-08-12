@@ -1,0 +1,313 @@
+/* =========================================================================
+   SYSTEM DESIGN PAGE (/system-design)
+
+   The two diagrams are inline SVG rendered on the server. Every stroke and
+   fill below reads a theme token rather than a literal, which is what lets one
+   set of rules serve both the pink/cream and the neon/black palettes — and
+   what keeps this file from becoming the place a seventh stray colour hides.
+
+   The draw-in animations are pure CSS on stroke-dashoffset, so they cost no
+   JavaScript and nothing here hydrates.
+
+   Split out of app/features.css, where it was being parsed by every visitor to
+   every route. It is the largest single block that only one page uses.
+   ========================================================================= */
+
+.sd-section {
+  padding: 56px 0;
+}
+.sd-section .section-heading {
+  max-width: 640px;
+  margin-bottom: 28px;
+}
+.sd-section .section-heading p {
+  color: var(--prose-soft);
+  margin: 10px 0 0;
+}
+.sd-section code {
+  padding: 1px 5px;
+  border: 1px solid var(--surface-line);
+  border-radius: 5px;
+  background: var(--surface);
+  font:
+    500 0.88em var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+}
+
+/* ---- figures ---- */
+.sd-figure {
+  margin: 0;
+  padding: 22px;
+  border: 1px solid var(--surface-line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--elev-1);
+}
+.sd-figure figcaption {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--surface-line);
+  color: var(--prose-soft);
+  font-size: 13px;
+  line-height: 1.6;
+}
+/* The viewBox does the scaling; width:100% keeps it inside the shell on
+   narrow screens without a horizontal scrollbar. */
+.sd-diagram {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* ---- diagram: nodes and edges ---- */
+.sd-node rect {
+  fill: var(--bg);
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.sd-node:hover rect {
+  stroke: var(--accent);
+}
+.sd-node-title {
+  fill: var(--fg);
+  font:
+    600 13px var(--font-manrope),
+    Manrope,
+    sans-serif;
+}
+.sd-node-sub {
+  fill: var(--muted);
+  font:
+    500 10px var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+}
+.sd-layer-label {
+  fill: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font:
+    500 9px var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+}
+.sd-edge {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  opacity: 0.55;
+  stroke-dasharray: 5 5;
+}
+
+/* ---- diagram: entities ---- */
+.sd-entity rect {
+  fill: var(--bg);
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.sd-entity-head {
+  fill: var(--accent-soft);
+  stroke: none;
+}
+.sd-entity:hover rect:first-of-type {
+  stroke: var(--accent);
+}
+.sd-entity-name {
+  fill: var(--fg);
+  font:
+    700 12px var(--font-manrope),
+    Manrope,
+    sans-serif;
+}
+.sd-entity-field {
+  fill: var(--prose-soft);
+  font:
+    400 10px var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+}
+.sd-rel {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.25;
+  opacity: 0.5;
+  stroke-dasharray: 4 4;
+}
+.sd-rel-label {
+  fill: var(--muted);
+  font:
+    500 9px var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+}
+
+/* Dark theme gets the bloom the neon palette exists for. Light theme
+   deliberately gets none — a glow on cream reads as a printing error. */
+:root[data-theme="dark"] .sd-edge,
+:root[data-theme="dark"] .sd-rel {
+  filter: drop-shadow(0 0 3px var(--accent));
+  opacity: 0.75;
+}
+:root[data-theme="dark"] .sd-figure {
+  box-shadow: none;
+  border-color: var(--surface-line);
+}
+
+/* ---- draw-in ---- */
+@keyframes sd-draw {
+  from {
+    stroke-dashoffset: 90;
+    opacity: 0;
+  }
+}
+[data-revealed="true"] .sd-edge,
+[data-revealed="true"] .sd-rel {
+  animation: sd-draw 0.9s ease-out both;
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+
+/* ---- phase map ---- */
+.sd-phases {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: none;
+}
+.sd-phase {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 16px 14px;
+  border: 1px solid var(--surface-line);
+  border-radius: 14px;
+  background: var(--surface);
+  transition:
+    transform 0.25s,
+    border-color 0.25s;
+}
+.sd-phase:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent);
+}
+.sd-phase-n {
+  color: var(--accent);
+  font:
+    600 10px var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+  letter-spacing: 0.1em;
+}
+.sd-phase-label {
+  color: var(--fg);
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: -0.02em;
+}
+.sd-phase-note {
+  color: var(--prose-soft);
+  font-size: 12px;
+}
+
+/* ---- decisions ---- */
+.sd-decisions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+.sd-decision {
+  padding: 20px;
+  border: 1px solid var(--surface-line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.sd-decision h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  letter-spacing: -0.03em;
+  color: var(--fg);
+}
+.sd-decision p {
+  margin: 0;
+  color: var(--prose-soft);
+  font-size: 13.5px;
+  line-height: 1.65;
+}
+
+/* ---- spec vs reality ---- */
+.sd-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--surface-line);
+  border-radius: var(--radius);
+}
+.sd-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+.sd-table th,
+.sd-table td {
+  padding: 13px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--surface-line);
+}
+.sd-table thead th {
+  background: var(--surface-2);
+  color: var(--fg);
+  font:
+    500 10px var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.sd-table tbody th {
+  color: var(--fg);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.sd-table tbody td {
+  color: var(--prose-soft);
+}
+.sd-table tbody tr:last-child th,
+.sd-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* ---- outro ---- */
+.sd-outro p {
+  max-width: 560px;
+  color: var(--prose-fg);
+  font-size: 18px;
+}
+.sd-outro-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+@media (max-width: 700px) {
+  .sd-section {
+    padding: 40px 0;
+  }
+  .sd-figure {
+    padding: 14px;
+  }
+}
+
+/* The draw-in is decoration; honour the OS setting like the rest of the site. */
+@media (prefers-reduced-motion: reduce) {
+  [data-revealed="true"] .sd-edge,
+  [data-revealed="true"] .sd-rel {
+    animation: none;
+  }
+  .sd-phase:hover {
+    transform: none;
+  }
+}

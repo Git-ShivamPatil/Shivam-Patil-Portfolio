@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { GitHubPanel } from "../../components/stats/github-panel";
 import { LeetCodePanel } from "../../components/stats/leetcode-panel";
+import "./stats.css";
 
 export const metadata: Metadata = {
   title: "Live stats — Shivam Patil",
