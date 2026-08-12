@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import "./system-design.css";
 
 export const metadata: Metadata = {
   title: "System design — Shivam Patil",

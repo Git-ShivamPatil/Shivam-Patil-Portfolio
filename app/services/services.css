@@ -1,0 +1,209 @@
+/* =========================================================================
+   SERVICES, BOOKING AND THE CAL EMBED (/services, /booking/success)
+
+   Split out of app/features.css.
+   ========================================================================= */
+
+.service-offer-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  padding: 30px 0 60px;
+}
+.service-offer-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 28px;
+  border: 1px solid var(--surface-line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.service-offer-card h2 {
+  margin: 0;
+  font-size: 21px;
+  letter-spacing: -0.04em;
+}
+.service-offer-desc {
+  margin: 0;
+  flex: 1;
+  color: var(--prose-soft);
+  font-size: 13px;
+  line-height: 1.7;
+}
+.service-offer-foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.service-offer-foot strong {
+  font:
+    500 22px var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+  letter-spacing: -0.05em;
+}
+.service-offer-foot span {
+  color: var(--muted);
+  font:
+    500 10px var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.booking-section {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 70px;
+  padding-bottom: 110px;
+}
+.booking-heading h2 {
+  margin: 0 0 20px;
+}
+.booking-heading > p:last-child {
+  max-width: 380px;
+  color: var(--prose-soft);
+  font-size: 14px;
+  line-height: 1.7;
+}
+.booking-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.booking-offerings {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+.booking-offerings legend {
+  margin-bottom: 12px;
+  padding: 0;
+}
+.booking-offering {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    background 0.2s,
+    transform 0.2s;
+}
+.booking-offering:hover {
+  border-color: var(--fg);
+  transform: translateX(3px);
+}
+.booking-offering.is-selected {
+  border-color: var(--fg);
+  background: var(--warm);
+}
+.booking-offering input {
+  accent-color: var(--ink);
+}
+.booking-offering div {
+  flex: 1;
+}
+.booking-offering strong {
+  display: block;
+  font-size: 14px;
+}
+.booking-offering span {
+  color: var(--muted);
+  font:
+    500 10px var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+}
+.booking-offering b {
+  font:
+    500 15px var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+  letter-spacing: -0.04em;
+}
+.booking-note,
+.booking-empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.booking-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 18px;
+  width: 100%;
+  max-width: 620px;
+  margin: 0 0 30px;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--warm);
+}
+.booking-summary dt {
+  color: var(--muted);
+  font:
+    500 9px var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.booking-summary dd {
+  margin: 6px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+.cal-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+  margin-bottom: 120px;
+  padding: 48px;
+  border-radius: var(--radius);
+  background: var(--ink);
+  color: #fff;
+}
+.cal-section h2 {
+  margin: 0;
+  font-size: clamp(26px, 3vw, 38px);
+}
+.cal-section h2 em {
+  color: var(--lime);
+}
+.cal-section .eyebrow {
+  color: #aaa9a2;
+}
+.cal-copy {
+  max-width: 400px;
+  margin: 18px 0 0;
+  color: #c9c8c1;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+/* ---------- responsive ---------- */
+@media (max-width: 900px) {
+  .service-offer-grid,
+  .booking-section {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .cal-section {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 32px;
+  }
+}

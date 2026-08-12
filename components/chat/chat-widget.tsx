@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ChatEvent, ChatMessagePayload } from "../../lib/realtime/events";
 import { PRESENCE_EVENT, type PresenceDetail } from "../presence-tracker";
+import "./chat-widget.css";
 
 /** Minimum gap between typing pings while the composer has content. */
 const TYPING_PING_MS = 2200;

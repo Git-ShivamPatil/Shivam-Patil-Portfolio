@@ -1,0 +1,256 @@
+/* =========================================================================
+   LIVE STATS (/stats)
+
+   Split out of app/features.css: these selectors only ever match on /stats,
+   and every byte of them used to be parsed on every route because the file was
+   @import-ed into globals.css. Next scopes a stylesheet imported by a page to
+   that route's CSS chunk, so this now loads for the one page that needs it.
+   ========================================================================= */
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+  padding: 40px 0 132px;
+}
+.stat-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 30px;
+  border: 1px solid var(--surface-line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.stat-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.stat-panel-head .eyebrow {
+  margin: 0;
+}
+.stat-panel-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--fg);
+  font:
+    500 11px var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s;
+}
+.stat-panel-link:hover {
+  border-bottom-color: var(--fg);
+}
+.stat-panel-empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+.stat-panel-empty a {
+  color: var(--fg);
+  text-decoration: underline;
+}
+.stat-figures {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--line);
+}
+.stat-figures strong {
+  display: block;
+  color: var(--fg);
+  font:
+    500 32px/1 var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+  letter-spacing: -0.06em;
+}
+.stat-figures span {
+  display: block;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+.stat-subhead {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font:
+    500 9px var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.stat-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.stat-bar-row {
+  display: grid;
+  grid-template-columns: 92px 1fr 34px;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--fg);
+}
+.stat-bar-track {
+  height: 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--fg) 10%, transparent);
+  overflow: hidden;
+}
+.stat-bar-track i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--lime);
+  /* Grows from nothing on first paint — the bars are the page's main
+     "this is live data" cue, so they earn a little motion. */
+  animation: stat-bar-grow 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: left center;
+}
+@keyframes stat-bar-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.stat-bar-easy {
+  background: var(--cyan);
+}
+.stat-bar-medium {
+  background: var(--orange);
+}
+.stat-bar-hard {
+  background: var(--pink);
+}
+.stat-bar-row b {
+  color: var(--muted);
+  font:
+    500 11px var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+  text-align: right;
+}
+.stat-repos ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--line);
+}
+.stat-repos li a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--line);
+  transition: padding-inline 0.2s;
+}
+.stat-repos li a:hover {
+  padding-inline: 8px;
+  background: var(--warm);
+}
+.stat-repos strong {
+  font-size: 14px;
+  letter-spacing: -0.03em;
+}
+.stat-repos p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.stat-repos span {
+  flex-shrink: 0;
+  color: var(--muted);
+  font:
+    500 10px var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+}
+.stat-footnote {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.stat-provenance {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font:
+    500 10px var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+}
+.stat-provenance.is-stale {
+  color: var(--orange);
+}
+.stat-provenance time {
+  margin-left: 4px;
+}
+.stat-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.stat-skeleton span {
+  display: block;
+  height: 20px;
+  border-radius: 8px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--fg) 7%, transparent),
+    color-mix(in srgb, var(--fg) 14%, transparent),
+    color-mix(in srgb, var(--fg) 7%, transparent)
+  );
+  background-size: 200% 100%;
+  animation: skeleton-sweep 1.4s ease-in-out infinite;
+}
+.stat-skeleton span:nth-child(2) {
+  width: 80%;
+}
+.stat-skeleton span:nth-child(3) {
+  width: 55%;
+}
+@keyframes skeleton-sweep {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* ---------- responsive ---------- */
+@media (max-width: 900px) {
+  .stat-grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+}
+
+@media (max-width: 620px) {
+  .stat-figures {
+    grid-template-columns: 1fr 1fr;
+  }
+  .stat-bar-row {
+    grid-template-columns: 74px 1fr 30px;
+  }
+}

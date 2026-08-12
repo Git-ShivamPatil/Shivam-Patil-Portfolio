@@ -4,6 +4,7 @@ import { formatMoney } from "../../lib/money";
 import { availableProviders } from "../../lib/payments";
 import { BookingForm, type OfferingOption } from "../../components/booking/booking-form";
 import { CalEmbed } from "../../components/booking/cal-embed";
+import "./services.css";
 
 export const metadata: Metadata = {
   title: "Work with me — Shivam Patil",
