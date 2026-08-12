@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { renderQrSvg, type QrStyle } from "../../../lib/growth/qr";
-import { clientIp, takeToken } from "../../../lib/rate-limit";
+import { clientIp, consume } from "../../../lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -92,7 +92,7 @@ export async function GET(request: Request) {
 
   // Metered before any encoding work: rendering is the expensive part, and an
   // attacker varying ?data= defeats the CDN cache on every request.
-  const budget = takeToken(`qr:${clientIp(request)}`, 30, 1 / 2);
+  const budget = await consume(`qr:${clientIp(request)}`, 30, 1 / 2);
   if (!budget.ok) {
     return NextResponse.json(
       { error: "Too many requests." },

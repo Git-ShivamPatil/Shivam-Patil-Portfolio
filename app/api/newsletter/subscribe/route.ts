@@ -3,7 +3,7 @@ import { randomBytes } from "node:crypto";
 import { z } from "zod";
 import { prisma } from "../../../../lib/prisma";
 import { sendNewsletterConfirmation } from "../../../../lib/mail";
-import { takeToken, clientIp } from "../../../../lib/rate-limit";
+import { consume, clientIp } from "../../../../lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,7 +28,7 @@ function token(): string {
  * list, which is a subscriber-privacy leak for a form that anyone can POST to.
  */
 export async function POST(request: Request) {
-  const limit = takeToken(`newsletter:${clientIp(request)}`, 5, 0.2);
+  const limit = await consume(`newsletter:${clientIp(request)}`, 5, 0.2);
   if (!limit.ok) {
     return NextResponse.json(
       { error: "Too many attempts. Try again shortly." },

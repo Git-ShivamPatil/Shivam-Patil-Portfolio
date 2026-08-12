@@ -8,7 +8,7 @@ import {
 } from "../../../../lib/chat";
 import { publish } from "../../../../lib/realtime/hub";
 import { chatMessageSchema } from "../../../../lib/validations/chat";
-import { takeToken, clientIp } from "../../../../lib/rate-limit";
+import { consume, clientIp } from "../../../../lib/rate-limit";
 import { notifyOwnerOfChatMessage } from "../../../../lib/push/notify";
 
 export const runtime = "nodejs";
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
 
   // 10-message burst, then ~1/second sustained. Enough for a fast typist,
   // not enough for a script.
-  const limit = takeToken(
+  const limit = await consume(
     `chat:${identity.guestId ?? identity.userId ?? clientIp(request)}`,
     10,
     1,

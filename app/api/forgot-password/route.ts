@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import { sendOAuthOnlyNotice, sendPasswordResetEmail } from "../../../lib/mail";
 import { forgotPasswordSchema } from "../../../lib/validations/auth";
-import { takeToken, clientIp } from "../../../lib/rate-limit";
+import { consume, clientIp } from "../../../lib/rate-limit";
 
 const TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour
 
@@ -35,8 +35,8 @@ export async function POST(request: Request) {
   // work, and a rejection still returns the same generic body — a distinct
   // 429 here would itself be an enumeration oracle.
   if (
-    !takeToken(`forgot:email:${email}`, 3, 1 / 900).ok ||
-    !takeToken(`forgot:ip:${clientIp(request)}`, 10, 1 / 60).ok
+    !(await consume(`forgot:email:${email}`, 3, 1 / 900)).ok ||
+    !(await consume(`forgot:ip:${clientIp(request)}`, 10, 1 / 60)).ok
   ) {
     return genericResponse();
   }

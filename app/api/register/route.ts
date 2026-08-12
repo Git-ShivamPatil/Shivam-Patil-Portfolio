@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import { hashPassword } from "../../../lib/password";
 import { registerSchema } from "../../../lib/validations/auth";
-import { takeToken, clientIp } from "../../../lib/rate-limit";
+import { consume, clientIp } from "../../../lib/rate-limit";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
   // account-enumeration oracle, so the answer is to make bulk probing
   // impractical rather than to make the message useless: a handful of tries
   // per IP is plenty for a real person and far too few to walk a list.
-  const limit = takeToken(`register:ip:${clientIp(request)}`, 5, 1 / 120);
+  const limit = await consume(`register:ip:${clientIp(request)}`, 5, 1 / 120);
   if (!limit.ok) {
     return NextResponse.json(
       { error: "Too many attempts. Please try again shortly." },
