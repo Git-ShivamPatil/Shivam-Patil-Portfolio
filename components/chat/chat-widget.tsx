@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ChatEvent, ChatMessagePayload } from "../../lib/realtime/events";
+import { PRESENCE_EVENT, type PresenceDetail } from "../presence-tracker";
 
 /** Minimum gap between typing pings while the composer has content. */
 const TYPING_PING_MS = 2200;
@@ -29,6 +30,8 @@ export function ChatWidget() {
   const [unread, setUnread] = useState(0);
   /** True once this visitor has an actual thread — gates the closed-panel poll. */
   const [hasThread, setHasThread] = useState(false);
+  /** P11 presence: is the owner behind an admin screen right now? */
+  const [ownerOnline, setOwnerOnline] = useState(false);
 
   const listRef = useRef<HTMLDivElement | null>(null);
   const lastTypingPing = useRef(0);
@@ -70,7 +73,22 @@ export function ChatWidget() {
         );
         break;
       }
+      case "presence":
+        setOwnerOnline(event.ownerOnline);
+        break;
     }
+  }, []);
+
+  // The presence tracker beats whether or not this widget is open, so the
+  // launcher can carry a truthful "online" pip before anyone clicks it. The
+  // stream's own `presence` event takes over once the panel is open; both write
+  // the same state, and the stream is the fresher of the two.
+  useEffect(() => {
+    const onPresence = (event: Event) => {
+      setOwnerOnline((event as CustomEvent<PresenceDetail>).detail.ownerOnline);
+    };
+    window.addEventListener(PRESENCE_EVENT, onPresence);
+    return () => window.removeEventListener(PRESENCE_EVENT, onPresence);
   }, []);
 
   useEffect(
@@ -95,7 +113,7 @@ export function ChatWidget() {
     };
 
     source.addEventListener("open", () => setConnected(true));
-    for (const name of ["ready", "message", "typing", "read"] as const) {
+    for (const name of ["ready", "message", "typing", "read", "presence"] as const) {
       source.addEventListener(name, onEvent as EventListener);
     }
     source.addEventListener("error", () => setConnected(false));
@@ -196,8 +214,15 @@ export function ChatWidget() {
           <header className="chat-panel-head">
             <div>
               <strong>Chat with Shivam</strong>
-              <span className={connected ? "chat-status is-live" : "chat-status"}>
-                {connected ? "connected" : "connecting…"}
+              {/* Two different facts, and conflating them would be a lie: the
+                  transport being up says nothing about whether anyone is
+                  reading. Once connected, the useful line is the second one. */}
+              <span className={ownerOnline ? "chat-status is-live" : "chat-status"}>
+                {!connected
+                  ? "connecting…"
+                  : ownerOnline
+                    ? "Shivam is online"
+                    : "Away — replies land in your inbox"}
               </span>
             </div>
             <button type="button" onClick={() => setOpen(false)} aria-label="Close chat">
@@ -285,6 +310,11 @@ export function ChatWidget() {
       >
         {open ? "✕" : "💬"}
         {!open && unread > 0 && <i className="chat-badge">{unread}</i>}
+        {/* The pip is suppressed while an unread badge is showing — two dots in
+            the same corner read as one broken one. */}
+        {!open && unread === 0 && ownerOnline && (
+          <i className="chat-online-pip" aria-hidden="true" />
+        )}
       </button>
     </div>
   );

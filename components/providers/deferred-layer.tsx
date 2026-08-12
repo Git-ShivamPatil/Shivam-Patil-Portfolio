@@ -20,6 +20,8 @@ import { Toaster } from "sonner";
  * - `ScrollProgress`, `BackToTop` — both are functions of scroll position, and
  *   scroll position is 0 until the page is visible enough to scroll.
  * - `ChatWidget` — a launcher button in the corner.
+ * - `PresenceTracker` — renders nothing at all; it beats a heartbeat so the
+ *   chat widget can say whether the owner is around.
  * - `Toaster` — renders nothing until something calls `toast()`, which only
  *   happens on a user action.
  *
@@ -59,6 +61,13 @@ const BackToTop = dynamic(() => import("../back-to-top").then((m) => m.BackToTop
 const ChatWidget = dynamic(() => import("../chat/chat-widget").then((m) => m.ChatWidget), {
   ssr: false,
 });
+// P11. Deferred for the same reason as the chat launcher it feeds: a heartbeat
+// that arrives after first paint is still a heartbeat, and nothing on screen
+// depends on it before then.
+const PresenceTracker = dynamic(
+  () => import("../presence-tracker").then((m) => m.PresenceTracker),
+  { ssr: false },
+);
 
 export function DeferredLayer() {
   const [ready, setReady] = useState(false);
@@ -89,6 +98,7 @@ export function DeferredLayer() {
       <ScrollProgress />
       <CursorFollower />
       <BackToTop />
+      <PresenceTracker />
       <ChatWidget />
       <Toaster
         position="bottom-right"
