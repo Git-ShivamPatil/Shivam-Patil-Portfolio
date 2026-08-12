@@ -4,13 +4,34 @@
 // thrown above it, so it must render its own <html>/<body> and cannot rely on
 // <Header>/<Footer> from the normal layout.
 import "./globals.css";
+import { useEffect } from "react";
 
 export default function GlobalError({
+  error,
   reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  // P14. An error that takes out the root layout never reaches a server log —
+  // it happened in the browser, after hydration. Reported through our own
+  // origin rather than straight to Sentry, so the DSN stays server-side and the
+  // CSP's connect-src can stay 'self'. Fire-and-forget: the page is already
+  // showing an error screen, and a failed report must not produce a second one.
+  useEffect(() => {
+    void fetch("/api/report-error", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: error.message,
+        stack: error.stack,
+        digest: error.digest,
+        path: window.location.pathname,
+      }),
+      keepalive: true,
+    }).catch(() => undefined);
+  }, [error]);
+
   return (
     <html lang="en">
       <body>

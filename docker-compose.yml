@@ -1,0 +1,68 @@
+# P14 — the whole stack, locally, with no cloud account.
+#
+#   docker compose up --build
+#
+# What this is for: reproducing a build without the platform, and giving the
+# Postgres-backed features (presence, analytics, the chat poll, the P16 vector
+# index) a database that is not the production one. Neon's free tier is a single
+# database, so "just point local dev at production" is how a test booking ends
+# up in a real invoice table.
+#
+# `pgvector/pgvector` rather than plain `postgres`: P16 stores embeddings in a
+# vector column, and the extension has to exist before the schema can be pushed.
+# Neon offers the same extension, which is why the two environments agree.
+
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_USER: portfolio
+      POSTGRES_PASSWORD: portfolio
+      POSTGRES_DB: portfolio
+    ports:
+      # Exposed so `pnpm db:push` and Prisma Studio can reach it from the host.
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      # `pg_isready` alone reports true during the init script's own startup, so
+      # the app can connect to a database that is about to be restarted. Naming
+      # the database and user is what makes this mean "ready for us".
+      test: ["CMD-SHELL", "pg_isready -U portfolio -d portfolio"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      # `db` resolves on the compose network. The app connects with the pooled
+      # URL and Prisma's CLI with the direct one; against a local Postgres they
+      # are the same, and keeping both set matches production's shape.
+      DATABASE_URL: postgresql://portfolio:portfolio@db:5432/portfolio
+      DIRECT_URL: postgresql://portfolio:portfolio@db:5432/portfolio
+      AUTH_URL: http://localhost:3000
+      AUTH_TRUST_HOST: "true"
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      # Read from a file rather than passed inline — this is the pattern the
+      # vault's NAME_FILE support exists for. An environment variable is visible
+      # to every process in the container and shows up in `docker inspect`.
+      AUTH_SECRET_FILE: /run/secrets/auth_secret
+    secrets:
+      - auth_secret
+
+secrets:
+  auth_secret:
+    # Generate once, and never commit it:
+    #   node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))" > .secrets/auth_secret
+    file: ./.secrets/auth_secret
+
+volumes:
+  db-data:

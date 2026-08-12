@@ -6,20 +6,31 @@ on:
   pull_request:
     branches: [main]
 
+# A second push to the same branch makes the first run's result irrelevant.
+# Cancelling it frees a runner and stops a stale red X from sitting on a commit
+# that has already been superseded. Never cancels on main: those runs are the
+# record of what was released.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+env:
+  # Deliberately unreachable placeholders. `next build` prerenders pages and
+  # runs generateStaticParams, both of which touch the database — and this job
+  # asserts that a build SURVIVES having no database, degrading to on-demand
+  # rendering instead of failing. That is the same resilience a Vercel deploy
+  # needs when Neon has a blip mid-build.
+  DATABASE_URL: "postgresql://user:pass@localhost:5432/db"
+  DIRECT_URL: "postgresql://user:pass@localhost:5432/db"
+  AUTH_SECRET: "ci-placeholder-secret"
+  AUTH_URL: "http://localhost:3000"
+  NEXT_PUBLIC_SITE_URL: "https://shivamsfolio.com"
+
 jobs:
+  # Lint, typecheck, test and build. The gate every change passes.
   build:
+    name: Build and unit tests
     runs-on: ubuntu-latest
-    env:
-      # Deliberately unreachable placeholders. `next build` prerenders pages
-      # and runs generateStaticParams, both of which touch the database — and
-      # this job asserts that a build SURVIVES having no database, degrading to
-      # on-demand rendering instead of failing. That is the same resilience a
-      # Vercel deploy needs when Neon has a blip mid-build.
-      DATABASE_URL: "postgresql://user:pass@localhost:5432/db"
-      DIRECT_URL: "postgresql://user:pass@localhost:5432/db"
-      AUTH_SECRET: "ci-placeholder-secret"
-      AUTH_URL: "http://localhost:3000"
-      NEXT_PUBLIC_SITE_URL: "https://shivamsfolio.com"
     steps:
       - uses: actions/checkout@v5
 
@@ -58,3 +69,62 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+      # Handed to the E2E job so it runs against the same artifact this job
+      # produced, rather than building a second time. Two builds are two chances
+      # to test something other than what was verified.
+      - name: Upload build
+        uses: actions/upload-artifact@v4
+        with:
+          name: next-build
+          path: |
+            .next
+            !.next/cache
+          retention-days: 1
+          include-hidden-files: true
+
+  # P15. Real browsers, clicking real links.
+  #
+  # This exists because of a specific bug: every client-side navigation on this
+  # site rendered a blank page for days while every route returned 200 with
+  # complete HTML. `fetch()` sweeps could not see it and unit tests could not
+  # see it. Only clicking could.
+  e2e:
+    name: E2E and accessibility
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Download build
+        uses: actions/download-artifact@v4
+        with:
+          name: next-build
+          path: .next
+
+      # Chromium only. The bugs this suite is built to catch are navigation and
+      # rendering bugs, not engine differences, and three browsers would triple
+      # the runtime to re-answer a question the first one already answered.
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run E2E
+        run: pnpm test:e2e
+
+      - name: Upload report
+        # `always()`: the report is at its most useful precisely when the step
+        # before it failed.
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 7

@@ -1,0 +1,28 @@
+# Everything here either bloats the build context or must never enter an image.
+
+# Secrets. .env.example is the only env file that belongs in a repo, and none of
+# them belong in an image — the container reads secrets from the environment or
+# from a mounted file (lib/security/vault.ts).
+.env
+.env.*
+!.env.example
+
+node_modules
+.next
+.git
+.github
+.husky
+.vercel
+coverage
+playwright-report
+test-results
+
+# Build output and caches from the host. Copying a host .next into the image is
+# how a stale build silently ships.
+*.tsbuildinfo
+.DS_Store
+
+# Documentation and tests are not needed to run the server. They are needed to
+# BUILD it in CI, which is a different pipeline — this file only governs the
+# image.
+ignore_old
