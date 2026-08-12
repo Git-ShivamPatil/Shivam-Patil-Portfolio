@@ -1,0 +1,70 @@
+import { defineConfig, devices } from "@playwright/test";
+
+/**
+ * P15 — the layer 185 unit tests structurally cannot be.
+ *
+ * This suite exists because of one specific bug. For days, **every internal
+ * link on this site led to a blank page**: the content was in the DOM and
+ * correct, and simply invisible. Every route returned 200 with complete HTML
+ * the entire time. The unit tests passed, the build passed, and every route
+ * audit up to that point had used `fetch()`, which tests server responses and
+ * therefore could not see it. The only thing that could was clicking.
+ *
+ * So the specs here click. They assert *visibility* rather than presence, and
+ * they navigate the way a visitor does rather than by calling `page.goto()` for
+ * each route — a `goto` is a fresh document load, which is precisely the case
+ * that always worked.
+ *
+ * **Chromium only.** The bugs this catches are navigation, reveal and contrast
+ * bugs, not engine differences. Three browsers would triple the runtime to
+ * re-answer a question the first one already answered.
+ */
+
+const PORT = Number(process.env.E2E_PORT ?? 3210);
+const baseURL = `http://127.0.0.1:${PORT}`;
+
+export default defineConfig({
+  testDir: "./e2e",
+  // Each spec file is independent; nothing shares state through the database.
+  fullyParallel: true,
+  // A `.only` left in a file is a whole suite silently not running.
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 1 : 0,
+  // One worker in CI: the app under test is a single Next server talking to one
+  // Neon connection, so more workers means contention, not speed.
+  workers: process.env.CI ? 1 : undefined,
+  reporter: process.env.CI ? [["html", { open: "never" }], ["list"]] : "list",
+
+  use: {
+    baseURL,
+    trace: "on-first-retry",
+    screenshot: "only-on-failure",
+    // The reveal drivers are gated on prefers-reduced-motion. Running with
+    // motion enabled is the configuration real visitors get and the one the
+    // blank-page bug lived in; the reduced-motion path is asserted explicitly
+    // in its own test instead.
+    //
+    // Set through contextOptions rather than as a top-level `use` key: it is a
+    // browser-context option in this version, and the top-level spelling type
+    // errors under `pnpm typecheck`.
+    contextOptions: { reducedMotion: "no-preference" },
+  },
+
+  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+
+  webServer: {
+    // `next start`, not `next dev`. Dev compiles on demand and ships an
+    // unminified bundle with different chunking, so a suite run against it
+    // proves nothing about what deploys.
+    command: `pnpm exec next start -p ${PORT}`,
+    url: `${baseURL}/api/health`,
+    reuseExistingServer: !process.env.CI,
+    timeout: 120_000,
+    env: {
+      NODE_ENV: "production",
+      // Whatever the developer has in .env.local; the suite reads no secrets of
+      // its own and asserts nothing that depends on one being present.
+      PORT: String(PORT),
+    },
+  },
+});

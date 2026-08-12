@@ -40,13 +40,13 @@ describe("cache headers", () => {
     expect(cacheControl).not.toContain("immutable");
   });
 
-  it("caches content-hashed assets forever", async () => {
-    const cacheControl = headerValue(
-      ruleFor(await rules(), "/_next/static/:path*"),
-      "Cache-Control",
-    );
-    expect(cacheControl).toContain("immutable");
-    expect(cacheControl).toContain("max-age=31536000");
+  it("leaves /_next/static to Next rather than restating it", async () => {
+    // Next already serves content-hashed assets as immutable for a year.
+    // Declaring it again changes nothing in production and makes the build warn
+    // that a custom Cache-Control there can break dev behaviour — which it can,
+    // because dev serves those paths differently.
+    const sources = (await rules()).map((rule) => rule.source);
+    expect(sources).not.toContain("/_next/static/:path*");
   });
 
   it("gives the résumé a short browser TTL and a long edge one", async () => {

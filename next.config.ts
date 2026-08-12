@@ -56,14 +56,12 @@ const nextConfig: NextConfig = {
         source: "/:path*",
         headers: securityHeaders(),
       },
-      {
-        // Everything under /_next/static is content-hashed, so the only correct
-        // answer is "never revalidate". Next sets this itself for its own
-        // assets; stating it here means it survives a self-hosted deploy where
-        // nothing else would.
-        source: "/_next/static/:path*",
-        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
-      },
+      // Deliberately NO rule for /_next/static. Everything there is
+      // content-hashed and Next already serves it `immutable` for a year;
+      // restating that here changes nothing in production and makes the build
+      // warn that "a custom Cache-Control header can break Next.js development
+      // behavior" — which it can, because dev serves those paths differently.
+      // A redundant header that costs a warning is worse than no header.
       {
         // The résumé is the single most-downloaded file on the site and it
         // changes a few times a year. A day at the edge with a week of

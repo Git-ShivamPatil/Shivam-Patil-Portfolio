@@ -53,3 +53,8 @@ next-env.d.ts
 # The root copy of logo.jpeg was a stray duplicate of public/logo.jpeg
 # (byte-identical). The one under public/ is the one next/image serves.
 logo.jpeg
+
+# Playwright
+playwright-report/
+test-results/
+.lighthouseci/
