@@ -4,6 +4,7 @@ import { AnimatedMetric } from "../components/animated-metric";
 import { ProjectFilter } from "../components/project-filter";
 import { getProjects } from "./projects";
 import { getSkillNames } from "./skills";
+import { jsonForScript } from "../lib/security/escape";
 
 const personJsonLd = {
   "@context": "https://schema.org",
@@ -27,9 +28,13 @@ export default async function Home() {
   const [projects, skills] = await Promise.all([getProjects(), getSkillNames()]);
   return (
     <>
+      {/* P13: serialised through jsonForScript rather than JSON.stringify. A
+          JSON string containing "</script" ends the element as far as the HTML
+          parser is concerned, whatever the JSON says. The input here is static
+          today — but that is a property of today's data, not of the code. */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonForScript(personJsonLd) }}
       />
       <section className="hero shell">
         <div className="hero-copy reveal">

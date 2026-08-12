@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { securityHeaders } from "./lib/security/headers";
 
 /**
  * P12 — the delivery layer.
@@ -47,6 +48,14 @@ const nextConfig: NextConfig = {
 
   async headers() {
     return [
+      {
+        // P13. Applied here rather than in the proxy because a proxy that
+        // matches a route forces it to render dynamically — putting the
+        // security headers in middleware would quietly convert every static
+        // page into a per-request render. See lib/security/headers.ts.
+        source: "/:path*",
+        headers: securityHeaders(),
+      },
       {
         // Everything under /_next/static is content-hashed, so the only correct
         // answer is "never revalidate". Next sets this itself for its own

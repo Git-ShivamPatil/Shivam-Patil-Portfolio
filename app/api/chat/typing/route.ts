@@ -3,7 +3,7 @@ import { prisma } from "../../../../lib/prisma";
 import { resolveIdentity, getVisitorConversation, TYPING_TTL_MS } from "../../../../lib/chat";
 import { publish } from "../../../../lib/realtime/hub";
 import { chatTypingSchema } from "../../../../lib/validations/chat";
-import { takeToken, clientIp } from "../../../../lib/rate-limit";
+import { consume, clientIp } from "../../../../lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,7 +18,7 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
   const identity = await resolveIdentity();
 
-  const limit = takeToken(
+  const limit = await consume(
     `typing:${identity.guestId ?? identity.userId ?? clientIp(request)}`,
     8,
     1,

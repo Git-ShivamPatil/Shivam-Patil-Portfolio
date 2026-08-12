@@ -1,5 +1,5 @@
 import { NextResponse, after } from "next/server";
-import { clientIp, takeToken } from "../../../../lib/rate-limit";
+import { clientIp, consume } from "../../../../lib/rate-limit";
 import { collectSchema } from "../../../../lib/validations/analytics";
 import { recordVisit } from "../../../../lib/analytics/collect";
 import { geoFromHeaders } from "../../../../lib/analytics/geo";
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
   // for the same reason as the /r/[code] redirect — the visitor hash mixes in
   // the User-Agent, so keying on both would let a caller rotate that header to
   // mint an unlimited number of fresh buckets.
-  const budget = takeToken(`analytics:${ip}`, 40, 0.5);
+  const budget = await consume(`analytics:${ip}`, 40, 0.5);
   if (!budget.ok) return noContent();
 
   // `sendBeacon` posts a Blob, so the Content-Type is whatever the client set

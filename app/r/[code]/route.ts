@@ -1,6 +1,6 @@
 import { NextResponse, after } from "next/server";
 import { prisma } from "../../../lib/prisma";
-import { clientIp, takeToken } from "../../../lib/rate-limit";
+import { clientIp, consume } from "../../../lib/rate-limit";
 import { buildDestination, recordClick } from "../../../lib/growth/links";
 
 // Reads headers and writes click rows — never static, never cached.
@@ -60,7 +60,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ code
   // counters. Metering on IP alone is deliberate — the visitor hash mixes in
   // the User-Agent, so a caller rotating that header would otherwise mint a
   // fresh bucket (and a fresh "unique" visitor) on every request.
-  const budget = takeToken(`r:${ip}`, 20, 1 / 3);
+  const budget = await consume(`r:${ip}`, 20, 1 / 3);
   if (budget.ok) {
     after(() => recordClick(linkId, context));
   }

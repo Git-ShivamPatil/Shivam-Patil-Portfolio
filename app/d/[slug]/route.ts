@@ -1,5 +1,5 @@
 import { NextResponse, after } from "next/server";
-import { clientIp, takeToken } from "../../../lib/rate-limit";
+import { clientIp, consume } from "../../../lib/rate-limit";
 import { findDownload } from "../../../lib/analytics/downloads";
 import { recordDownload } from "../../../lib/analytics/collect";
 import { geoFromHeaders } from "../../../lib/analytics/geo";
@@ -42,7 +42,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
   // their download; we simply stop counting — the same split the referral
   // redirect makes, and for the same reason: this is an anonymous endpoint
   // that writes rows and takes a row lock on the shared counter.
-  const budget = takeToken(`download:${ip}`, 10, 1 / 6);
+  const budget = await consume(`download:${ip}`, 10, 1 / 6);
   if (budget.ok) {
     const context = {
       ip,

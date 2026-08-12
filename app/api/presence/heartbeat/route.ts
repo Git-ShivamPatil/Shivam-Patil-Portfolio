@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "../../../../auth";
-import { clientIp, takeToken } from "../../../../lib/rate-limit";
+import { clientIp, consume } from "../../../../lib/rate-limit";
 import { deviceFrom } from "../../../../lib/growth/links";
 import { geoFromHeaders } from "../../../../lib/analytics/geo";
 import { isExcludedPath, normalizePath } from "../../../../lib/analytics/normalize";
@@ -59,7 +59,7 @@ export async function POST(request: Request) {
   // table open. Metered on IP alone — keying on the token would let a caller
   // rotate it to mint unlimited buckets, which is exactly what the limiter is
   // supposed to stop.
-  if (!takeToken(`presence:${ip}`, 12, 0.2).ok) {
+  if (!(await consume(`presence:${ip}`, 12, 0.2)).ok) {
     return NextResponse.json(
       { ownerOnline: false, intervalMs: PRESENCE_HEARTBEAT_MS },
       { status: 429 },
