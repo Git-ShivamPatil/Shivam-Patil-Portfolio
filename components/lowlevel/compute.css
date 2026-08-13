@@ -1,0 +1,106 @@
+/* =========================================================================
+   P19 — COMPUTE LAB
+   Route-scoped; imported by the component. Theme tokens only.
+   ========================================================================= */
+
+.compute-lab {
+  display: grid;
+  gap: 22px;
+}
+.compute-support ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.compute-support li {
+  padding: 6px 13px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font:
+    500 11px var(--font-dm-mono),
+    monospace;
+}
+/* Availability is carried by border style and weight, not by red/green — two
+   more hues would break the two-colour brief, and colour alone is not an
+   accessible signal anyway. The text says which it is. */
+.compute-support li[data-ok="true"] {
+  border-color: var(--accent);
+  color: var(--fg);
+}
+.compute-support li[data-ok="false"] {
+  border-style: dashed;
+}
+
+.compute-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.compute-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.compute-table caption {
+  margin-bottom: 12px;
+  color: var(--prose-soft);
+  font-size: 12px;
+  text-align: left;
+}
+.compute-table th,
+.compute-table td {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+.compute-table thead th {
+  color: var(--muted);
+  font:
+    600 10px var(--font-dm-mono),
+    monospace;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.compute-table tbody th {
+  color: var(--fg);
+  font-weight: 600;
+}
+.compute-table td {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.compute-note-cell {
+  font-size: 11.5px;
+}
+.compute-note {
+  margin: 0;
+  color: var(--prose-soft);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.compute-canvas {
+  width: 100%;
+  max-width: 640px;
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  /* The tile is greyscale; a background keeps the frame visible before a run. */
+  background: var(--surface);
+  image-rendering: pixelated;
+}
+
+@media (max-width: 620px) {
+  .compute-table {
+    font-size: 12px;
+  }
+  .compute-table th,
+  .compute-table td {
+    padding: 8px 6px;
+  }
+}

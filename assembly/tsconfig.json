@@ -1,0 +1,5 @@
+{
+  "$comment": "AssemblyScript is a different language with the same syntax: it has i32/usize/f64 as real types and no DOM. It gets its own config, and the root tsconfig excludes this directory — typechecking it with the app's config produces dozens of 'Cannot find name usize' errors for code that is not TypeScript.",
+  "extends": "assemblyscript/std/assembly.json",
+  "include": ["./**/*.ts"]
+}

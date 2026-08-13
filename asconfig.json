@@ -1,0 +1,29 @@
+{
+  "$comment": [
+    "P19 — AssemblyScript build config.",
+    "",
+    "Output goes to public/wasm so the module is served as a static asset with",
+    "the same immutable caching every other build artefact gets, rather than",
+    "through a route that would invoke a function to serve a fixed file.",
+    "",
+    "The .wasm is committed. That is deliberate: it means `pnpm build` needs no",
+    "second toolchain, CI does not compile it, and a Vercel deploy cannot fail",
+    "because an AssemblyScript version drifted — the same reasoning that moved",
+    "the fonts into the repo in P12. `pnpm wasm:build` regenerates it, and a",
+    "test asserts the committed binary matches the source it claims to be."
+  ],
+  "targets": {
+    "release": {
+      "outFile": "public/wasm/kernel.wasm",
+      "textFile": "public/wasm/kernel.wat",
+      "optimizeLevel": 3,
+      "shrinkLevel": 0,
+      "converge": false,
+      "noAssert": true
+    }
+  },
+  "options": {
+    "bindings": "raw",
+    "exportRuntime": true
+  }
+}

@@ -56,6 +56,45 @@ const nextConfig: NextConfig = {
         source: "/:path*",
         headers: securityHeaders(),
       },
+      {
+        // P19 — cross-origin isolation, on exactly one route.
+        //
+        // SharedArrayBuffer requires COOP: same-origin (already global) *and*
+        // COEP: require-corp. COEP is the reason this cannot be site-wide: it
+        // blocks every cross-origin subresource that does not explicitly opt in
+        // with CORP or CORS, which on this site means the OpenStreetMap frame
+        // on /reach-out and the OAuth avatar images would stop loading. Scoping
+        // it to /compute gives that page real isolation and leaves the rest of
+        // the site alone — the correct answer rather than a compromise.
+        //
+        // Our own assets already carry `Cross-Origin-Resource-Policy:
+        // same-origin` from the P13 header set, which is what lets the page's
+        // own scripts, fonts and the .wasm load under COEP at all.
+        source: "/compute",
+        headers: [
+          { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
+          { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+        ],
+      },
+      {
+        // The worker is fetched by the isolated page, so it needs the same
+        // treatment. Without CORP on it, COEP blocks the very script the
+        // isolation exists to enable.
+        source: "/workers/:path*",
+        headers: [{ key: "Cross-Origin-Resource-Policy", value: "same-origin" }],
+      },
+      {
+        // Content-hashed by the build, so it can be cached hard. The explicit
+        // Content-Type matters: `WebAssembly.instantiateStreaming` refuses
+        // anything that is not `application/wasm` and falls back to a slower
+        // non-streaming path only if the caller wrote one.
+        source: "/wasm/:path*",
+        headers: [
+          { key: "Content-Type", value: "application/wasm" },
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+          { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
+        ],
+      },
       // Deliberately NO rule for /_next/static. Everything there is
       // content-hashed and Next already serves it `immutable` for a year;
       // restating that here changes nothing in production and makes the build

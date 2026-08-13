@@ -46,6 +46,7 @@ export const NAVIGATION_COMMANDS: Command[] = [
   { id: "nav-blog", label: "Blog", href: "/blog", kind: "navigate", group: "Go to", keywords: "writing posts articles" },
   { id: "nav-ask", label: "Ask this site", href: "/ask", kind: "navigate", group: "Go to", keywords: "search rag retrieval ai question" },
   { id: "nav-terminal", label: "Terminal", href: "/terminal", kind: "navigate", group: "Go to", keywords: "cli shell console command line" },
+  { id: "nav-compute", label: "Compute lab", href: "/compute", kind: "navigate", group: "Go to", keywords: "wasm webassembly webgpu workers benchmark parallel simd" },
   { id: "nav-system", label: "System design", href: "/system-design", kind: "navigate", group: "Go to", keywords: "architecture diagrams decisions" },
   { id: "nav-skills", label: "Skills", href: "/skills", kind: "navigate", group: "Go to", keywords: "stack technologies graph" },
   { id: "nav-experience", label: "Experience", href: "/experience", kind: "navigate", group: "Go to", keywords: "work history roles education" },

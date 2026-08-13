@@ -27,7 +27,8 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:lighthouse": "lhci autorun",
-    "ai:index": "tsx prisma/build-index.ts"
+    "ai:index": "tsx prisma/build-index.ts",
+    "wasm:build": "asc assembly/kernel.ts --config asconfig.json --target release"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
