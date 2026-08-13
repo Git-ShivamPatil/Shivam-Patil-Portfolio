@@ -135,9 +135,37 @@ jobs:
             echo "::error::secrets.E2E_DATABASE_URL is not set. The E2E suite needs a reachable database; see HANDOFF 'CI needs a database'."
             exit 1
           fi
+          # Never printed, only tested for. `prisma db push` takes advisory
+          # locks and runs session-level statements, which PgBouncer in
+          # transaction mode cannot carry — so a pooled URL fails at "Push
+          # schema" with an error that says nothing about pooling. Naming it
+          # here costs one string comparison and saves a whole debugging cycle.
+          case "${DATABASE_URL}" in
+            *-pooler.*)
+              echo "::error::E2E_DATABASE_URL is the POOLED endpoint (its host contains '-pooler'). Prisma's schema push needs the direct one — copy the connection string again with connection pooling turned OFF."
+              exit 1
+              ;;
+          esac
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      # Must come BEFORE `db push`, and the schema comment on KnowledgeChunk is
+      # what says why: `embedding` is `Unsupported("vector(256)")`, so the table
+      # cannot be created at all until the extension providing that type exists.
+      #
+      # `pnpm ai:index` also creates it, which is enough on a database that has
+      # already been through this once — and is why the ordering held on
+      # production and failed the first time CI pointed at a fresh branch. The
+      # indexer cannot simply run earlier: it writes to the very tables `db
+      # push` is about to create.
+      #
+      # `prisma db execute` rather than psql, so this depends on the toolchain
+      # the repo already installs rather than on what the runner image ships.
+      # It takes no `--url` in Prisma 7 — the datasource comes from
+      # prisma.config.ts, which reads DIRECT_URL, which this job sets above.
+      - name: Enable pgvector
+        run: echo 'CREATE EXTENSION IF NOT EXISTS vector;' | pnpm exec prisma db execute --stdin
 
       # `db push` rather than `migrate deploy`: this project has never used a
       # migration history, and the CI branch is disposable.
