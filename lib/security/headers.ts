@@ -62,6 +62,17 @@ const FRAME_ORIGINS = ["https://www.openstreetmap.org"];
  * The alternative was proxying several hundred megabytes of model weights
  * through our own functions on a free tier, which is not an alternative.
  */
+/**
+ * Where P20 fetches the DuckDB WebAssembly bundle.
+ *
+ * jsDelivr, because that is where duckdb-wasm publishes its bundles and
+ * self-hosting ~30MB of WebAssembly would mean committing it to this repo and
+ * serving it from our own bandwidth for a feature most visitors never open.
+ * Read-only CDN, no POST target, and — like the model repositories below — a
+ * named origin rather than a wildcard.
+ */
+const DATA_ORIGINS = ["https://cdn.jsdelivr.net"];
+
 const MODEL_ORIGINS = [
   // The MLC model repository and its CDN.
   "https://huggingface.co",
@@ -114,6 +125,10 @@ export function contentSecurityPolicy(mode: PolicyMode = currentMode()): string 
       // the directive exists separately, and it is why enabling it here does
       // not give back what 'unsafe-eval' would.
       "'wasm-unsafe-eval'",
+      // P20. DuckDB's worker is a blob that importScripts() its bundle from the
+      // CDN, so the CDN must be a permitted script source as well as a
+      // permitted connect target.
+      ...DATA_ORIGINS,
       // Next's dev server compiles with eval-based source maps and reloads over
       // a websocket. Neither is present in a production build.
       ...(isProduction ? [] : ["'unsafe-eval'"]),
@@ -138,6 +153,7 @@ export function contentSecurityPolicy(mode: PolicyMode = currentMode()): string 
     "connect-src": [
       "'self'",
       ...MODEL_ORIGINS,
+      ...DATA_ORIGINS,
       ...(isProduction ? [] : ["ws:", "http://localhost:*"]),
     ],
 

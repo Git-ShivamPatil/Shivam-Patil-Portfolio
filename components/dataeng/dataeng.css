@@ -1,0 +1,204 @@
+/* =========================================================================
+   P20 — OLAP CONSOLE, LINEAGE DAG, STREAM WINDOWS
+   Route-scoped. Theme tokens only.
+   ========================================================================= */
+
+.olap {
+  display: grid;
+  gap: 12px;
+}
+.olap-examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.olap-examples button {
+  padding: 7px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: 500 12px var(--font-manrope), sans-serif;
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    border-color 0.2s;
+}
+.olap-examples button:hover {
+  color: var(--fg);
+  border-color: var(--fg);
+}
+.olap textarea {
+  width: 100%;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--fg);
+  font:
+    400 12.5px/1.7 var(--font-dm-mono),
+    monospace;
+  resize: vertical;
+}
+.olap textarea:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.olap-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+.olap-actions .ask-note {
+  margin: 0;
+  flex: 1;
+  min-width: 220px;
+}
+.olap-status {
+  margin: 0;
+  color: var(--accent-strong);
+  font:
+    500 12px var(--font-dm-mono),
+    monospace;
+}
+.olap-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.olap-result table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+.olap-result th,
+.olap-result td {
+  padding: 9px 13px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  white-space: nowrap;
+}
+.olap-result th {
+  color: var(--muted);
+  font:
+    600 10px var(--font-dm-mono),
+    monospace;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.olap-result td {
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+.olap-result tr:last-child td {
+  border-bottom: 0;
+}
+
+/* ---------- lineage ---------- */
+.lineage {
+  margin: 0;
+}
+.lineage svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.lineage-edges path {
+  stroke: var(--line);
+  stroke-width: 1.5;
+}
+.lineage-node rect {
+  fill: var(--surface);
+  stroke: var(--line);
+  stroke-width: 1.5;
+}
+.lineage-node text {
+  fill: var(--fg);
+  font:
+    600 11px var(--font-manrope),
+    sans-serif;
+}
+/* Kind is carried by stroke treatment, not by a fourth and fifth hue. */
+.lineage-source rect {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+.lineage-sink rect {
+  fill: var(--accent-soft);
+}
+.lineage-view rect {
+  stroke-dasharray: 5 3;
+}
+.lineage figcaption {
+  margin-top: 14px;
+  color: var(--prose-soft);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.lineage-legend {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  margin: 26px 0 0;
+}
+.lineage-legend dt {
+  color: var(--fg);
+  font-size: 13px;
+  font-weight: 600;
+}
+.lineage-legend dt code {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font:
+    400 10.5px var(--font-dm-mono),
+    monospace;
+  font-weight: 400;
+}
+.lineage-legend dd {
+  margin: 6px 0 0;
+  color: var(--prose-soft);
+  font-size: 12px;
+  line-height: 1.65;
+}
+.lineage-problems {
+  padding: 20px;
+  border: 1px dashed var(--accent-strong);
+  border-radius: var(--radius);
+  color: var(--fg);
+}
+.lineage-problems ul {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  color: var(--prose-soft);
+  font-size: 13px;
+}
+
+/* ---------- stream windows ---------- */
+.windows {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 110px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.windows li {
+  flex: 1;
+  min-height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--accent);
+  opacity: 0.85;
+}
+.windows li[data-empty="true"] {
+  background: var(--line);
+}
+
+@media (max-width: 620px) {
+  .olap textarea {
+    font-size: 11.5px;
+  }
+}

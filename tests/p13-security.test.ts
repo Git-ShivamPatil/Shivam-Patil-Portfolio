@@ -92,6 +92,8 @@ describe("the content security policy", () => {
       "https://cdn-lfs.huggingface.co",
       "https://cdn-lfs-us-1.hf.co",
       "https://raw.githubusercontent.com",
+      // P20 — the DuckDB WebAssembly bundle.
+      "https://cdn.jsdelivr.net",
     ]);
     expect(connectSrc.filter((origin) => !allowed.has(origin))).toEqual([]);
   });
@@ -118,12 +120,19 @@ describe("the content security policy", () => {
     expect(csp().get("worker-src")).toBe("'self' blob:");
   });
 
-  it("still refuses third-party script sources", () => {
+  it("permits exactly one third-party script origin, and names it", () => {
     const scriptSrc = csp().get("script-src") ?? "";
     expect(scriptSrc).toContain("'self'");
-    expect(scriptSrc).not.toMatch(/https?:\/\//);
     // No eval outside development.
     expect(scriptSrc).not.toContain("'unsafe-eval'");
+
+    // P20 opened the DuckDB CDN, because its worker is a blob that
+    // importScripts() its own bundle and cannot run from a blob alone.
+    // Asserted as an allowlist rather than "no origins", so a second one
+    // cannot appear without being named here — which is the point of pinning
+    // this at all.
+    const scriptOrigins = scriptSrc.split(" ").filter((value) => value.startsWith("http"));
+    expect(scriptOrigins).toEqual(["https://cdn.jsdelivr.net"]);
   });
 
   it("serves fonts from our own origin only", () => {
@@ -262,11 +271,36 @@ describe("CSRF", () => {
   });
 });
 
-describe("no raw SQL escape hatches", () => {
-  /** Every .ts/.tsx file we author, excluding generated output. */
+/**
+ * Directories that cannot contain authored source.
+ *
+ * The list grew with the project. By P20 the walk was also descending into the
+ * Playwright report, the build output, the vendored fonts and public/ — and
+ * under twenty concurrent test files it started exceeding the default 5s
+ * timeout, passing alone and failing in the suite. That reads as flakiness
+ * rather than as a scan with too much to do. Same shape as the bcrypt timeout
+ * in p2-password.
+ */
+const SKIP_DIRECTORIES = [
+  "node_modules",
+  ".next",
+  "generated",
+  ".git",
+  "public",
+  "playwright-report",
+  "test-results",
+  "coverage",
+  ".vercel",
+  ".husky",
+  "ignore_old",
+  "assembly",
+];
+
+describe("no raw SQL escape hatches", { timeout: 30_000 }, () => {
+  /** Every .ts/.tsx file we author, excluding generated and build output. */
   function sourceFiles(dir: string, found: string[] = []): string[] {
     for (const entry of readdirSync(dir)) {
-      if (["node_modules", ".next", "generated", ".git"].includes(entry)) continue;
+      if (SKIP_DIRECTORIES.includes(entry)) continue;
       const full = join(dir, entry);
       if (statSync(full).isDirectory()) sourceFiles(full, found);
       else if (/\.tsx?$/.test(entry)) found.push(full);
