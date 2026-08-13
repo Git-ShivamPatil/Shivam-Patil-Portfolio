@@ -151,7 +151,18 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             </main>
             <Footer />
             <DeferredLayer />
-            <Analytics />
+            {/* Rendered only on Vercel, because its script is served by Vercel's
+                edge at /_vercel/insights/script.js and exists nowhere else. Off
+                the platform — a local `next start`, the Docker image, CI — that
+                path 404s and then fails strict MIME checking, so every page
+                logged two console errors for a feature that could not work
+                there anyway. Lighthouse counts those against best-practices,
+                which is how a category pinned at 1.0 sat at 0.96 site-wide.
+
+                Read on the server, so the flag is resolved at build time for
+                static routes; `process.env.VERCEL` is set on every Vercel
+                build and deployment, so production is unaffected. */}
+            {process.env.VERCEL ? <Analytics /> : null}
           </SessionProvider>
         </ThemeProvider>
       </body>
