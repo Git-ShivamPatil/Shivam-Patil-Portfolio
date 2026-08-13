@@ -1397,21 +1397,45 @@ the _unpooled_ endpoint, because `prisma db push` runs session-level statements
 that PgBouncer in transaction mode cannot. The Neon driver adapter connects
 happily to either.
 
-### Still required — CI stays red until this is done
+### Done — `secrets.E2E_DATABASE_URL` is set, and CI is green
 
-`secrets.E2E_DATABASE_URL` **is not set yet.** It needs a Neon branch (free,
-same project) and a GitHub Actions secret:
+**Run #36 on `5d99379` is the first green run since #24, and the first time the
+E2E job has ever passed: all 41 Playwright tests, against a real browser.**
 
-1. Neon → the existing project → Branches → **New branch**, name it `ci`.
-2. Copy its **unpooled / direct** connection string — the host _without_
-   `-pooler` in it.
-3. GitHub → repo → Settings → Secrets and variables → Actions → **New
-   repository secret**, named `E2E_DATABASE_URL`.
-4. Re-run the latest workflow.
+The secret points at a **standalone Neon project** (`portfolio-ci`), not a
+branch of production. That was forced rather than chosen — the production Neon
+project turned out to live in an account that could not be reached from either
+the Neon console or Vercel's Storage tab, and Vercel's Storage page listed no
+stores at all. It is the better arrangement anyway: nothing CI does can reach
+production data. **Do not create the CI database through Vercel's Neon
+Marketplace tile** — that integration injects `DATABASE_URL`/`DIRECT_URL` into
+the linked project's environment and would point the live site at an empty
+database.
 
-A branch rather than a second project because it is free, isolated and
-disposable. **It must not be the production database** — the job pushes a
-schema, seeds it and rebuilds the retrieval index on whatever it is pointed at.
+**It must stay a non-production database.** The job pushes a schema, seeds it
+and rebuilds the retrieval index on whatever it is pointed at.
+
+### Three failures on the way there, all worth not repeating
+
+1. **Re-running an old run cannot pick up a workflow fix.** A re-run replays the
+   workflow file _as of that commit_, so run #34 kept failing on the flag that
+   had already been fixed on `main`. Push, then watch the new run.
+2. **pgvector must exist before `prisma db push`.** `KnowledgeChunk.embedding`
+   is `Unsupported("vector(256)")`, so the table cannot be created without the
+   extension. `pnpm ai:index` does create it, which is why the ordering survived
+   everywhere it had been run before and broke on first contact with a fresh
+   database — and the indexer cannot move earlier, because it writes to the very
+   tables `db push` creates. Hence the separate `Enable pgvector` step, using
+   `prisma db execute --stdin` (Prisma 7 takes no `--url` there; the datasource
+   comes from `prisma.config.ts`, which reads `DIRECT_URL`).
+3. **`prisma db push --skip-generate` no longer exists.** Removed in Prisma 7,
+   and an unknown flag fails the command before it touches Postgres — which
+   reads exactly like a database problem and is not one. The client is generated
+   by `postinstall` anyway.
+
+The fail-fast step now also rejects a **pooled** endpoint by name, because
+`db push` takes advisory locks that PgBouncer in transaction mode cannot carry
+and the resulting error never mentions pooling. The URL is tested, never printed.
 
 ---
 
