@@ -39,6 +39,7 @@
   },
   "dependencies": {
     "@auth/prisma-adapter": "2.11.3",
+    "@duckdb/duckdb-wasm": "1.33.1-dev57.0",
     "@hookform/resolvers": "5.7.1",
     "@mlc-ai/web-llm": "^0.2.84",
     "@prisma/adapter-neon": "7.9.1",
@@ -71,6 +72,7 @@
     "@types/react-dom": "^19.2.4",
     "@types/web-push": "^3.6.4",
     "@vitest/coverage-v8": "^4.1.10",
+    "assemblyscript": "^0.28.20",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.3.0",
     "husky": "^9.1.7",

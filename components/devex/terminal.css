@@ -1,0 +1,439 @@
+/* =========================================================================
+   P17 — TERMINAL, COMMAND PALETTE, CUSTOMISER, SKILL GRAPH, HEATMAP
+
+   Imported by the components that own it (P12's rule), so nothing here is in
+   the sheet every visitor parses.
+
+   Every colour is a theme token. The terminal is the one surface where a
+   "hacker green on black" literal would be the obvious choice, and it is
+   exactly the third hue the two-colour brief forbids — so the prompt uses
+   --accent, which is pink in light and neon green in dark. It reads as a
+   terminal in both without inventing a palette.
+   ========================================================================= */
+
+/* ---------- terminal ---------- */
+.terminal {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface);
+  /* Pale fill in light theme: set the colour rather than inheriting it. */
+  color: var(--fg);
+}
+.terminal-bar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--paper-soft, var(--surface));
+}
+.terminal-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--line);
+}
+.terminal-title {
+  margin-left: 10px;
+  color: var(--muted);
+  font:
+    500 11px var(--font-dm-mono),
+    monospace;
+}
+.terminal-screen {
+  max-height: 460px;
+  overflow-y: auto;
+  padding: 18px 20px 20px;
+  font:
+    400 13px/1.75 var(--font-dm-mono),
+    monospace;
+  cursor: text;
+}
+.terminal-line {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.terminal-input {
+  color: var(--fg);
+}
+.terminal-error {
+  color: var(--accent-strong);
+}
+.terminal-line a {
+  color: var(--accent-strong);
+  border-bottom: 1px solid transparent;
+}
+.terminal-line a:hover {
+  border-bottom-color: currentColor;
+}
+.terminal-prompt {
+  margin-right: 9px;
+  color: var(--accent-strong);
+  font-weight: 600;
+  user-select: none;
+}
+.terminal-input-row {
+  display: flex;
+  align-items: center;
+  margin-top: 4px;
+}
+.terminal-input-row input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  outline: none;
+  caret-color: var(--accent-strong);
+}
+
+/* ---------- command palette ---------- */
+.palette-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: start center;
+  padding: 12vh 20px 20px;
+  background: color-mix(in srgb, var(--ink) 52%, transparent);
+  backdrop-filter: blur(3px);
+}
+.palette {
+  width: min(560px, 100%);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--fg);
+  box-shadow: 0 24px 60px color-mix(in srgb, var(--ink) 34%, transparent);
+}
+.palette-input {
+  width: 100%;
+  padding: 18px 22px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: var(--fg);
+  font: 400 15px var(--font-manrope), sans-serif;
+  outline: none;
+}
+.palette-input::placeholder {
+  color: var(--muted);
+}
+.palette-results {
+  margin: 0;
+  padding: 6px;
+  max-height: 46vh;
+  overflow-y: auto;
+  list-style: none;
+}
+.palette-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 14px;
+  border-radius: calc(var(--radius) - 10px);
+  cursor: pointer;
+}
+.palette-row[data-active="true"] {
+  background: var(--surface);
+}
+.palette-row-label {
+  font-size: 14px;
+}
+.palette-row-group {
+  color: var(--muted);
+  font:
+    500 10px var(--font-dm-mono),
+    monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+.palette-empty {
+  padding: 22px 14px;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+}
+.palette-foot {
+  display: flex;
+  gap: 16px;
+  padding: 10px 18px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 11px;
+}
+.palette-foot kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  margin-right: 3px;
+  padding: 0 4px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font:
+    500 10px var(--font-dm-mono),
+    monospace;
+}
+.palette-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  z-index: 90;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: var(--ink);
+  /* --ink is near-black in both themes, so the label must be light in both. */
+  color: var(--paper);
+  font-size: 13px;
+}
+
+/* ---------- customiser ---------- */
+.customizer {
+  position: fixed;
+  right: 22px;
+  bottom: 96px;
+  z-index: 80;
+  width: min(310px, calc(100vw - 44px));
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--fg);
+  box-shadow: 0 18px 44px color-mix(in srgb, var(--ink) 26%, transparent);
+}
+.customizer header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.customizer h2 {
+  margin: 0;
+  font-size: 14px;
+}
+.customizer header button {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 14px;
+}
+.customizer label {
+  display: grid;
+  gap: 7px;
+}
+.customizer label > span {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font:
+    500 11px var(--font-dm-mono),
+    monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.customizer label em {
+  color: var(--fg);
+  font-style: normal;
+}
+.customizer input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+.customizer-note {
+  margin: 0;
+  color: var(--prose-soft);
+  font-size: 11px;
+  line-height: 1.6;
+}
+.customizer-reset {
+  padding: 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--fg);
+  font: 500 12px var(--font-manrope), sans-serif;
+  cursor: pointer;
+}
+
+/* ---------- skill graph ---------- */
+.skill-graph {
+  margin: 0;
+}
+.skill-graph-svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.skill-graph-edges line {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.skill-graph-node circle {
+  fill: var(--surface);
+  stroke: var(--muted);
+  stroke-width: 1.5;
+  transition:
+    fill 0.2s,
+    stroke 0.2s;
+}
+.skill-graph-project circle {
+  fill: var(--accent);
+  stroke: var(--accent-strong);
+}
+.skill-graph-node text {
+  fill: var(--muted);
+  font:
+    500 10px var(--font-dm-mono),
+    monospace;
+  pointer-events: none;
+  transition: fill 0.2s;
+}
+.skill-graph-project text {
+  fill: var(--fg);
+  font-size: 11px;
+  font-weight: 600;
+}
+.skill-graph-node:hover circle {
+  fill: var(--accent-strong);
+  stroke: var(--accent-strong);
+}
+.skill-graph-node:hover text {
+  fill: var(--fg);
+}
+.skill-graph figcaption,
+.graph-empty {
+  margin-top: 14px;
+  color: var(--prose-soft);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+/* ---------- activity heatmap ---------- */
+.activity-panel {
+  padding: 26px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.activity-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+.activity-head h2 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+.activity-sub {
+  max-width: 52ch;
+  margin: 0;
+  color: var(--prose-soft);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.activity-figures {
+  display: flex;
+  gap: 22px;
+  margin: 0;
+}
+.activity-figures dt {
+  color: var(--muted);
+  font:
+    500 10px var(--font-dm-mono),
+    monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+.activity-figures dd {
+  margin: 4px 0 0;
+  color: var(--fg);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.activity-grid {
+  display: grid;
+  /* Rows are weekdays, columns are weeks — the orientation everyone reads. */
+  grid-template-rows: repeat(7, 1fr);
+  grid-auto-flow: column;
+  gap: 3px;
+  margin: 22px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.activity-grid li,
+.activity-legend i {
+  aspect-ratio: 1;
+  min-width: 9px;
+  border-radius: 2px;
+  background: var(--line);
+}
+.activity-grid li[data-level="1"],
+.activity-legend i[data-level="1"] {
+  background: color-mix(in srgb, var(--accent) 28%, var(--line));
+}
+.activity-grid li[data-level="2"],
+.activity-legend i[data-level="2"] {
+  background: color-mix(in srgb, var(--accent) 52%, var(--line));
+}
+.activity-grid li[data-level="3"],
+.activity-legend i[data-level="3"] {
+  background: color-mix(in srgb, var(--accent) 76%, var(--line));
+}
+.activity-grid li[data-level="4"],
+.activity-legend i[data-level="4"] {
+  background: var(--accent);
+}
+.activity-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px;
+  margin-top: 18px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.activity-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.activity-legend i {
+  width: 10px;
+}
+.activity-types {
+  font-family: var(--font-dm-mono), monospace;
+}
+.activity-stale {
+  color: var(--accent-strong);
+}
+
+@media (max-width: 620px) {
+  .terminal-screen {
+    max-height: 340px;
+    font-size: 12px;
+  }
+  .palette-backdrop {
+    padding: 8vh 14px 14px;
+  }
+  .customizer {
+    right: 14px;
+    left: 14px;
+    bottom: 84px;
+    width: auto;
+  }
+  .activity-panel {
+    padding: 18px;
+  }
+}

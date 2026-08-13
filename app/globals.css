@@ -85,6 +85,12 @@
   --blue: #f2c3d6;
   --pink: #ffc2da;
   --radius: 20px;
+  /* P17 — the theme customiser writes these two on <html>. Declared here so
+     they always resolve: a var() with no fallback and no definition collapses
+     the whole declaration, which would drop the radius entirely for anyone who
+     has never opened the customiser. */
+  --accent-hue-shift: 0deg;
+  --density: 1;
 }
 
 /* Dark theme: only the indirection tokens + genuinely theme-agnostic tokens
@@ -129,6 +135,9 @@
      stronger pairing for small text on the tinted surfaces. */
   --accent: #7d1039;
   --accent-strong: #5e0a2a;
+  /* The unrotated originals, read by the OKLCH hue rule further down. */
+  --accent-base: #7d1039;
+  --accent-strong-base: #5e0a2a;
   --accent-soft: rgba(125, 16, 57, 0.11);
   /* Dark theme turns these into real glows. In light theme a neon bloom would
      look cheap against cream, so they resolve to nothing. */
@@ -182,6 +191,9 @@
   --neon-violet: #35f05a;
   --accent: #4dff6a;
   --accent-strong: #7cff92;
+  /* The unrotated originals, read by the OKLCH hue rule further down. */
+  --accent-base: #4dff6a;
+  --accent-strong-base: #7cff92;
   --accent-soft: rgba(77, 255, 106, 0.13);
   /* The same six decorative slots, resolved to the neon set. These were left
      as pastels before, which is why dark theme read as "dark mode" rather than
@@ -251,6 +263,9 @@
     --neon-violet: #35f05a;
     --accent: #4dff6a;
     --accent-strong: #7cff92;
+    /* The unrotated originals, read by the OKLCH hue rule further down. */
+    --accent-base: #4dff6a;
+    --accent-strong-base: #7cff92;
     --accent-soft: rgba(77, 255, 106, 0.13);
     --lime: #7cff92;
     --cyan: #4dff6a;
@@ -263,6 +278,30 @@
       0 0 6px rgba(77, 255, 106, 0.6), 0 0 20px rgba(77, 255, 106, 0.38),
       0 0 44px rgba(34, 224, 67, 0.24);
     --neon-line: rgba(77, 255, 106, 0.45);
+  }
+}
+
+/* P17 — the theme customiser's hue slider, in OKLCH.
+
+   `oklch(from …)` re-expresses the accent in a perceptual space and rewrites
+   ONLY the hue channel: lightness and chroma are passed through untouched. That
+   is not a stylistic preference — every contrast ratio in §2b is a function of
+   lightness against the surface, so rotating hue this way provably cannot move
+   any of them. A hue-rotate() filter would have changed lightness too, and
+   would also have rotated the photograph and the card illustrations.
+
+   Behind @supports because the relative-colour syntax is recent. Where it is
+   missing the accent simply stays at its authored value and the slider does
+   nothing — which is the right failure: an unsupported browser gets the
+   designed palette, not a broken one. */
+@supports (color: oklch(from red l c h)) {
+  :root {
+    --accent: oklch(from var(--accent-base) l c calc(h + var(--accent-hue-shift)));
+    --accent-strong: oklch(from var(--accent-strong-base) l c calc(h + var(--accent-hue-shift)));
+  }
+  :root[data-theme="dark"] {
+    --accent: oklch(from var(--accent-base) l c calc(h + var(--accent-hue-shift)));
+    --accent-strong: oklch(from var(--accent-strong-base) l c calc(h + var(--accent-hue-shift)));
   }
 }
 

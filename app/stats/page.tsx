@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { GitHubPanel } from "../../components/stats/github-panel";
 import { LeetCodePanel } from "../../components/stats/leetcode-panel";
+import { ActivityPanel } from "../../components/devex/activity-panel";
 import "./stats.css";
 
 export const metadata: Metadata = {
@@ -55,6 +56,15 @@ export default function StatsPage() {
         </Suspense>
         <Suspense fallback={<PanelSkeleton label="LeetCode" />}>
           <LeetCodePanel />
+        </Suspense>
+      </section>
+
+      {/* P17. Streamed separately for the same reason the two panels above are:
+          the events endpoint is the one most likely to be rate-limited, and a
+          throttled heatmap must not delay the numbers beside it. */}
+      <section className="shell pb-20" data-reveal>
+        <Suspense fallback={<PanelSkeleton label="Activity" />}>
+          <ActivityPanel />
         </Suspense>
       </section>
     </>

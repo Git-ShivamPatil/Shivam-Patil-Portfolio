@@ -64,6 +64,17 @@ const ChatWidget = dynamic(() => import("../chat/chat-widget").then((m) => m.Cha
 // P11. Deferred for the same reason as the chat launcher it feeds: a heartbeat
 // that arrives after first paint is still a heartbeat, and nothing on screen
 // depends on it before then.
+// P17. The palette renders nothing until Cmd+K is pressed — closed, it is one
+// keydown listener — and the customiser nothing until the palette asks for it.
+// Both are deferred anyway: neither can be wanted before first paint.
+const CommandPalette = dynamic(
+  () => import("../devex/command-palette").then((m) => m.CommandPalette),
+  { ssr: false },
+);
+const ThemeCustomizer = dynamic(
+  () => import("../devex/theme-customizer").then((m) => m.ThemeCustomizer),
+  { ssr: false },
+);
 const PresenceTracker = dynamic(
   () => import("../presence-tracker").then((m) => m.PresenceTracker),
   { ssr: false },
@@ -99,6 +110,8 @@ export function DeferredLayer() {
       <CursorFollower />
       <BackToTop />
       <PresenceTracker />
+      <CommandPalette />
+      <ThemeCustomizer />
       <ChatWidget />
       <Toaster
         position="bottom-right"
