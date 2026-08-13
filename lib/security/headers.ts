@@ -50,6 +50,28 @@ const IMAGE_ORIGINS = [
 const FRAME_ORIGINS = ["https://www.openstreetmap.org"];
 
 /**
+ * Where P16's in-browser model fetches its weights.
+ *
+ * Added with some reluctance, and worth being explicit about what it costs:
+ * `connect-src 'self'` was the single directive doing the most work in this
+ * policy — an injected script could run, and had nowhere to send what it stole.
+ * These two entries open exactly two destinations, both of them read-only model
+ * repositories, and neither accepts a POST that would exfiltrate anything.
+ * Every other origin is still refused.
+ *
+ * The alternative was proxying several hundred megabytes of model weights
+ * through our own functions on a free tier, which is not an alternative.
+ */
+const MODEL_ORIGINS = [
+  // The MLC model repository and its CDN.
+  "https://huggingface.co",
+  "https://cdn-lfs.huggingface.co",
+  "https://cdn-lfs-us-1.hf.co",
+  // Model and WASM manifests.
+  "https://raw.githubusercontent.com",
+];
+
+/**
  * The Content-Security-Policy.
  *
  * **`script-src` includes `'unsafe-inline'`, deliberately, and this is the one
@@ -85,6 +107,13 @@ export function contentSecurityPolicy(mode: PolicyMode = currentMode()): string 
     "script-src": [
       "'self'",
       "'unsafe-inline'",
+      // P16. WebLLM compiles the model to WebAssembly and instantiates it,
+      // which needs this. It is NOT 'unsafe-eval': it permits compiling
+      // WebAssembly and nothing else — no eval, no Function constructor, no
+      // string-to-JavaScript path at all. That distinction is the entire reason
+      // the directive exists separately, and it is why enabling it here does
+      // not give back what 'unsafe-eval' would.
+      "'wasm-unsafe-eval'",
       // Next's dev server compiles with eval-based source maps and reloads over
       // a websocket. Neither is present in a production build.
       ...(isProduction ? [] : ["'unsafe-eval'"]),
@@ -106,7 +135,11 @@ export function contentSecurityPolicy(mode: PolicyMode = currentMode()): string 
     // Every request the browser makes on our behalf goes to our own origin —
     // the analytics beacon, the SSE streams, the API. This is the directive
     // that stops an injected script from shipping anything anywhere.
-    "connect-src": ["'self'", ...(isProduction ? [] : ["ws:", "http://localhost:*"])],
+    "connect-src": [
+      "'self'",
+      ...MODEL_ORIGINS,
+      ...(isProduction ? [] : ["ws:", "http://localhost:*"]),
+    ],
 
     "frame-src": ["'self'", ...FRAME_ORIGINS],
 
@@ -116,8 +149,9 @@ export function contentSecurityPolicy(mode: PolicyMode = currentMode()): string 
     // merely opened the page.
     "object-src": ["'self'"],
 
-    // The service worker.
-    "worker-src": ["'self'"],
+    // The service worker, plus P16: WebLLM runs the model in a worker it
+    // creates from a blob URL, which is a distinct origin from ours.
+    "worker-src": ["'self'", "blob:"],
 
     // Nothing may retarget relative URLs, and no form may post off-site. Both
     // are cheap and both close real injection escalations.
