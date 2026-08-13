@@ -1146,7 +1146,7 @@ one drag and every contrast guarantee with it. The accent rotates ±18° through
 `oklch(from … l c calc(h + shift))`, which rewrites **only** the hue channel —
 lightness and chroma pass through untouched, and every ratio in §2b is a
 function of lightness against the surface, so this provably cannot move one. A
-`hue-rotate()` filter would have changed lightness *and* rotated the photograph.
+`hue-rotate()` filter would have changed lightness _and_ rotated the photograph.
 Behind `@supports`, so a browser without relative colour gets the designed
 palette rather than a broken one.
 
@@ -1172,7 +1172,7 @@ preserves length so highlight indices still address the original string.
 
 **The outbox exists because two writes to different systems cannot be atomic.**
 `/api/contact` used to save a row and then send an email in a second try/catch —
-four outcomes, two of them wrong. Now the row and the *intent to email* commit
+four outcomes, two of them wrong. Now the row and the _intent to email_ commit
 in one transaction and a worker turns intent into effect with backoff.
 
 There is no Kafka and there should not be: a broker is a server that must stay
@@ -1197,7 +1197,7 @@ at one Upstash instance it reduces to `SET NX PX`; its release is a two-round-
 trip compare-and-delete, which is a real race, documented rather than hidden.
 
 **Fencing tokens are not optional.** Release requires the token from
-acquisition. Without it a holder whose lease expired mid-run releases the *next*
+acquisition. Without it a holder whose lease expired mid-run releases the _next_
 holder's lock on the way out and two workers run concurrently.
 
 **Idempotency returns the stored response**, which is the whole feature — a 409
@@ -1219,7 +1219,7 @@ deliberately naive JS is the oldest way to produce an impressive, meaningless
 number.
 
 **Every backend is checksummed before any timing is reported.** WebGPU is
-reported as *differs* rather than loosening the comparison until it agreed: WGSL
+reported as _differs_ rather than loosening the comparison until it agreed: WGSL
 has no f64, so the shader computes in f32 and the banding is visible.
 
 **Cross-origin isolation is scoped to `/compute`.** COEP blocks every
@@ -1322,7 +1322,217 @@ Carries forward §18, unchanged except where noted.
    `/compute` and `/data` are the obvious additions — `/compute` especially,
    since a COEP regression would disable SharedArrayBuffer silently.
 7. **A full production E2E run has never completed.** `E2E_BASE_URL=… pnpm
-   test:e2e` works but took 31 minutes over the network and was cut short at 13
+test:e2e` works but took 31 minutes over the network and was cut short at 13
    passed with no failures. Worth running once to completion from a faster link.
 8. Optional: `UPSTASH_REDIS_REST_URL`/`_TOKEN`, `SENTRY_DSN`, `METRICS_TOKEN`.
    All degrade cleanly while unset; `/api/health` reports which are on.
+
+---
+
+# Session of 13 Aug 2026 (later) — CI, and two features that were dead in production
+
+This session developed nothing. It was scoped to getting P1–P20 verifiably
+running on the live site and every CI job green.
+
+**Pushed as `cd2fb98`.** Everything below was observed, not inferred, except
+where it says otherwise.
+
+---
+
+## 26. Why CI was red — and why it was never the reason it looked like
+
+Runs **#25–#32 all failed**, every run since P15 landed. The interesting part is
+what was _not_ wrong:
+
+| Job                                 | Result                                                        |
+| ----------------------------------- | ------------------------------------------------------------- |
+| `build` (lint→typecheck→test→build) | ✅ **passed on every one of those runs**                      |
+| `e2e`                               | ❌ failed on every one — it has never once passed             |
+| `lighthouse`                        | ❌ failed, but `continue-on-error` so it never failed the run |
+
+So the workflow's red X came from `e2e` alone, and the gate everyone looks at
+was green the whole time. That is why this survived eight runs.
+
+**Root cause, confirmed against the installed version rather than assumed.**
+`playwright.config.ts` points `webServer.url` at `/api/health`. Playwright
+1.62.1 accepts only **2xx, 3xx, 400, 401, 402 or 403** as "ready" — the contract
+is stated in `playwright/types/test.d.ts`. `/api/health` returns **503** when the
+database is unreachable, deliberately and correctly (§14). CI sets a
+deliberately unreachable `DATABASE_URL`, equally deliberately (§9). Two correct
+decisions met and produced a 120-second timeout before a single test ran.
+
+**Past that gate it still could not pass**, which is what rules out the tempting
+small fix of pointing the gate at a liveness route:
+
+- The P14 spec asserts `/api/health` returns **200** with `database.ok === true`.
+- P11's heartbeat and all four P16 retrieval specs need real rows.
+- Dynamic routes hang on connection timeouts with no database, so client-side
+  navigations blow the 5s `toHaveURL` window — the navigation specs fail too.
+- **`/` is a static route.** Its project list is baked into HTML at build time,
+  so a no-database build produces an empty homepage and zero project pages.
+
+That last point is why the E2E job could not simply reuse the `build` job's
+artifact, which it used to download. **The two jobs genuinely need different
+builds**: `build` proves a build survives having no database, and E2E needs a
+build that has content. The artifact upload/download is gone; each builds its
+own, and both comments say why.
+
+### What CI looks like now
+
+- `build` — unchanged, still on the unreachable placeholders. **Do not "fix"
+  this by giving it a database.** §9 still holds: surviving a mid-build Neon
+  blip is the property this asserts.
+- `e2e` — overrides `DATABASE_URL`/`DIRECT_URL` from `secrets.E2E_DATABASE_URL`
+  at the job level, then `prisma db push` → seed → `ai:index` → `pnpm build` →
+  Playwright. Job-level `concurrency: ci-database` serialises it across runs,
+  because two runs rebuilding the retrieval index on one branch would interleave.
+- `lighthouse` — `needs: e2e` rather than `build`, for the same content-bearing
+  build and to keep two jobs off the one database at once. Reads only; never seeds.
+- A **fail-fast step** names a missing secret explicitly. Without it the failure
+  is a silent 120-second timeout that says nothing, which is precisely how this
+  hid for eight runs.
+
+**One URL serves both `DATABASE_URL` and `DIRECT_URL` on purpose**: it must be
+the _unpooled_ endpoint, because `prisma db push` runs session-level statements
+that PgBouncer in transaction mode cannot. The Neon driver adapter connects
+happily to either.
+
+### Still required — CI stays red until this is done
+
+`secrets.E2E_DATABASE_URL` **is not set yet.** It needs a Neon branch (free,
+same project) and a GitHub Actions secret:
+
+1. Neon → the existing project → Branches → **New branch**, name it `ci`.
+2. Copy its **unpooled / direct** connection string — the host _without_
+   `-pooler` in it.
+3. GitHub → repo → Settings → Secrets and variables → Actions → **New
+   repository secret**, named `E2E_DATABASE_URL`.
+4. Re-run the latest workflow.
+
+A branch rather than a second project because it is free, isolated and
+disposable. **It must not be the production database** — the job pushes a
+schema, seeds it and rebuilds the retrieval index on whatever it is pointed at.
+
+---
+
+## 27. Two features that shipped dead, and one silent a11y defect
+
+All three have the shape §2b keeps recording: green build, green types, green
+unit tests, and nothing working in a browser. None was reachable by `fetch()`.
+
+**1. `/compute` — the worker backend never ran in production.** A dedicated
+worker **inherits its creator's embedder policy**, so when the creating document
+is cross-origin isolated the worker's _own script response_ must assert
+`Cross-Origin-Embedder-Policy: require-corp` as well. `/workers/:path*` carried
+CORP but not COEP. Chrome refused the load with `ERR_BLOCKED_BY_RESPONSE` before
+the worker started, and the page reported **`worker failed: undefined`** — a
+blocked load produces an `ErrorEvent` with no message. Same-origin and
+CORP-tagged is _not_ sufficient; that is the trap.
+
+Three of the four backends worked, so the page read as fine.
+`crossOriginIsolated` was `true` and `SharedArrayBuffer` existed, which made it
+look like a code bug rather than a header one.
+
+`tests/p19-lowlevel.test.ts` asserted COEP applied to exactly `["/compute"]`,
+which **pinned the bug in place**. It now asserts the page _and_ its worker, and
+separately keeps the guarantee that actually matters — nothing broader may carry
+COEP, or the OpenStreetMap frame and the OAuth avatars break.
+
+**2. `/data` — DuckDB never loaded.** Reading the warehouse export means reading
+JSON, and JSON is a DuckDB **extension**, fetched from `extensions.duckdb.org` at
+query time. It is not part of the jsDelivr bundle that `connect-src` already
+allowed. The CSP blocked it, the button re-enabled itself, no table ever
+appeared, and the only evidence anywhere was a console violation.
+
+Added as `DATA_EXTENSION_ORIGINS`, kept **separate from `DATA_ORIGINS` on
+purpose**: that list is spread into `script-src` too, and this origin is only
+ever fetched. The allowlist test in `tests/p13-security.test.ts` names it — that
+test is built so a new origin cannot appear without being declared.
+
+**3. `aria-label` on a bare `<div>`** (`app/page.tsx`, the skill marquee). A div
+with no role maps to `role="generic"`, which does not support an accessible
+name, so the label was **silently dropped** and did nothing for the screen
+readers it was added for. axe reports it as `aria-prohibited-attr` (serious).
+Fixed with `role="group"`, which permits naming.
+
+---
+
+## 28. What was verified live, and how
+
+Against `https://www.shivamsfolio.com`, by request and in a real browser — not
+by reading the source.
+
+| Area                            | Result                                                                |
+| ------------------------------- | --------------------------------------------------------------------- |
+| 23 public page routes           | ✅ all 200; `/projects` 404 by design                                 |
+| `/api/health`                   | ✅ `status: ok`, database reachable                                   |
+| P4 search, P5 GitHub + LeetCode | ✅ live data, real ranked results                                     |
+| P8 QR, P20 warehouse            | ✅ 200; export leaks no `visitorHash`/`viewId`                        |
+| P13 headers, HSTS, CSRF         | ✅ all present; cross-site POST → 403                                 |
+| P14 guarded endpoints           | ✅ `/api/metrics` and both crons → 401                                |
+| Admin + account routes          | ✅ 307 to login                                                       |
+| P16 retrieval                   | ✅ correct extractive answer **and** correct refusal                  |
+| P19 isolation                   | ✅ `crossOriginIsolated: true`, SAB + WebGPU; COEP only on `/compute` |
+| P19 worker backend              | ❌ **was** dead — fixed in `cd2fb98`                                  |
+| P20 DuckDB                      | ❌ **was** dead — fixed in `cd2fb98`                                  |
+| P17 terminal, P20 lineage DAG   | ✅ render with real content (15 DAG nodes)                            |
+
+**Local suite at HEAD against a real database: 39/41 E2E, then clean after the
+two fixes.** 385 unit tests, lint and typecheck all pass.
+
+Both header fixes were verified **behaviourally**, not merely as headers: the
+worker backend went from `worker failed: undefined` to `213.4 ms — 4 threads, 4
+bands acknowledged`, and DuckDB went from nothing at all to returning real rows
+(`/ | 297 | 26`) in five seconds.
+
+### Two things worth knowing about the tooling
+
+- **The E2E "project page renders its case study" failure was a flake**, not a
+  bug: it passed 3/3 on re-run. It appeared under `--workers=2`; the config pins
+  one worker in CI for exactly this reason.
+- **A database-less local run is a faithful CI reproduction.** Next does not
+  overwrite variables already present in `process.env`, so exporting
+  `DATABASE_URL` in the shell beats `.env.local` without touching the file.
+
+---
+
+## 29. Also settled — do not re-litigate
+
+- **COEP belongs on the worker as well as the page.** This is not a widening of
+  §22's "scoped to /compute" rule — a dedicated worker inherits the policy, so
+  its own response needs it. The test now pins both, plus "nothing broader".
+- **`extensions.duckdb.org` is a `connect-src` origin only.** Do not fold it into
+  `DATA_ORIGINS`; that list also feeds `script-src`.
+- **CI's `build` job keeps its unreachable database.** Only `e2e` and
+  `lighthouse` get the real one.
+- **E2E must build its own artifact.** The `build` job's output has an empty
+  homepage by design and is not a valid subject for an end-to-end test.
+- §9's "any element with a pale background must set its `color`" now has a
+  sibling: **any element carrying `aria-label` must have a role that permits a
+  name.** A bare `<div>` does not.
+- **`public/wasm/kernel.js` and `kernel.d.ts` are unused AssemblyScript
+  by-products.** The `/wasm/:path*` rule serves them as `application/wasm`,
+  which is harmless because nothing loads them. Not a defect — do not "fix" the
+  MIME type without first checking whether anything references them.
+
+---
+
+## 30. Outstanding after this session
+
+Carries forward §25. The new item is first because it blocks green CI.
+
+1. **Set `secrets.E2E_DATABASE_URL`** — see §26. Until then `e2e` fails fast
+   with a named error instead of a silent timeout.
+2. **The Lighthouse job has never passed either**, and was not diagnosed this
+   session — it is `continue-on-error`, so it does not fail the run. Its
+   assertions are strict (accessibility and SEO pinned at 1.0, performance 0.95,
+   `third-party-summary` at 0) and it had been measuring a **no-database build
+   with an empty homepage**, which is very likely part of it. Re-check once it
+   runs against a seeded branch, before changing any threshold.
+3. **The E2E suite still does not cover P17–P20.** `/compute` most of all: the
+   defect fixed this session is exactly the silent COEP regression §25 warned
+   about, and no test would have caught it. A spec asserting that all four
+   backends report a time, and that `/data` returns rows, would have.
+4. Items 1–8 of §25 are otherwise unchanged: DNS off Wix, OAuth apps, the
+   booking unique-constraint retry, Razorpay, R2, `public/profile.jpg`, a full
+   production E2E run, and the optional Upstash / Sentry / metrics variables.
