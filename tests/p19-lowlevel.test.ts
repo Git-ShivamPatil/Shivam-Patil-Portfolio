@@ -63,7 +63,9 @@ describe("the reference kernel", () => {
     const centred = { ...TINY, centreX: 0, centreY: 0, scale: 0.01 };
     const pixels = new Uint8Array(centred.width * centred.height);
     renderMandelbrot(pixels, centred);
-    expect(pixels[Math.floor(centred.height / 2) * centred.width + Math.floor(centred.width / 2)]).toBe(0);
+    expect(
+      pixels[Math.floor(centred.height / 2) * centred.width + Math.floor(centred.width / 2)],
+    ).toBe(0);
   });
 });
 
@@ -172,10 +174,7 @@ describe("the worker copy of the kernel", () => {
     // A plain increment is read-modify-write: two workers finishing at once
     // lose one of them, and the main thread waits for a count that never
     // arrives.
-    const source = readFileSync(
-      join(process.cwd(), "public/workers/mandelbrot.worker.js"),
-      "utf8",
-    );
+    const source = readFileSync(join(process.cwd(), "public/workers/mandelbrot.worker.js"), "utf8");
     expect(source).toContain("Atomics.add");
 
     // Comments stripped before searching. The comment above that line in the
@@ -187,14 +186,28 @@ describe("the worker copy of the kernel", () => {
 });
 
 describe("cross-origin isolation", () => {
-  it("applies COEP to /compute and nowhere else", async () => {
+  it("applies COEP to the isolated page and its worker, and nowhere else", async () => {
     // Site-wide COEP blocks every cross-origin subresource that does not opt
     // in, which here means the OpenStreetMap frame on /reach-out and the OAuth
     // avatars. Scoping it is the correct answer, not a compromise.
+    //
+    // The worker is on this list because a dedicated worker inherits its
+    // creator's embedder policy: when the creating document is cross-origin
+    // isolated, the worker's own script response must assert `require-corp`
+    // too, or Chrome blocks the load outright. This test previously asserted
+    // `["/compute"]` exactly, and that pinned the bug in place — the worker
+    // carried CORP but not COEP, so /compute shipped with its
+    // SharedArrayBuffer backend dead while every check here stayed green.
     const withCoep = (await rules()).filter((rule) =>
       rule.headers.some((header) => header.key === "Cross-Origin-Embedder-Policy"),
     );
-    expect(withCoep.map((rule) => rule.source)).toEqual(["/compute"]);
+    expect(withCoep.map((rule) => rule.source).sort()).toEqual(["/compute", "/workers/:path*"]);
+
+    // The guarantee that actually protects the rest of the site: no rule broad
+    // enough to catch a page other than /compute may carry it.
+    for (const rule of withCoep) {
+      expect(rule.source.startsWith("/compute") || rule.source.startsWith("/workers/")).toBe(true);
+    }
   });
 
   it("pairs it with COOP, which is the half that is already global", async () => {

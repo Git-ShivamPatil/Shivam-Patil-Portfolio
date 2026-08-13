@@ -70,18 +70,19 @@ jobs:
       - name: Build
         run: pnpm build
 
-      # Handed to the E2E job so it runs against the same artifact this job
-      # produced, rather than building a second time. Two builds are two chances
-      # to test something other than what was verified.
-      - name: Upload build
-        uses: actions/upload-artifact@v4
-        with:
-          name: next-build
-          path: |
-            .next
-            !.next/cache
-          retention-days: 1
-          include-hidden-files: true
+      # This job deliberately publishes no artifact.
+      #
+      # It used to hand `.next` to the E2E job, on the reasoning that two builds
+      # are two chances to test something other than what was verified. That was
+      # sound, and it was still wrong here: `/` is a **static** route, so the
+      # project list the navigation specs click through is baked into HTML at
+      # build time — and this job builds against a deliberately unreachable
+      # database. The artifact it produced therefore had an empty homepage and
+      # no project pages at all, which is correct output for this job's purpose
+      # and useless as the subject of an end-to-end test.
+      #
+      # The two jobs genuinely need different builds: this one proves a build
+      # survives having no database, and E2E needs a build that has content.
 
   # P15. Real browsers, clicking real links.
   #
@@ -93,6 +94,30 @@ jobs:
     name: E2E and accessibility
     runs-on: ubuntu-latest
     needs: build
+
+    # Serialised across runs, because this job pushes a schema, seeds it and
+    # rebuilds the retrieval index on one shared Neon branch. Two runs doing
+    # that concurrently would interleave a full index rebuild with another
+    # run's queries. `cancel-in-progress: false` — a half-seeded database is
+    # worse than a queued job.
+    concurrency:
+      group: ci-database
+      cancel-in-progress: false
+
+    env:
+      # Overrides the deliberately-unreachable placeholders at the top of this
+      # file, for this job only. The build job must keep them: proving that
+      # `next build` survives an unreachable database is what protects a Vercel
+      # deploy when Neon blips mid-build, and that property is asserted by the
+      # build job continuing to pass without one.
+      #
+      # One URL serves both variables because it is the *unpooled* endpoint.
+      # `prisma db push` runs session-level statements that PgBouncer in
+      # transaction mode cannot, and the Neon driver adapter connects happily
+      # to either endpoint.
+      DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
+      DIRECT_URL: ${{ secrets.E2E_DATABASE_URL }}
+
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
@@ -101,14 +126,39 @@ jobs:
           node-version: 24
           cache: pnpm
 
+      # Without this the failure is a silent 120-second Playwright timeout
+      # waiting on a webServer whose /api/health returns 503, which names
+      # nothing and is exactly how this job failed unnoticed for eight runs.
+      - name: Fail early if the CI database is not configured
+        run: |
+          if [ -z "${DATABASE_URL}" ]; then
+            echo "::error::secrets.E2E_DATABASE_URL is not set. The E2E suite needs a reachable database; see HANDOFF 'CI needs a database'."
+            exit 1
+          fi
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Download build
-        uses: actions/download-artifact@v4
-        with:
-          name: next-build
-          path: .next
+      # `db push` rather than `migrate deploy`: this project has never used a
+      # migration history, and the CI branch is disposable.
+      - name: Push schema
+        run: pnpm exec prisma db push --skip-generate
+
+      - name: Seed content
+        run: |
+          pnpm db:seed
+          pnpm db:seed:services
+
+      # Also creates the pgvector extension and the HNSW index, so a fresh
+      # branch needs no manual preparation before the P16 specs run.
+      - name: Build the retrieval index
+        run: pnpm ai:index
+
+      # Built here, with a database, rather than reusing the build job's
+      # artifact — see the note in that job for why its output cannot serve as
+      # the subject of an end-to-end test.
+      - name: Build
+        run: pnpm build
 
       # Chromium only. The bugs this suite is built to catch are navigation and
       # rendering bugs, not engine differences, and three browsers would triple
@@ -143,8 +193,17 @@ jobs:
   lighthouse:
     name: Lighthouse budget
     runs-on: ubuntu-latest
-    needs: build
+    # After E2E rather than after build, for two reasons: it needs the same
+    # content-bearing build (a homepage with no projects is not the page whose
+    # LCP is being budgeted), and running it alongside E2E would have both jobs
+    # on the one CI database at once.
+    needs: e2e
     continue-on-error: true
+
+    env:
+      DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
+      DIRECT_URL: ${{ secrets.E2E_DATABASE_URL }}
+
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
@@ -156,11 +215,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Download build
-        uses: actions/download-artifact@v4
-        with:
-          name: next-build
-          path: .next
+      # No seeding here — the E2E job this one depends on has already pushed
+      # the schema and seeded the branch. This job only reads.
+      - name: Build
+        run: pnpm build
 
       - name: Run Lighthouse CI
         run: pnpm test:lighthouse

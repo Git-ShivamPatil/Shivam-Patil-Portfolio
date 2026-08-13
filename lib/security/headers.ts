@@ -73,6 +73,23 @@ const FRAME_ORIGINS = ["https://www.openstreetmap.org"];
  */
 const DATA_ORIGINS = ["https://cdn.jsdelivr.net"];
 
+/**
+ * Where DuckDB fetches its own extensions, at query time rather than load time.
+ *
+ * This is separate from DATA_ORIGINS on purpose: it is a `connect-src` target
+ * and **not** a script source, so it does not belong in the list that is spread
+ * into both. Widening `script-src` for something that is only ever fetched
+ * would hand back trust nothing asked for.
+ *
+ * It is needed because the warehouse export is JSON, and reading JSON is a
+ * DuckDB *extension* — `json.duckdb_extension.wasm`, pulled on demand from
+ * extensions.duckdb.org the first time a query touches the data. The bundle
+ * loading from jsDelivr is therefore not sufficient, and the failure looked
+ * like nothing at all: the button re-enabled, no table appeared, and the only
+ * evidence was a CSP violation in the console.
+ */
+const DATA_EXTENSION_ORIGINS = ["https://extensions.duckdb.org"];
+
 const MODEL_ORIGINS = [
   // The MLC model repository and its CDN.
   "https://huggingface.co",
@@ -154,6 +171,7 @@ export function contentSecurityPolicy(mode: PolicyMode = currentMode()): string 
       "'self'",
       ...MODEL_ORIGINS,
       ...DATA_ORIGINS,
+      ...DATA_EXTENSION_ORIGINS,
       ...(isProduction ? [] : ["ws:", "http://localhost:*"]),
     ],
 

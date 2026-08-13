@@ -94,6 +94,11 @@ describe("the content security policy", () => {
       "https://raw.githubusercontent.com",
       // P20 — the DuckDB WebAssembly bundle.
       "https://cdn.jsdelivr.net",
+      // P20 — DuckDB's own extensions, fetched at query time rather than with
+      // the bundle. Reading the warehouse export means reading JSON, and JSON
+      // is an extension, so without this the console shows a CSP violation and
+      // the page shows nothing at all.
+      "https://extensions.duckdb.org",
     ]);
     expect(connectSrc.filter((origin) => !allowed.has(origin))).toEqual([]);
   });
@@ -265,7 +270,10 @@ describe("CSRF", () => {
   it("trusts the forwarded host, so preview deploys keep working", () => {
     const origins = allowedOriginsFor({
       url: "https://internal.local/api/contact",
-      headers: headers({ "x-forwarded-host": "preview-abc.vercel.app", "x-forwarded-proto": "https" }),
+      headers: headers({
+        "x-forwarded-host": "preview-abc.vercel.app",
+        "x-forwarded-proto": "https",
+      }),
     });
     expect(origins).toContain("https://preview-abc.vercel.app");
   });
@@ -333,7 +341,8 @@ describe("no raw SQL escape hatches", { timeout: 30_000 }, () => {
       const text = readFileSync(file, "utf8");
       // A call form: $queryRaw( ... ) where the argument is not Prisma.sql`…`
       for (const match of text.matchAll(/\$(?:query|execute)Raw(?:<[^>]*>)?\(\s*(\w+)/g)) {
-        if (match[1] !== "Prisma") offenders.push(`${file.replace(process.cwd(), "")}: ${match[0]}`);
+        if (match[1] !== "Prisma")
+          offenders.push(`${file.replace(process.cwd(), "")}: ${match[0]}`);
       }
     }
     expect(offenders).toEqual([]);
@@ -344,7 +353,7 @@ describe("escaping", () => {
   it("stops a JSON payload from ending its own script element", () => {
     // Valid JSON, and still an HTML injection: the parser ends <script> at the
     // literal characters "</script" regardless of what the JSON means.
-    const payload = { bio: '</script><img src=x onerror=alert(1)>' };
+    const payload = { bio: "</script><img src=x onerror=alert(1)>" };
     expect(JSON.stringify(payload)).toContain("</script>");
     expect(jsonForScript(payload)).not.toContain("</script>");
     expect(jsonForScript(payload)).toContain("\\u003c");

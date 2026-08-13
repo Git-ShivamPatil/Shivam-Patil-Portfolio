@@ -186,7 +186,13 @@ export default async function Home() {
       <section className="capabilities" data-reveal>
         <div className="shell capabilities-inner">
           <p className="eyebrow">Working set</p>
-          <div className="skill-marquee" aria-label="Technical skills">
+          {/* `role="group"` is load-bearing, not decoration: `aria-label` on a
+              bare <div> is an aria-prohibited-attr violation, because a div with
+              no role maps to role="generic", which does not support an
+              accessible name. The label is simply dropped, so the attribute that
+              was added for screen readers did nothing for them. A role that
+              permits naming is what makes it count. */}
+          <div className="skill-marquee" role="group" aria-label="Technical skills">
             {[...skills, ...skills].map((skill, index) => (
               <span key={`${skill}-${index}`}>
                 {skill}

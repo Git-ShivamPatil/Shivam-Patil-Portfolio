@@ -80,8 +80,24 @@ const nextConfig: NextConfig = {
         // The worker is fetched by the isolated page, so it needs the same
         // treatment. Without CORP on it, COEP blocks the very script the
         // isolation exists to enable.
+        //
+        // CORP alone is not enough, and that gap shipped: a dedicated worker
+        // **inherits** its creator's embedder policy, so when the creating
+        // document is cross-origin isolated the worker's own script response
+        // must assert `require-corp` as well. Same-origin and CORP-tagged is
+        // not sufficient — Chrome fails the load with ERR_BLOCKED_BY_RESPONSE
+        // before the worker ever runs, which surfaces on /compute as
+        // `worker failed: undefined`, because a blocked load produces an
+        // ErrorEvent with no message.
+        //
+        // The failure is silent in exactly the way HANDOFF predicted for this
+        // route: the page renders, three of four backends work, and only the
+        // one that needs SharedArrayBuffer is dead.
         source: "/workers/:path*",
-        headers: [{ key: "Cross-Origin-Resource-Policy", value: "same-origin" }],
+        headers: [
+          { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
+          { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
+        ],
       },
       {
         // Content-hashed by the build, so it can be cached hard. The explicit
