@@ -4,11 +4,33 @@ Paste this file's contents into a new session to resume without re-deriving
 anything. Everything here is verified fact, not assumption — where something is
 inferred rather than observed, it says so.
 
-**Last verified:** 13 Aug 2026, against commit `1c42c3b` — **live in production**.
+---
 
-Phases 11–16 landed on 13 Aug. Sections 10–16 at the end of this file cover
-them; everything before that is the 10 Aug state and is still accurate except
-where a later section says otherwise.
+# ▶ START HERE — state as of 14 Aug 2026
+
+**Live commit: `5852a9f`. CI run #38: all three jobs green.** Build, E2E (41
+Playwright tests) and Lighthouse all pass — the first run in this project's
+history where all three did.
+
+|               |                                                                                                    |
+| ------------- | -------------------------------------------------------------------------------------------------- |
+| Production    | https://www.shivamsfolio.com on `5852a9f`                                                          |
+| CI            | build ✅ · e2e ✅ · lighthouse ✅                                                                  |
+| Local gate    | lint ✅ · typecheck ✅ · 385 unit ✅ · 41 E2E ✅ · build ✅                                        |
+| Phases P1–P20 | **all deployed and reachable** — see §31 for what is fully live vs. switched off for want of a key |
+
+**Read next, in this order:** §31 (phase-by-phase live status and how to switch
+on what is off) → §26–§30 (the CI rebuild and the two features that shipped
+dead) → §9, §17, §24, §29 (settled decisions — do not re-litigate) → §32 (what
+is left).
+
+**Nothing is broken right now.** Everything in §31 marked "off" is off because a
+credential is absent, and every one of those degrades by design rather than
+erroring. There is no outstanding defect known to be live.
+
+Sections below this point are historical, newest last. Phases 11–16 landed on
+13 Aug; sections 10–16 cover them. Everything before that is the 10 Aug state
+and is still accurate except where a later section supersedes it.
 
 ---
 
@@ -1560,3 +1582,77 @@ Carries forward §25. The new item is first because it blocks green CI.
 4. Items 1–8 of §25 are otherwise unchanged: DNS off Wix, OAuth apps, the
    booking unique-constraint retry, Razorpay, R2, `public/profile.jpg`, a full
    production E2E run, and the optional Upstash / Sentry / metrics variables.
+
+---
+
+## 31. Phase-by-phase live status — P1 to P20
+
+Checked against production on 14 Aug 2026 by request and in a real browser, not
+read off the source. **Every phase is deployed and reachable.** The distinction
+below is between a phase that is _fully operational_ and one where a specific
+feature is _switched off because a credential is absent_ — the latter degrades
+by design and never errors.
+
+### Fully live — nothing to do
+
+| Phase             | Verified how                                                                                                                   |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| **P1** Foundation | 23 public routes → 200; `/sitemap.xml`, `/robots.txt` → 200; `/projects` → 404 by design                                       |
+| **P3** Admin      | `/admin`, `/admin/live`, `/account` → 307 to login (the gate works; §5 records how it was once broken)                         |
+| **P4** Content    | `/api/search?q=rate` returns ranked results with `rank` scores                                                                 |
+| **P8** Growth     | `/api/qr` → 200; referral capture funnels into `referralRef`                                                                   |
+| **P10** Analytics | warehouse export shows real traffic (297 views on `/`); no IP, no cookie                                                       |
+| **P11** Realtime  | presence + heartbeat pass in the E2E suite against a real visible browser                                                      |
+| **P12** Delivery  | `content-encoding: br`; route-scoped stylesheets; `sw.js` never cached                                                         |
+| **P13** Security  | every header present incl. HSTS; cross-site POST → **403**                                                                     |
+| **P14** DevOps    | `/api/health` → `status: ok`; `/api/metrics` and both crons → **401**                                                          |
+| **P15** QA        | 41 E2E + axe in both themes, green in CI                                                                                       |
+| **P16** AI        | correct extractive answer with sources **and** correct refusal on an unanswerable question                                     |
+| **P17** DevEx UI  | Cmd+K opens with a searchbox; `/terminal` renders; skill graph 81 nodes / 45 edges; 90-day activity grid                       |
+| **P18** DistSys   | Raft simulator steps term 0 → candidate → term 1 and elects a leader                                                           |
+| **P19** Low-level | `crossOriginIsolated: true`, SAB + WebGPU present; **worker backend 176.1 ms, 4 threads** (was dead before this session — §27) |
+| **P20** Data eng  | lineage DAG 15 nodes; **DuckDB loads in ~5s and returns real rows** (was dead before this session — §27)                       |
+
+### Live but partly switched off — each needs one credential
+
+Nothing here is broken. Each is built, deployed and inert until its key exists.
+
+| Phase                | What is off                                                                                                                                                 | Switch it on with                                                                                                                                                                                                                                                                 |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **P2** Auth          | The Google and GitHub buttons render (`/api/auth/providers` advertises both) but cannot complete a flow. **Email/password login works today.**              | Create both OAuth apps, then set `AUTH_GOOGLE_ID`/`_SECRET`, `AUTH_GITHUB_ID`/`_SECRET`. Callback URIs are in §3 — the `www` matters.                                                                                                                                             |
+| **P5** Integrations  | GitHub and LeetCode are **live**. The Cal.com intro-call section is not rendered at all (0 mentions on `/services`).                                        | `CAL_USERNAME`, `CAL_EVENT_SLUG`. Optional: `GITHUB_TOKEN` lifts `/stats` from 60 to 5,000 requests/hour.                                                                                                                                                                         |
+| **P6** Comms         | Chat, newsletter and web push all work. Mail **sends but lands in spam**.                                                                                   | Not a missing key — blocked. `EMAIL_FROM` is Resend's shared sender and Wix DNS cannot create the MX record Resend needs on a subdomain. Move DNS off Wix, verify the domain, set `EMAIL_FROM=shivam@shivamsfolio.com`. See §3; the zone is two records, so the move is low-risk. |
+| **P7** Monetization  | `/services` renders; the booking API cannot take a payment.                                                                                                 | `RAZORPAY_KEY_ID`, `_KEY_SECRET`, `_WEBHOOK_SECRET`. **Register the webhook before setting the keys** — the other order can charge a customer who is never confirmed (§6).                                                                                                        |
+| **P9** Storage       | Admin media library is read-only; uploads disabled.                                                                                                         | Cloudflare R2 (free, zero egress): `S3_*` per SETUP.md §6. Do not forget the CORS rule — a presigned PUT without it is blocked by the browser, not by R2.                                                                                                                         |
+| **P13/P14** optional | `/api/health` reports `errorReporting: false`, `sharedRateLimit: false`. Rate limiting falls back to per-instance memory; errors are not reported anywhere. | `UPSTASH_REDIS_REST_URL`/`_TOKEN`, `SENTRY_DSN`, `METRICS_TOKEN`. All three degrade cleanly, which is also why their absence is easy to miss — health states which are on.                                                                                                        |
+
+**Priority if you only do one:** the OAuth apps (P2). It is four environment
+variables, needs no DNS change and no payment account, and it is the only item
+here a visitor actually sees fail — they click a button that cannot work.
+
+---
+
+## 32. Outstanding after this session
+
+Supersedes §30 and §25.
+
+1. **DNS off Wix** → verify the Resend domain → `EMAIL_FROM=shivam@shivamsfolio.com`.
+   Still the only thing between transactional mail and the inbox.
+2. **Google + GitHub OAuth apps** → four variables. Highest visible impact.
+3. **A retry on unique-constraint violation** in `app/api/bookings/route.ts`.
+   Still the oldest open code defect; `lib/distsys/command.ts` is the natural home.
+4. **Razorpay**, **R2**, **Cal.com** — per §31.
+5. **`public/profile.jpg` still does not exist.** It no longer costs anything —
+   `components/about-photo.tsx` now settles this on the server, so the 400 that
+   used to fire on every `/about` load is gone and the wordmark renders instead.
+   Dropping a real photo at that path switches it on with no code change.
+6. **The E2E suite still does not cover P17–P20.** Both features that shipped
+   dead this session live in that gap: a spec asserting all four `/compute`
+   backends report a time, and that `/data` returns rows, would have caught
+   both. This is the single highest-value piece of test work left.
+7. **`pnpm format:check` still reports CRLF noise** from the Windows checkout.
+   CI does not run it. Harmless, still untidy.
+8. **The CI database is a standalone Neon project** (`portfolio-ci`), not a
+   branch of production — see §26. If it is ever deleted, CI fails at "Fail
+   early if the CI database is not configured" with a named error, and the fix
+   is to create another and update `secrets.E2E_DATABASE_URL`.
