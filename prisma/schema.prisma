@@ -741,6 +741,78 @@ model PresenceSession {
   @@index([role, lastSeenAt])
 }
 
+// ---- Phase 16: AI ----
+
+// One retrievable passage of the site, with its embedding.
+//
+// Chunks rather than whole documents: a project case study is long enough that
+// a single vector for it averages away the specific thing someone asked about.
+// Splitting on headings keeps each vector about one idea and gives the answer a
+// section to cite.
+//
+// `embedding` is a pgvector column, declared Unsupported because Prisma has no
+// native vector type. That means it can only be read and written through raw
+// SQL — which is fine, since the only queries that touch it are the `<=>`
+// distance search and the indexer's insert, and both are tagged templates.
+// The extension has to exist before this table can be created: `pnpm ai:index`
+// runs CREATE EXTENSION IF NOT EXISTS vector before anything else.
+//
+// Retrieval degrades if the column or extension is missing — see
+// lib/ai/retrieve.ts, which falls back to Postgres full-text search alone
+// rather than failing the request.
+model KnowledgeChunk {
+  id String @id @default(cuid())
+
+  // "project" | "blog" | "skill" | "experience" | "page" | "resume"
+  source   String
+  sourceId String
+  /// Where a citation should link to.
+  url      String
+  title    String
+  /// The section this passage came from. Never null, and that matters: Postgres
+  /// treats NULLs as distinct inside a unique index, so a nullable heading would
+  /// let (source, sourceId, NULL) be inserted twice and quietly duplicate a
+  /// chunk on every reindex. Sections without a heading get "Overview".
+  heading  String   @default("Overview")
+
+  content String @db.Text
+  /// Term count after tokenisation — used to skip chunks too short to rank.
+  tokens  Int    @default(0)
+
+  embedding Unsupported("vector(256)")?
+
+  /// SHA-256 of the content, so an unchanged chunk is not re-embedded.
+  contentHash String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // One chunk per (source, id, heading). A document that loses a heading on
+  // re-index has its old chunk deleted rather than orphaned.
+  @@unique([source, sourceId, heading])
+  @@index([source])
+}
+
+// The IDF snapshot the index was built with, and nothing else.
+//
+// It has to be stored because a query vector weighted with different IDF values
+// than the documents is a query in a different vector space — the numbers would
+// still come out, and they would be meaningless. Storing it here is also what
+// makes reindexing an all-or-nothing rebuild: changing IDF changes every vector,
+// so there is no such thing as updating one row.
+model KnowledgeIndex {
+  // Single row, always.
+  id String @id @default("singleton")
+
+  documentCount Int
+  /// term -> document frequency.
+  idf           Json
+  chunkCount    Int      @default(0)
+  /// False when pgvector was unavailable and the index is lexical-only.
+  vectorized    Boolean  @default(false)
+  builtAt       DateTime @default(now())
+}
+
 // Webhook idempotency ledger. Both Stripe and Razorpay redeliver on any
 // non-2xx, and Stripe explicitly warns that events can arrive more than once —
 // the unique (provider, eventId) is what makes handling exactly-once.

@@ -165,3 +165,70 @@ test.describe("P12 — delivery", () => {
     expect(response.headers()["cache-control"]).toContain("max-age=0");
   });
 });
+
+test.describe("P16 — retrieval", () => {
+  test("answers from the site and cites where each sentence came from", async ({ page }) => {
+    await page.goto("/ask");
+    await page.getByRole("searchbox").fill("what has he built with rate limiting?");
+    await page.getByRole("button", { name: "Ask", exact: true }).click();
+
+    const answer = page.locator(".ask-answer-text");
+    await expect(answer).toBeVisible({ timeout: 20_000 });
+
+    // The whole claim of the extractive path: every sentence it shows exists on
+    // this site. A source link is what lets a reader check that.
+    const sources = page.locator(".ask-sources a");
+    await expect(sources.first()).toBeVisible();
+    expect(await answer.innerText()).toMatch(/rate limiter/i);
+  });
+
+  test("says nothing matches rather than inventing something", async ({ page }) => {
+    await page.goto("/ask");
+    await page.getByRole("searchbox").fill("what is his favourite variety of tulip?");
+    await page.getByRole("button", { name: "Ask", exact: true }).click();
+
+    await expect(page.locator(".ask-answer-text")).toContainText(
+      /closest match|does not|nothing/i,
+      {
+        timeout: 20_000,
+      },
+    );
+  });
+
+  test("never loads the model runtime unless asked", async ({ page }) => {
+    // ~14MB of WebAssembly runtime plus a few hundred MB of weights. A visitor
+    // who does not press the button must not pay for any of it.
+    const modelRequests: string[] = [];
+    page.on("request", (request) => {
+      const url = request.url();
+      if (/huggingface|mlc-ai|web-llm|\.wasm$/i.test(url)) modelRequests.push(url);
+    });
+
+    await page.goto("/ask");
+    await page.getByRole("searchbox").fill("what has he built?");
+    await page.getByRole("button", { name: "Ask", exact: true }).click();
+    await expect(page.locator(".ask-answer-text")).toBeVisible({ timeout: 20_000 });
+    await page.waitForTimeout(1500);
+
+    expect(modelRequests).toEqual([]);
+  });
+
+  test("matches a job description and reports gaps as plainly as matches", async ({ page }) => {
+    await page.goto("/ask");
+    await page
+      .locator("#jd-input")
+      .fill(
+        [
+          "- Strong experience with PostgreSQL and Redis at scale",
+          "- Experience with Kubernetes and container orchestration",
+          "- Deep knowledge of COBOL mainframe migration",
+        ].join("\n"),
+      );
+    await page.getByRole("button", { name: /match against my work/i }).click();
+
+    await expect(page.locator(".jd-score")).toBeVisible({ timeout: 30_000 });
+    // The gap is the honesty test: retrieval always returns its best effort, so
+    // a matcher that never reports a gap is one that treats a passage as proof.
+    await expect(page.locator(".jd-list-gaps")).toContainText(/COBOL/i);
+  });
+});

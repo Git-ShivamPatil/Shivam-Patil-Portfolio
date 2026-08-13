@@ -29,6 +29,7 @@ const NAV_ROUTES = [
   { name: "Services", path: "/services" },
   { name: "Stats", path: "/stats" },
   { name: "Blog", path: "/blog" },
+  { name: "Ask", path: "/ask" },
   { name: "System design", path: "/system-design" },
   { name: "About", path: "/about" },
   { name: "Contact", path: "/contact" },

@@ -42,6 +42,12 @@ export function Header() {
             Stats
           </Link>
           <Link href="/blog">Blog</Link>
+          {/* P16. prefetch={false} for the same reason /stats and /services
+              carry it: /ask is a `ƒ` dynamic route, so prefetching it means a
+              server render and a database read for a page nobody asked for. */}
+          <Link href="/ask" prefetch={false}>
+            Ask
+          </Link>
           <Link href="/system-design">System design</Link>
           <Link href="/about">About</Link>
           <Link href="/contact">Contact</Link>

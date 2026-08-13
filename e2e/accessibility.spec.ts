@@ -16,7 +16,16 @@ import AxeBuilder from "@axe-core/playwright";
  * it able to catch this where a static check of the token table cannot.
  */
 
-const ROUTES = ["/", "/about", "/services", "/system-design", "/blog", "/contact", "/reach-out"];
+const ROUTES = [
+  "/",
+  "/about",
+  "/services",
+  "/system-design",
+  "/blog",
+  "/contact",
+  "/reach-out",
+  "/ask",
+];
 
 /**
  * Rules to run.

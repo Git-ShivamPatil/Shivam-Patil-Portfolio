@@ -74,14 +74,48 @@ describe("security headers", () => {
 
 describe("the content security policy", () => {
   it("blocks exfiltration even though inline script is allowed", () => {
-    const directives = csp();
+    const connectSrc = (csp().get("connect-src") ?? "").split(" ");
+
     // 'unsafe-inline' is unavoidable — the App Router inlines the RSC payload
-    // into every page — so the directive that carries the weight is this one:
-    // an injected inline script still has nowhere to send what it steals.
-    expect(directives.get("connect-src")).toBe("'self'");
-    // The dev relaxation is the websocket HMR needs, and nothing more.
-    expect(csp("development").get("connect-src")).toBe("'self' ws: http://localhost:*");
-    expect(directives.get("default-src")).toBe("'self'");
+    // into every page — so the directive carrying the weight is this one: an
+    // injected inline script has almost nowhere to send what it steals.
+    expect(connectSrc).toContain("'self'");
+    expect(csp().get("default-src")).toBe("'self'");
+
+    // P16 opened exactly the model repositories the in-browser model fetches
+    // weights from, and nothing else. Asserted as an allowlist rather than a
+    // count, so a future addition has to be named here to pass — which is the
+    // point of pinning it at all.
+    const allowed = new Set([
+      "'self'",
+      "https://huggingface.co",
+      "https://cdn-lfs.huggingface.co",
+      "https://cdn-lfs-us-1.hf.co",
+      "https://raw.githubusercontent.com",
+    ]);
+    expect(connectSrc.filter((origin) => !allowed.has(origin))).toEqual([]);
+  });
+
+  it("adds only the websocket relaxation in development", () => {
+    const development = csp("development").get("connect-src") ?? "";
+    expect(development).toContain("ws:");
+    expect(development).toContain("http://localhost:*");
+    expect(csp("production").get("connect-src")).not.toContain("ws:");
+  });
+
+  it("permits WebAssembly compilation without permitting eval", () => {
+    // 'wasm-unsafe-eval' allows compiling WebAssembly and nothing else — no
+    // eval, no Function constructor, no string-to-JavaScript path. That
+    // distinction is the whole reason the directive exists separately, and why
+    // enabling it for the local model does not give back what 'unsafe-eval'
+    // would.
+    const scriptSrc = csp("production").get("script-src") ?? "";
+    expect(scriptSrc).toContain("'wasm-unsafe-eval'");
+    expect(scriptSrc).not.toContain("'unsafe-eval'");
+  });
+
+  it("lets the model run in a blob worker", () => {
+    expect(csp().get("worker-src")).toBe("'self' blob:");
   });
 
   it("still refuses third-party script sources", () => {

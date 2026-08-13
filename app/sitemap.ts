@@ -18,6 +18,7 @@ const staticRoutes = [
   "/blog",
   "/system-design",
   "/search",
+  "/ask",
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
