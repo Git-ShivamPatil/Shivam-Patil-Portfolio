@@ -21,7 +21,19 @@ import { defineConfig, devices } from "@playwright/test";
  */
 
 const PORT = Number(process.env.E2E_PORT ?? 3210);
-const baseURL = `http://127.0.0.1:${PORT}`;
+
+/**
+ * Point the suite at a deployment instead of a local build.
+ *
+ *   E2E_BASE_URL=https://www.shivamsfolio.com pnpm test:e2e
+ *
+ * The same specs then become a post-deploy smoke test, which is worth more than
+ * a second suite written to do only that: the checks that matter after a deploy
+ * are the ones that mattered before it. When it is set, no local server is
+ * started — see `webServer` below.
+ */
+const externalBaseURL = process.env.E2E_BASE_URL;
+const baseURL = externalBaseURL ?? `http://127.0.0.1:${PORT}`;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -37,6 +49,14 @@ export default defineConfig({
 
   use: {
     baseURL,
+    // Do Not Track, on every request the suite makes.
+    //
+    // The analytics ingest honours it before it does anything else, so a run
+    // against production cannot write synthetic page views into the owner's
+    // real numbers. Synthetic traffic in a dashboard is worse than no smoke
+    // test, because the figures then need a mental correction nobody remembers
+    // to apply.
+    extraHTTPHeaders: { dnt: "1" },
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     // The reveal drivers are gated on prefers-reduced-motion. Running with
@@ -52,19 +72,22 @@ export default defineConfig({
 
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
 
-  webServer: {
-    // `next start`, not `next dev`. Dev compiles on demand and ships an
-    // unminified bundle with different chunking, so a suite run against it
-    // proves nothing about what deploys.
-    command: `pnpm exec next start -p ${PORT}`,
-    url: `${baseURL}/api/health`,
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-    env: {
-      NODE_ENV: "production",
-      // Whatever the developer has in .env.local; the suite reads no secrets of
-      // its own and asserts nothing that depends on one being present.
-      PORT: String(PORT),
-    },
-  },
+  // Skipped entirely when E2E_BASE_URL points somewhere already running.
+  webServer: externalBaseURL
+    ? undefined
+    : {
+        // `next start`, not `next dev`. Dev compiles on demand and ships an
+        // unminified bundle with different chunking, so a suite run against it
+        // proves nothing about what deploys.
+        command: `pnpm exec next start -p ${PORT}`,
+        url: `${baseURL}/api/health`,
+        reuseExistingServer: !process.env.CI,
+        timeout: 120_000,
+        env: {
+          NODE_ENV: "production",
+          // Whatever the developer has in .env.local; the suite reads no secrets of
+          // its own and asserts nothing that depends on one being present.
+          PORT: String(PORT),
+        },
+      },
 });

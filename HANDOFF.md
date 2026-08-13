@@ -4,7 +4,11 @@ Paste this file's contents into a new session to resume without re-deriving
 anything. Everything here is verified fact, not assumption — where something is
 inferred rather than observed, it says so.
 
-**Last verified:** 10 Aug 2026, against commit `4a13ac1`.
+**Last verified:** 13 Aug 2026, against commit `1c42c3b` — **live in production**.
+
+Phases 11–16 landed on 13 Aug. Sections 10–16 at the end of this file cover
+them; everything before that is the 10 Aug state and is still accurate except
+where a later section says otherwise.
 
 ---
 
@@ -715,3 +719,374 @@ thread via their cookie.
   download for everyone who merely opened the page.
 - The Resend key is **send-only on purpose**. A 401 from any non-send endpoint
   is expected.
+
+---
+
+# Phases 11–16 — 13 Aug 2026
+
+Everything above this line is the 10 Aug state. It is still accurate except
+where a section below supersedes it.
+
+**Live at https://www.shivamsfolio.com on `1c42c3b`**, verified against
+production rather than assumed: `/api/health` reports `version: 1c42c3b`,
+`region: iad1`, database reachable in 19ms.
+
+| Check                          | Result                                    |
+| ------------------------------ | ----------------------------------------- |
+| `pnpm lint` / `typecheck`      | exit 0                                    |
+| `pnpm test`                    | **301 passed** (was 185)                  |
+| `pnpm test:e2e`                | **41 passed**, Chromium                   |
+| `pnpm build`, unreachable DB   | exit 0 — the CI resilience property holds |
+| Production header + CSRF sweep | all pass, see §13                         |
+| Production RAG queries         | correct sources, correct refusals         |
+
+---
+
+## 10. The three defects the new test layer found
+
+Worth reading first, because all three are the same _kind_ of bug this file has
+been recording since P1 — invisible to the build, the types and the unit tests.
+
+**1. `.contact-quick .eyebrow` was `#5f6d21`.** An olive literal: 4.73:1 on the
+light fill, under the 7:1 floor every text token here holds, and hue 71° in a
+theme whose text must sit at 337–341°. The same stray olive that was removed
+once already from the chat live pip.
+
+**2. `.contact-quick h2` measured 1.23:1 in dark theme.** Present, and
+unreadable. This is the **third** appearance of the pattern §2b names: a pale
+fill that does not follow the theme, plus text that inherits `--fg` and does.
+Fixed on the container with `color: var(--ink)`, exactly as `.project-card` was.
+
+**3. The presence rate limit was sized like a signup form.** 12 burst at 0.2/s
+throttles _legitimate_ visitors past about four tabs from one address — any
+shared NAT, office or household. A limiter's size comes from what the endpoint
+costs, not from copying another route's numbers.
+
+Nos. 1 and 2 were found by axe running in **both themes**. A single-theme run
+cannot see that class of bug at all, which is why the loop exists.
+
+---
+
+## 11. Realtime — presence, online status, live dashboard
+
+**Presence is state, not memory.** Module scope is not shared between
+serverless invocations, so the instance serving a heartbeat and the instance
+rendering the dashboard cannot see each other. Postgres is the only store both
+can read. `PresenceSession` is that store, and liveness is a **freshness window
+on `lastSeenAt`**, not an online flag — same reasoning as the typing deadlines
+in `ChatConversation`: a closed laptop never sends "I left", so a flag stays
+true forever while a deadline lapses.
+
+**The presence token lives in module scope and is never stored, and that is the
+part to not undo.** A token in `sessionStorage` survives a reload, so the
+outgoing page's "delete token T" races the incoming page's "I'm here, token T" —
+and `sendBeacon` guarantees no ordering. When the beacon lands second it deletes
+a row for a visitor who is demonstrably still on the site. Found exactly that
+way: the heartbeat returned 200 and the table stayed empty. A per-document token
+means the two requests name different rows.
+
+- The `presence` variant has been in `ChatEvent` since P6 and nothing emitted
+  it. The chat stream now does, on the visitor's side only.
+- The widget used to say "connected", which describes the transport and says
+  nothing about whether anyone is reading. It now says which it means.
+- `/admin/live` polls rather than pretending to push: the writes arrive from
+  `after()` callbacks in other invocations, so there is no change feed and
+  anything called push would be a poll with extra steps.
+- The live stream closes itself at 50s. Whatever the platform's function
+  ceiling is, closing first turns a reaped function into a clean reconnect —
+  and the reconnect re-runs the admin guard, so a dashboard left open on an
+  unattended screen cannot outlive its session by more than that.
+
+---
+
+## 12. Delivery — and the build break that had to be fixed first
+
+**`next/font/google` had to go, and this was not optional.** Google began
+returning **404 for four of the Playfair Display files its own stylesheet points
+at**, and `next build` failed with `Module not found:
+@vercel/turbopack-next/internal/font/google/font`. Reproducible across clean
+builds, while the same URLs fetched by hand returned 200 — so it was not a
+network problem here, and it would have failed a Vercel deploy identically.
+
+The fonts are now vendored in `app/fonts/` and **the build touches no network at
+all**. Manrope and Playfair are variable fonts, so one file covers each weight
+range rather than five byte-identical copies; latin subset only. `size-adjust`
+fallback metrics are still generated, so the CLS of 0 is unaffected, and the
+head still carries five same-origin preloads and zero external origins.
+
+**Do not reintroduce `next/font/google`.** There is a test that fails if the
+import comes back.
+
+**The render-blocking CSS is split.** All six stylesheets were `@import`ed into
+`globals.css`, so every visitor to every route parsed the /stats panels, the
+invoice table, the admin chat console and the /system-design diagrams. Each now
+lives in a stylesheet imported by the page or component that owns it. Global
+sheet: **114.6KB → 96.2KB**; seven route sheets at 1.5–4.1KB. Verified in
+production: `/` ships one stylesheet, `/system-design` ships two.
+
+Splitting the two shared breakpoint blocks by section is the part that is easy
+to get wrong — a rule left behind still applies, but only on the routes that
+load the file it was left in — so each media query was divided along with the
+selectors it targets.
+
+- The chat widget's CSS is attached to the **component**, so it travels with the
+  idle-gated dynamic chunk instead of blocking first paint everywhere.
+- Integration routes carry `s-maxage` + `stale-while-revalidate` in front of —
+  not instead of — the database cache. Verified live: `x-vercel-cache: HIT`.
+  Vercel consumes `s-maxage` and rewrites the downstream header to `public`, so
+  do not read that as the header having been dropped.
+- `sw.js` is explicitly never cached. A hard-cached service worker is stuck
+  forever: the thing that would fetch its replacement is the stale copy.
+- Brotli is the edge's job and `compress` stays off — Next only does gzip, and
+  producing gzip in front of an edge that recompresses is CPU spent on bytes
+  that get discarded. Verified live: `content-encoding: br`.
+- There is deliberately **no** `/_next/static` cache rule. Next already serves
+  those immutable for a year, and restating it makes the build warn.
+
+---
+
+## 13. Security
+
+**The headers are in `next.config.ts`, not the proxy, and that is load-bearing.**
+A proxy that matches a route forces it to render dynamically — putting them in
+middleware would have silently converted every static page into a per-request
+render.
+
+**`script-src` keeps `'unsafe-inline'` deliberately.** The App Router inlines
+the RSC flight payload into a `<script>` on every page, and the theme and reveal
+bootstraps must run before first paint. The only alternative is a per-request
+nonce, which Next can supply only from middleware. What the policy still buys,
+stated precisely rather than dismissed: third-party script sources blocked,
+`eval` blocked, and `connect-src` allowing only our origin plus four read-only
+model repositories — so the usual "inject a script, exfiltrate cookies" chain is
+broken at two of its three links.
+
+`object-src` is `'self'`, not `'none'`: /resume previews the PDF through an
+`<object>`.
+
+**CSRF is an origin check in the proxy, ahead of and instead of the auth
+instance for `/api`.** `authorized()` only decides /admin and /account, so
+running it over /api would cost a JWT decode to reach a verdict it does not
+make. **The auth gate is untouched** — it was broken once and is pinned by
+`tests/p2-auth-gate.test.ts`. Webhooks and Auth.js routes are exempt: webhooks
+authenticate by signature over the raw body, and the OAuth callback is
+legitimately a cross-site navigation.
+
+Adding `/api` to the matcher costs no static generation, because API routes
+already render per request. **That is exactly why the matcher may grow there and
+must never grow to cover pages.**
+
+**The rate limiter has a shared backend now.** `consume()` prefers Upstash Redis
+when configured — one INCR plus a conditional EXPIRE, where the key's own TTL
+_is_ the refill, which is what makes it one atomic round trip. It is a fixed
+window rather than a true bucket, so a caller can spend capacity either side of
+a boundary; not worth a Lua script for endpoints whose job is stopping a script.
+**It degrades to memory rather than failing closed** — a limiter that 429s
+because its own dependency is down has converted someone else's outage into
+ours.
+
+**The vault** reads `NAME_FILE` before `NAME`, which is the Docker and
+Kubernetes convention: an env var is visible to every process in a container and
+lands in `docker inspect`, a mounted file has permissions. It is split into
+`lib/security/secrets.ts` (pure, edge-safe) and `lib/security/vault.ts` (touches
+`node:fs`) because `instrumentation.ts` is bundled for the Edge runtime too, and
+anything in that graph that so much as _mentions_ `node:fs` makes the build warn.
+
+XSS and SQLi were mostly audit rather than new code, which is the honest
+finding: React escapes every rendered child, blog content is plain text, and the
+one raw query already used a tagged template. What is new is `jsonForScript` for
+the JSON-LD block — valid JSON containing `</script` still ends the element —
+and two tests that fail the build if anything reaches for `$queryRawUnsafe` or
+calls `$queryRaw` with a built string.
+
+**Verified in production**, not just asserted: every header present including
+HSTS, cross-site POST to `/api/contact` returns 403, the webhook exemption
+holds, and the CSP carries `wasm-unsafe-eval`, `worker-src 'self' blob:` and
+`upgrade-insecure-requests`.
+
+---
+
+## 14. DevOps and observability
+
+**Sentry over its HTTP API, with no SDK.** `@sentry/nextjs` is a build-time
+plugin: it patches the bundler, uploads source maps, wraps every route. What is
+needed is one POST of a documented envelope format, and doing it by hand means
+the error path carries no build-time dependency — on a project whose build was
+broken by a third party three commits earlier. The trade is named in the file:
+no breadcrumbs, no tracing, stack frames point at built output.
+
+Frames are **reversed** on the way out: Sentry renders innermost-last, V8 prints
+innermost-first, and getting that backwards makes every error look like it
+originated in the framework. Messages are scrubbed through the vault first.
+
+Client errors relay through `/api/report-error` rather than going to Sentry
+directly — a browser-side DSN is public by construction and would force
+`connect-src` to be widened.
+
+**`/api/metrics` exposes gauges and not one counter, deliberately.** RED metrics
+are counters incremented in the process handling a request; on serverless those
+live in one instance's memory while a scrape reaches whichever instance the
+platform picks, so the series would jump between unrelated instances' totals and
+`rate()` over it would produce numbers that look precise and mean nothing. What
+is exposed is state that is genuinely shared — the database. Request rate and
+latency are already answered by the platform's own per-function metrics, which
+can see every invocation in a way no endpoint running _inside_ one ever can.
+
+**`/api/health` returns 503 when unhealthy**, not 200 with a `degraded` body
+that every automated consumer would read as fine. Admins additionally get the
+secrets report; anonymous callers never do.
+
+**The container is not the production path and does not pretend to be.** It
+exists to prove nothing here depends on Vercel, to reproduce a build without the
+platform, and to hold secrets as mounted files. `output: "standalone"` is opted
+into by `DOCKER_BUILD=1` so the Vercel deploy is untouched. Non-root user;
+health-checks readiness rather than an open port, because a Next server answers
+on the port well before it can reach the database.
+
+---
+
+## 15. QA — the layer that was missing
+
+`pnpm test:e2e` runs Playwright against a production build. **`E2E_BASE_URL=…
+pnpm test:e2e` runs the same specs against a deployment**, which makes them a
+post-deploy smoke test — the checks that matter after a deploy are the ones that
+mattered before it. Every request carries `DNT: 1`, so a run against production
+cannot write synthetic page views into real analytics.
+
+The suite exists because of the blank-navigation outage (§2z). So it **clicks**
+rather than calling `goto()` per route — a `goto` is a fresh document load,
+which is precisely the case that always worked and would have passed throughout
+the outage.
+
+**The invariant is "nothing substantially on screen is unrevealed", not "some
+element got armed".** Both wrong versions were written first and both taught
+something: `/blog` has no `[data-reveal]` sections at all, and the homepage's
+four are all below the fold, which §2a is explicit is the design working. The
+threshold is the element's **top edge** at 75% of viewport height, because the
+failure being caught is an element whose beginning you can see and whose content
+is not there — `/reach-out`'s `.channel-list` sat at 485 in a 720px viewport when
+it broke. An "any intersection at all" rule flags the next section peeking over
+the bottom edge on every page that has one.
+
+**axe composites elements over their background**, so one caught mid-stagger at
+0.988 opacity reads as a colour that never ships — enough to tip text near the
+AA boundary into a violation that does not exist. It showed up as failures
+moving between routes and themes on consecutive runs. The scan now waits for
+opacity to **stop changing**, rather than for a threshold: some elements are
+legitimately never revealed, and several decorative animations never finish.
+
+Lighthouse CI closes the gap §2a recorded — the font work was structurally
+verified but its LCP effect was never measured. It runs `continue-on-error`:
+variance on a shared runner is several points, and a build that fails on noise
+is one people re-run without reading.
+
+---
+
+## 16. AI — retrieval, and what it honestly is
+
+**There is no embedding API call anywhere in this phase.** Every hosted provider
+is metered and free-tier-only is a standing constraint. The alternatives were a
+~500MB transformer with a cold start per invocation, or one in the browser —
+which puts the index and the query in different processes and so puts it back on
+the server. So the embedding is computed in-process: hashed TF-IDF over unigrams
+and bigrams, sublinear TF × IDF, L2-normalised into 256 dimensions, in a
+pgvector column.
+
+**It is a lexical embedding and the code says so.** It cannot know that
+"Kubernetes" and "container orchestration" are related, and no tuning will teach
+it. **Which is exactly why retrieval is hybrid**: dense vectors and Postgres
+full-text search fail differently, so both run on every query and the results
+fuse by **reciprocal rank**. RRF rather than a weighted sum because cosine
+similarity and `ts_rank` are on incomparable scales — 0.42 against 0.0007 — so
+any weighting is a decision about which retriever wins, dressed up as
+arithmetic.
+
+**The default answer is extractive because it cannot hallucinate.** Every
+sentence exists verbatim on the site and links to where it came from. Generation
+is a button that says what it costs: WebLLM downloads a ~380MB model once and
+runs it on the visitor's own GPU, grounded on the same passages. On a page
+describing a real person's real work, a fluent invented claim is not a smaller
+failure than an awkward true one — the visitor cannot tell them apart.
+
+**Three things were calibrated against measured output, not guessed:**
+
+- Confidence originally required a raw score of 1.0. Real answers score
+  **0.19–0.33**, so it could never fire, which reads as permanent uncertainty
+  about answers that are correct. It now needs two distinct matched words, half
+  the question covered, and agreement between both retrievers. One word is not
+  enough: "where does he work?" reduces to "work", matched "knowledge-work" in
+  an unrelated project, and produced a confidently wrong answer.
+- Sentence ranking ignored retrieval order, so the right sentence beat a wrong
+  one 0.31 to 0.25 — close enough that ordinary variation flips it.
+- The stemmer left "caching"/"cache" and "service"/"services" as different
+  terms. Dropping a silent "e" fixes both, with a **length floor of 5, not 4**:
+  at 4 it also collapses "rate"→"rat" and "site"→"sit" for no gain, since
+  plurals already agree without it.
+
+**The JD matcher shipped a lie on its first live run, and the fix is the
+interesting part.** "Deep knowledge of COBOL mainframe migration" came back
+COVERED with a banking case study as proof, because "knowledge" and "deep"
+cleared a two-terms threshold and `retrieve` **always returns its best effort** —
+that is what a retriever is for. Treating a returned passage as proof is how a
+coverage report starts lying. Requirements now need a _distinctive_ term (under
+a quarter of the corpus) **and** the passage must contain it. That fix then
+produced the opposite error — "PostgreSQL and Redis at scale" reported as a gap
+because only the top-ranked chunk was checked and it named neither — so it now
+scans four candidates for one that actually proves the requirement.
+
+`KnowledgeChunk.heading` is **non-nullable**, and that is not cosmetic: Postgres
+treats NULLs as distinct inside a unique index, so a nullable heading would let
+the same chunk insert twice and duplicate on every reindex.
+
+**`pnpm ai:index` is a full rebuild every time.** IDF is a property of the whole
+corpus, so adding one document changes the weight of every term in every other
+document's vector. An incremental indexer would leave old vectors in one space
+and new ones in another, and the failure would be invisible — the numbers still
+come out, just wrong. Re-run it after any content change, and after any change
+to the tokenizer or the embedding.
+
+---
+
+## 17. Newly settled — do not re-litigate
+
+Additions to §9. Everything there still holds.
+
+- **Fonts are vendored in `app/fonts/`.** Not `next/font/google` — that broke
+  the build when Google 404'd its own files. A test fails if the import returns.
+- **`prisma db push` is still the workflow**, and pgvector must exist first.
+  `pnpm ai:index` creates the extension and the HNSW index, so a fresh database
+  needs that one command.
+- **The presence token must not be stored.** See §11 for the race it causes.
+- **Route CSS belongs to the page or component that owns it.** Do not move a
+  route stylesheet back into `globals.css` to "keep the imports tidy".
+- **`consume()`, not `takeToken()`, at request boundaries.** `takeToken` remains
+  exported because it is the in-memory fallback.
+- **The extractive answer stays the default.** Generation is opt-in, in-browser,
+  and grounded. Do not make a model the primary answer path.
+- **`/api/metrics` has no counters, on purpose.** See §14 before adding one.
+- **The E2E suite sends `DNT: 1`.** Do not remove it — a suite that pollutes the
+  analytics it is meant to protect is worse than no suite.
+
+---
+
+## 18. Outstanding after P16
+
+Supersedes §7. Items 7 (render-blocking CSS) and 8 (no E2E layer) from that list
+are **done**.
+
+1. **Move DNS off Wix**, then verify the Resend domain and set `EMAIL_FROM` to
+   `shivam@shivamsfolio.com`. Still the only thing between transactional mail
+   and the inbox. Unchanged from §7.
+2. **Google + GitHub OAuth apps** → four env vars. Callback URIs in §3.
+3. **A retry on unique-constraint violation** in `app/api/bookings/route.ts`.
+   Still the oldest open code defect.
+4. **Razorpay** per §6, still unblocked.
+5. **R2** (SETUP.md §6) if uploads are wanted.
+6. **`public/profile.jpg` does not exist.** `components/about-photo.tsx` handles
+   it — it falls back to the "SP" wordmark rather than a broken image — but the
+   `priority` preload still fires a request that 400s on every /about load, and
+   the server logs it. Adding the photo removes both.
+7. Optional: `UPSTASH_REDIS_REST_URL`/`_TOKEN` for shared rate limiting,
+   `SENTRY_DSN` for error reporting, `METRICS_TOKEN` for the scrape endpoint.
+   All three degrade cleanly while unset, which is also why their absence is
+   invisible — `/api/health` reports which are on.
