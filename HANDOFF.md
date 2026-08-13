@@ -1090,3 +1090,239 @@ are **done**.
    `SENTRY_DSN` for error reporting, `METRICS_TOKEN` for the scrape endpoint.
    All three degrade cleanly while unset, which is also why their absence is
    invisible — `/api/health` reports which are on.
+
+---
+
+# Phases 17–20 — 13 Aug 2026
+
+**Live on `fc5b1a1`.** Verified against production, not asserted: `/terminal`,
+`/skills`, `/stats`, `/system-design`, `/compute` and `/data` all 200 with their
+new sections rendered; `/compute` carries `COEP: require-corp` and the homepage
+does not; `/wasm/kernel.wasm` serves `application/wasm` with a valid magic
+number; the warehouse export returns 99 fact rows with no per-visitor column.
+
+**385 unit tests, 41 E2E, lint and typecheck clean.**
+
+---
+
+## 19. The deployment failure worth remembering
+
+**Production stopped advancing after P17 while every build passed locally**, and
+nothing in the build output pointed at why. The cause was `vercel.json`: the
+outbox worker was scheduled `*/10 * * * *`, and **the Hobby plan permits cron
+jobs only at daily granularity**. The deployment was rejected on its
+configuration, not its code — so `pnpm build` was green, the push succeeded, and
+`/api/health` simply kept reporting the previous commit.
+
+**If production is not on the commit you pushed, check `vercel.json` before you
+check anything else.** A config rejection looks exactly like nothing happening.
+
+The fix was better than what it replaced, which is worth noting because the
+constraint forced it. An outbox drained once a day delivers a contact email
+tomorrow — technically eventually consistent, practically broken. So the drain
+is now kicked from the contact route itself in `after()`, once the response is
+flushed: the common case is immediate, the write path stays atomic, and the
+daily cron became what it should always have been — the retry safety net, not
+the delivery mechanism. The lease makes the two safe together.
+
+---
+
+## 20. DevEx UI (P17)
+
+**One command registry, two front ends.** The Cmd+K palette and the `/terminal`
+CLI read the same list from `lib/devex/commands.ts`, so they cannot drift into
+two different answers to "what can I do here". A test asserts every navigation
+command points at a page that exists and that none offers a route the visitor
+would be redirected away from.
+
+**The terminal is not a typewriter animation.** It parses input, drives the real
+router, sets the real theme, and `ask` runs the P16 retrieval endpoint — so it
+answers questions about the site, with sources, from a prompt. Arrow keys walk
+shell history; Tab completes command names.
+
+**The customiser cannot produce a third hue, and that constraint is the
+design.** A colour picker would let any visitor break the two-colour brief in
+one drag and every contrast guarantee with it. The accent rotates ±18° through
+`oklch(from … l c calc(h + shift))`, which rewrites **only** the hue channel —
+lightness and chroma pass through untouched, and every ratio in §2b is a
+function of lightness against the surface, so this provably cannot move one. A
+`hue-rotate()` filter would have changed lightness *and* rotated the photograph.
+Behind `@supports`, so a browser without relative colour gets the designed
+palette rather than a broken one.
+
+**The heatmap is labelled as what it is**: public GitHub activity over 90 days,
+which is what the unauthenticated events endpoint can see — not "contributions",
+which would include private work and a full year. `GITHUB_TOKEN` is optional
+here by design, so a feature built on the GraphQL contribution calendar would be
+dead most of the time.
+
+**The skill graph is force-directed and settled on the server**, seeded so it is
+byte-identical for every visitor. A live physics loop would ship a simulation,
+run it on the main thread during hydration, and draw a different picture every
+visit.
+
+One real hole a test caught: strict comparison scored "Résumé" **zero** for the
+spelling almost everyone types, and ranked "Achievements" first because "resume"
+is a subsequence of its keyword list. Accents are folded now, and the fold
+preserves length so highlight indices still address the original string.
+
+---
+
+## 21. Distributed systems (P18)
+
+**The outbox exists because two writes to different systems cannot be atomic.**
+`/api/contact` used to save a row and then send an email in a second try/catch —
+four outcomes, two of them wrong. Now the row and the *intent to email* commit
+in one transaction and a worker turns intent into effect with backoff.
+
+There is no Kafka and there should not be: a broker is a server that must stay
+up, and this runs on functions that do not. The guarantee a broker provides here
+comes from writing the event in the same transaction, not from the broker.
+`FOR UPDATE SKIP LOCKED` makes two workers safe without a lock between them.
+
+**The DLQ is the part people skip.** Retrying forever turns one poison message
+into permanent load; giving up silently loses it. `DEAD` is a third state:
+stopped, kept, countable. An unknown topic is dead-lettered immediately — no
+number of retries produces a handler that was never written.
+
+Backoff is **quadratic, not exponential**: doubling reaches hours by the sixth
+attempt, which for a contact email means it arrives tomorrow.
+
+**The lease is in Postgres, not Redis, and that inverts the usual assumption.**
+Every critical section it guards is Postgres work, so a Redis lock can be held
+perfectly while Postgres is unreachable — the lock succeeds and the work fails.
+Worse, a Redis failover can hand one lock to two holders while both commit.
+Redlock is implemented alongside it and `lib/distsys/lock.ts` says plainly that
+at one Upstash instance it reduces to `SET NX PX`; its release is a two-round-
+trip compare-and-delete, which is a real race, documented rather than hidden.
+
+**Fencing tokens are not optional.** Release requires the token from
+acquisition. Without it a holder whose lease expired mid-run releases the *next*
+holder's lock on the way out and two workers run concurrently.
+
+**Idempotency returns the stored response**, which is the whole feature — a 409
+would be correct and useless. A key reused with a different body gets 422, since
+that is a caller bug and replaying would hide it permanently.
+
+**The Raft simulator is a pure state machine** with the visualisation on top.
+Nineteen tests assert what the protocol guarantees, and one caught a real
+modelling gap: a leader that lost quorum kept leading, which is exactly the
+split-brain Raft prevents. It steps down now.
+
+---
+
+## 22. Low level (P19)
+
+**The JavaScript baseline is written to be fast, not to lose** — same algorithm,
+same squared-term reuse, same buffer shape. Benchmarking WASM against
+deliberately naive JS is the oldest way to produce an impressive, meaningless
+number.
+
+**Every backend is checksummed before any timing is reported.** WebGPU is
+reported as *differs* rather than loosening the comparison until it agreed: WGSL
+has no f64, so the shader computes in f32 and the banding is visible.
+
+**Cross-origin isolation is scoped to `/compute`.** COEP blocks every
+cross-origin subresource that does not opt in — site-wide it would break the
+OpenStreetMap frame on `/reach-out` and the OAuth avatars. The worker and the
+`.wasm` carry CORP so they survive under it, and the `.wasm` is served as
+`application/wasm` because `instantiateStreaming` refuses anything else.
+
+**AssemblyScript, not Rust**: a Rust toolchain is a second language in CI for a
+forty-line integer kernel. **The `.wasm` is committed**, so the build needs no
+second toolchain and a deploy cannot fail on a compiler version — the same
+reasoning that vendored the fonts. `pnpm wasm:build` regenerates it.
+
+The worker is a static file in `public/`, not a bundled module, because a
+bundled worker needs a build-time URL dance that changes every Next major. The
+price is a duplicated kernel, and **there is a test that fails if the two
+copies drift** — a divergence would render a banded image subtly different from
+the single-threaded one, which nobody would catch by looking.
+
+The bands are deliberately uneven and the page says so: points inside the set
+run the full iteration count, so the speed-up lands well under the core count.
+That is the real load-imbalance problem.
+
+---
+
+## 23. Data engineering (P20)
+
+**It is ELT, not ETL.** The raw events are already loaded, so there is nothing
+to extract-then-load; the transform runs after the load. Transforming on the way
+in throws away the rows you did not yet know you would need.
+
+**The export is aggregated in Postgres before it is published**, which is what
+makes publishing it possible at all. Shipping the ledger and letting DuckDB
+aggregate in the browser would be simpler and would publish a per-visitor row
+for every view ever recorded. A test asserts the pipeline never selects
+`visitorHash` or `viewId`, and that it exports no further back than the
+retention window — exporting past the prune point is inventing data.
+
+**The query runs on the visitor's machine.** No query endpoint means no
+injection surface, nothing to rate limit, and no way to make the database do
+expensive work. That is the actual argument for client-side OLAP. ~30MB of WASM,
+so it loads on a click and never before.
+
+JSON rather than Parquet is a stated trade: a Parquet writer is megabytes on a
+serverless function to serve rows that gzip to kilobytes, and DuckDB reads JSON
+natively. At a hundred times this size the trade flips.
+
+**The lineage DAG validates itself before it draws.** A cycle, a dangling edge
+or a stage no source reaches renders as an error instead of a believable
+picture, and every node names the file that implements it — checked by a test
+that the file exists. Layering is by longest path, or an edge would run
+backwards.
+
+The blueprint names Flink; there is no stream processor and cannot be one. The
+window semantics are real and the difference is named on the page: this
+recomputes from the ledger on read, so it is correct and gets slower as the
+ledger grows. Windows are aligned to the epoch, not to `now` — windows that
+shift under you make two readings incomparable.
+
+---
+
+## 24. Also settled — do not re-litigate
+
+- **Check `vercel.json` first when a deploy silently does not land.** Hobby
+  crons are daily-only. See §19.
+- **The outbox drains opportunistically from the write path**, with the cron as
+  the retry net. Do not move delivery back onto the cron.
+- **The lease is the Postgres one.** `acquireRedisLock` exists and is not used;
+  read the note in `lib/distsys/lock.ts` before reaching for it.
+- **`public/wasm/kernel.wasm` is committed.** Regenerate with `pnpm wasm:build`
+  after editing `assembly/kernel.ts`, and commit the result.
+- **The worker kernel is duplicated on purpose** and pinned by a test. Change
+  both or neither.
+- **COEP stays scoped to `/compute`.** Site-wide it breaks the map and avatars.
+- **The theme customiser must never touch lightness.** The 7:1 floor depends on
+  it; rotate hue only, through OKLCH.
+- **The warehouse export must stay aggregated.** It is public because no row in
+  it is a person.
+- **`assembly/` is excluded from the app tsconfig.** It is a different language
+  with the same syntax; typechecking it with the app's config produces dozens of
+  "Cannot find name usize".
+
+---
+
+## 25. Outstanding after P20
+
+Carries forward §18, unchanged except where noted.
+
+1. **Move DNS off Wix**, then verify the Resend domain and set `EMAIL_FROM`.
+   Still the only thing between transactional mail and the inbox.
+2. **Google + GitHub OAuth apps** → four env vars.
+3. **A retry on unique-constraint violation** in `app/api/bookings/route.ts`.
+   Now easier than it was: `lib/distsys/command.ts` is the natural place, and
+   bookings is the obvious next route to move onto it.
+4. **Razorpay**, **R2** — unchanged.
+5. **`public/profile.jpg` does not exist.** The fallback handles it, but the
+   `priority` preload still 400s on every `/about` load.
+6. **The E2E suite does not yet cover P17–P20.** The specs exist for P11–P16
+   and the new pages are only checked by unit tests and by hand. `/terminal`,
+   `/compute` and `/data` are the obvious additions — `/compute` especially,
+   since a COEP regression would disable SharedArrayBuffer silently.
+7. **A full production E2E run has never completed.** `E2E_BASE_URL=… pnpm
+   test:e2e` works but took 31 minutes over the network and was cut short at 13
+   passed with no failures. Worth running once to completion from a faster link.
+8. Optional: `UPSTASH_REDIS_REST_URL`/`_TOKEN`, `SENTRY_DSN`, `METRICS_TOKEN`.
+   All degrade cleanly while unset; `/api/health` reports which are on.
