@@ -827,3 +827,93 @@ model WebhookEvent {
   @@unique([provider, eventId])
   @@index([provider, processedAt])
 }
+
+// ---- Phase 18: distributed systems ----
+
+enum OutboxStatus {
+  PENDING
+  DONE
+  DEAD
+}
+
+// The transactional outbox.
+//
+// The blueprint names Kafka with a dead-letter queue. There is no Kafka here
+// and there should not be: a broker is a server that must stay up, and this
+// runs on functions that do not. What a broker is *for* in this design is the
+// guarantee that "the row was written" and "the side effect happened" cannot
+// disagree — and that guarantee comes from writing the event in the same
+// transaction as the row, not from the broker.
+//
+// So the event is a row. A worker drains it with backoff, and anything that
+// fails enough times lands in DEAD rather than being retried forever or
+// dropped silently. That is the DLQ, and it is the part of the pattern that
+// actually carries the weight.
+model OutboxEvent {
+  id      String @id @default(cuid())
+  /// "contact.received", "booking.confirmed", ... — the routing key.
+  topic   String
+  payload Json
+
+  status   OutboxStatus @default(PENDING)
+  attempts Int          @default(0)
+  /// Exponential backoff. A row is invisible to the worker until this passes.
+  nextAttemptAt DateTime @default(now())
+  /// Only ever the message, never the payload — it may contain a visitor's text.
+  lastError String?
+
+  createdAt   DateTime  @default(now())
+  processedAt DateTime?
+
+  // Serves the worker's only query: "what is due, oldest first".
+  @@index([status, nextAttemptAt])
+  @@index([topic, createdAt])
+}
+
+// Replay protection for state-changing requests.
+//
+// P7 already keys payment creation on an idempotency key, which is where it
+// matters most. This generalises it: a client may send `Idempotency-Key` on any
+// POST, and a retry with the same key returns the first response rather than
+// performing the action twice.
+//
+// The stored response is what makes it useful. Returning 409 on a repeat would
+// be correct and useless — the client retried because it never saw the first
+// answer, so the only helpful reply is that answer.
+model IdempotencyRecord {
+  /// The client's key, scoped by route so two endpoints cannot collide.
+  key   String @id
+  route String
+
+  /// SHA-256 of the request body. A key reused with different content is a bug
+  /// on the caller's side, and answering it with the old response would hide it.
+  requestHash String
+
+  status   Int
+  response Json
+
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@index([expiresAt])
+}
+
+// A named lease, held by one holder at a time.
+//
+// This is the lock the cron jobs take. Redis Redlock is implemented alongside
+// it (lib/distsys/redlock.ts) because the blueprint names it, but this is the
+// stronger option *here* and is the default: the work being guarded is Postgres
+// work, so a lease in Postgres cannot be held while the database that the
+// critical section writes to is unreachable. A Redis lock can.
+model Lease {
+  name      String   @id
+  /// Random per acquisition. A releaser must present it, so a process whose
+  /// lease already expired cannot release the next holder's.
+  token     String
+  holder    String
+  expiresAt DateTime
+
+  acquiredAt DateTime @default(now())
+
+  @@index([expiresAt])
+}

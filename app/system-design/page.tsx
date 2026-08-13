@@ -1,5 +1,13 @@
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
 import Link from "next/link";
+
+// P18. The page is otherwise `○` static and hydrates nothing; the simulator is the
+// one interactive thing on it, so it is code-split rather than bundled into a
+// page most readers will scroll past.
+const RaftVisualizer = dynamic(() =>
+  import("../../components/distsys/raft-visualizer").then((m) => m.RaftVisualizer),
+);
 import "./system-design.css";
 
 export const metadata: Metadata = {
@@ -399,6 +407,26 @@ export default function SystemDesignPage() {
             </tbody>
           </table>
         </div>
+      </section>
+
+      <section className="sd-section shell" data-reveal>
+        <div className="section-heading">
+          <h2>
+            Consensus, <em>watchable.</em>
+          </h2>
+          <p>
+            Raft leader election, running live. The rules are a pure state machine in{" "}
+            <code>lib/distsys/raft.ts</code> with nineteen tests asserting what the protocol
+            actually guarantees — a term only increases, two leaders cannot exist in one term, a
+            leader that loses quorum steps down. This component only draws it and drives the clock.
+          </p>
+          <p>
+            Kill the leader and watch a new one get elected. Kill a third node and watch it
+            correctly elect <em>nobody</em>: two of five cannot form a majority, and stopping is the
+            right answer rather than splitting the cluster in half.
+          </p>
+        </div>
+        <RaftVisualizer />
       </section>
 
       <section className="sd-section shell sd-outro" data-reveal>

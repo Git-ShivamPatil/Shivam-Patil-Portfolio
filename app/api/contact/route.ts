@@ -1,15 +1,44 @@
 import { NextResponse } from "next/server";
-import { sendContactFormEmail } from "../../../lib/mail";
 import { contactFormSchema } from "../../../lib/validations/contact";
-import { prisma } from "../../../lib/prisma";
+import { runCommand } from "../../../lib/distsys/command";
 
+/**
+ * P18 — the first route through the command boundary.
+ *
+ * **What changed, and why it is not just moving code around.** Before, this
+ * wrote the row and then sent the email in a second try/catch. That has four
+ * outcomes and two of them are wrong: the row saved and the email vanished into
+ * a logged warning, or — if the order had been the other way — an email sent
+ * for a message nobody has. Wrapping both in try/catch does not fix it; it
+ * picks which failure to have.
+ *
+ * Now the row and the *intent to email* commit in one transaction, and the
+ * outbox worker turns the intent into an email afterwards with retries and a
+ * dead-letter state. The visitor still gets an instant answer; the email
+ * becomes eventually certain rather than immediately uncertain, and a Resend
+ * outage no longer silently eats a lead — it shows up as queue depth.
+ *
+ * `Idempotency-Key` is honoured but optional: a visitor whose connection dropped
+ * mid-submit and who pressed send again gets the original response instead of
+ * two identical messages in the inbox.
+ */
 export async function POST(request: Request) {
-  const body = await request.json().catch(() => null);
+  // Read once, as text, because the command boundary hashes the raw body to
+  // detect a reused idempotency key carrying different content.
+  const raw = await request.text().catch(() => "");
 
-  // Simple honeypot: a hidden field real visitors never see or fill in.
-  // Bots that blindly fill every field will trip it; report success
-  // without actually sending, so the bot gets no signal either way.
-  if (body && typeof body === "object" && "website" in body && body.website) {
+  let body: unknown;
+  try {
+    body = JSON.parse(raw);
+  } catch {
+    return NextResponse.json({ error: "Invalid input." }, { status: 400 });
+  }
+
+  // Honeypot: a hidden field real visitors never see. Bots that fill every
+  // field trip it. Report success without doing anything, so the bot gets no
+  // signal either way — and crucially before the command runs, so a bot cannot
+  // fill the outbox.
+  if (body && typeof body === "object" && "website" in body && (body as { website?: unknown }).website) {
     return NextResponse.json({ message: "Message sent." });
   }
 
@@ -21,29 +50,24 @@ export async function POST(request: Request) {
     );
   }
 
-  const { name, email, message, ref } = parsed.data;
+  return runCommand(
+    {
+      route: "contact.submit",
+      async handler({ input, tx, emit }) {
+        const { name, email, message, ref } = input;
 
-  try {
-    // The database write is the source of truth (the admin Inbox) — a
-    // Resend outage or missing RESEND_API_KEY shouldn't make a real
-    // submission look like it failed to the visitor, so email is
-    // best-effort below and never blocks the success response.
-    await prisma.contactMessage.create({
-      data: { name, email, message, source: "contact", referralRef: ref || null },
-    });
-  } catch (error) {
-    console.error("POST /api/contact failed to persist message:", error);
-    return NextResponse.json(
-      { error: "Something went wrong. Please try again, or email directly." },
-      { status: 500 },
-    );
-  }
+        await tx.contactMessage.create({
+          data: { name, email, message, source: "contact", referralRef: ref || null },
+        });
 
-  try {
-    await sendContactFormEmail({ name, email, message });
-  } catch (error) {
-    console.error("POST /api/contact: email notification failed (message was still saved):", error);
-  }
+        // Inside the same transaction as the row above. That is the entire
+        // point: either both exist or neither does.
+        await emit("contact.received", { name, email, message });
 
-  return NextResponse.json({ message: "Message sent." });
+        return { status: 200, body: { message: "Message sent." } };
+      },
+    },
+    parsed.data,
+    { idempotencyKey: request.headers.get("idempotency-key"), rawBody: raw },
+  );
 }
