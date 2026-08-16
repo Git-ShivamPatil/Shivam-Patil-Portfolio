@@ -6,23 +6,25 @@
  * about one person, not rows anyone will edit through the admin, so a database
  * table would be a migration and a query for content that changes twice a year.
  *
- * **`pending` is the honest half of this file.** The document lists eighteen
- * apps and six socials but only supplies a URL for eleven of them. The rest are
- * recorded with `url: null` rather than dropped, and rather than guessed at:
- * a referral link is a payout identity, and inventing one either sends a
- * visitor to a stranger's code or to a 404. `certifications.ts` made the same
- * call for the same reason and the note there says so.
+ * **Only links that exist are here.** The source document also named Jupiter,
+ * Binance, Exness, Zerodha, Groww, Navi, INDmoney, Angel One, Upstox and
+ * Telegram without supplying a URL for any of them. They were briefly carried
+ * as `pending` rows and are now dropped outright: a referral row with no link
+ * is a dead end that costs a scroll and pays nothing, and guessing the URL is
+ * worse than omitting it — a referral link is a payout identity, so a wrong one
+ * either credits a stranger or 404s.
  *
- * Anything `pending` renders as a "link coming" state and mints no QR.
+ * `url` is therefore a required string, and every consumer can rely on that
+ * rather than branching on null. Re-adding an app is a one-line entry the day
+ * its link exists.
  */
 
-export type ReferralCategory = "Payments" | "Credit & loans" | "Investing" | "Money transfer";
+export type ReferralCategory = "Payments" | "Credit & loans" | "Money transfer";
 
 export interface Referral {
   name: string;
   category: ReferralCategory;
-  /** Null when the source document named the app but gave no link. */
-  url: string | null;
+  url: string;
   /** The offer, in the words of the referral itself where it had any. */
   offer?: string;
   /** Some programmes pay on a typed code rather than the link alone. */
@@ -74,29 +76,18 @@ export const referrals: Referral[] = [
     url: "https://wise.com/invite/ilpc/shivamp682",
     offer: "Fee-free first transfer on the mid-market rate.",
   },
-
-  // Named in the document, no link supplied. See the `pending` note above.
-  { name: "Jupiter", category: "Payments", url: null },
-  { name: "Binance", category: "Investing", url: null },
-  { name: "Exness", category: "Investing", url: null },
-  { name: "Zerodha", category: "Investing", url: null },
-  { name: "Groww", category: "Investing", url: null },
-  { name: "Navi", category: "Investing", url: null },
-  { name: "INDmoney", category: "Investing", url: null },
-  { name: "Angel One", category: "Investing", url: null },
-  { name: "Upstox", category: "Investing", url: null },
 ];
 
+/** Only categories that still have rows. "Investing" left with its apps. */
 export const referralCategories: ReferralCategory[] = [
   "Payments",
   "Credit & loans",
-  "Investing",
   "Money transfer",
 ];
 
 export interface SocialLink {
   name: string;
-  url: string | null;
+  url: string;
   handle?: string;
   /** Shown on the casual path only when it adds something a label does not. */
   note?: string;
@@ -121,18 +112,8 @@ export const socials: SocialLink[] = [
     handle: "in/shivam--patil",
   },
   { name: "GitHub", url: "https://github.com/Git-ShivamPatil", handle: "Git-ShivamPatil" },
-  // Listed in the document with no handle or invite link.
-  { name: "Telegram", url: null },
 ];
-
-/** Freelance platforms the document names without profile URLs. */
-export const freelancePlatforms = ["Upwork", "Fiverr", "Freelancer"] as const;
 
 export function referralsIn(category: ReferralCategory): Referral[] {
   return referrals.filter((referral) => referral.category === category);
-}
-
-/** Everything that can actually be linked to, and therefore QR-coded. */
-export function liveReferrals(): Referral[] {
-  return referrals.filter((referral) => referral.url !== null);
 }

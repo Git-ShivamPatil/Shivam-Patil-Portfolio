@@ -1,13 +1,7 @@
 import type { Metadata } from "next";
 import { LinkQr } from "../../../components/entry/link-qr";
 import { InviteCard } from "../../../components/entry/invite-card";
-import {
-  referralCategories,
-  referralsIn,
-  socials,
-  freelancePlatforms,
-  type Referral,
-} from "../../referrals";
+import { referralCategories, referralsIn, socials, type Referral } from "../../referrals";
 import "../for.css";
 
 export const metadata: Metadata = {
@@ -25,10 +19,9 @@ export const metadata: Metadata = {
  * on a laptop by someone who wants the app on their phone, and a code removes
  * the "send yourself the link" step entirely.
  *
- * Entries the source document named without a URL render as a pending row
- * rather than being hidden, because "he uses Zerodha" is still true and worth
- * saying — and inventing a referral link would send a stranger's payout to the
- * wrong account or to a 404.
+ * Every row here has a working link, so there is no empty state to render.
+ * Apps the source document named without a URL are absent from the data
+ * entirely rather than shown as dead rows — see the note in app/referrals.ts.
  */
 
 function ReferralRow({ referral }: { referral: Referral }) {
@@ -36,21 +29,14 @@ function ReferralRow({ referral }: { referral: Referral }) {
     <li className="link-row">
       <div>
         <span className="link-row-name">
-          {referral.url ? (
-            <a href={referral.url} target="_blank" rel="noreferrer">
-              {referral.name} ↗
-            </a>
-          ) : (
-            referral.name
-          )}
+          <a href={referral.url} target="_blank" rel="noreferrer">
+            {referral.name} ↗
+          </a>
         </span>
         {referral.offer ? <p className="link-row-offer">{referral.offer}</p> : null}
         {referral.code ? <span className="link-row-code">CODE {referral.code}</span> : null}
-        {!referral.url ? (
-          <p className="link-row-pending">Referral link not published yet.</p>
-        ) : null}
       </div>
-      {referral.url ? <LinkQr url={referral.url} label={referral.name} size={84} /> : null}
+      <LinkQr url={referral.url} label={referral.name} size={84} />
     </li>
   );
 }
@@ -98,19 +84,14 @@ export default function HumanPath() {
             <li className="link-row" key={social.name}>
               <div>
                 <span className="link-row-name">
-                  {social.url ? (
-                    <a href={social.url} target="_blank" rel="noreferrer">
-                      {social.name} ↗
-                    </a>
-                  ) : (
-                    social.name
-                  )}
+                  <a href={social.url} target="_blank" rel="noreferrer">
+                    {social.name} ↗
+                  </a>
                 </span>
                 {social.handle ? <p className="link-row-offer">{social.handle}</p> : null}
                 {social.note ? <p className="link-row-offer">{social.note}</p> : null}
-                {!social.url ? <p className="link-row-pending">Handle not published yet.</p> : null}
               </div>
-              {social.url ? <LinkQr url={social.url} label={social.name} size={84} /> : null}
+              <LinkQr url={social.url} label={social.name} size={84} />
             </li>
           ))}
         </ul>
@@ -126,8 +107,7 @@ export default function HumanPath() {
         <p>
           Lifting and nutrition are the ones I will talk about for too long — I write diet and
           workout plans for people, which is what the Instagram above is for. Otherwise: combat
-          sports, travel, and taking apart systems that were not built to be taken apart. I also
-          take freelance work on {freelancePlatforms.join(", ")}.
+          sports, travel, and taking apart systems that were not built to be taken apart.
         </p>
       </section>
     </div>
