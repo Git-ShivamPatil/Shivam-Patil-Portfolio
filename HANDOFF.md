@@ -6,23 +6,33 @@ inferred rather than observed, it says so.
 
 ---
 
-# ▶ START HERE — state as of 14 Aug 2026
+# ▶ START HERE — state as of 16 Aug 2026
 
-**Live commit: `5852a9f`. CI run #38: all three jobs green.** Build, E2E (41
-Playwright tests) and Lighthouse all pass — the first run in this project's
-history where all three did.
+**The navigation and the information architecture were rebuilt on 16 Aug.** The
+site no longer has an eight-link top bar, an eleven-link footer row, or a
+homepage that is four pages at once. If your mental model of this site predates
+that, read §33 before anything else — it invalidates a lot of what is written
+below, and the older sections have deliberately NOT been rewritten to match.
 
 |               |                                                                                                    |
 | ------------- | -------------------------------------------------------------------------------------------------- |
-| Production    | https://www.shivamsfolio.com on `5852a9f`                                                          |
-| CI            | build ✅ · e2e ✅ · lighthouse ✅                                                                  |
-| Local gate    | lint ✅ · typecheck ✅ · 385 unit ✅ · 41 E2E ✅ · build ✅                                        |
+| Production    | https://www.shivamsfolio.com — see §33 for the deploy of the nav/IA work                           |
+| Local gate    | lint ✅ · typecheck ✅ · 385 unit ✅ · build ✅ · navigation.spec 14/14 ✅                         |
 | Phases P1–P20 | **all deployed and reachable** — see §31 for what is fully live vs. switched off for want of a key |
 
-**Read next, in this order:** §31 (phase-by-phase live status and how to switch
-on what is off) → §26–§30 (the CI rebuild and the two features that shipped
-dead) → §9, §17, §24, §29 (settled decisions — do not re-litigate) → §32 (what
-is left).
+**Read next, in this order:** §33 (the nav and IA rebuild — what moved where,
+and the two traps in it) → §31 (phase-by-phase live status and how to switch on
+what is off) → §26–§30 (the CI rebuild and the two features that shipped dead)
+→ §9, §17, §24, §29 (settled decisions — do not re-litigate) → §34 (what is
+left).
+
+**Three facts stated elsewhere in this file are now false**, and are left in
+place because rewriting history makes it impossible to tell what was believed
+when. §33 supersedes them:
+
+- the header carries eight links — it carries one, plus search, theme, contact
+- the footer carries a row of eleven — it carries none
+- a bare `/projects` is a 404 by design — it is the project index
 
 **Nothing is broken right now.** Everything in §31 marked "off" is off because a
 credential is absent, and every one of those degrades by design rather than
@@ -1656,3 +1666,160 @@ Supersedes §30 and §25.
    branch of production — see §26. If it is ever deleted, CI fails at "Fail
    early if the CI database is not configured" with a named error, and the fix
    is to create another and update `secrets.E2E_DATABASE_URL`.
+
+---
+
+## 33. The navigation and IA rebuild — 16 Aug
+
+Nine directives, delivered on one branch (`nav-drawer-and-ia-refactor`). This
+section supersedes every earlier description of the header, the footer, the
+homepage and the `/projects` route.
+
+### What moved
+
+| Before                                                      | After                                                                        |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Top bar: 8 links + auth avatar + a "Let us talk" pill       | Top bar: **System design, Search, theme toggle, Contact** — and nothing else |
+| Footer: a wrapping row of 11 links                          | Footer: newsletter + copyright. **No link row at all**                       |
+| No way in to `/terminal`, `/compute`, `/data`               | All three are in the drawer — they had no `<Link>` anywhere in the repo      |
+| `/projects` → 404 "by design"; homepage was the listing     | `/projects` is the index; the homepage is a hub                              |
+| Homepage: hero + full project grid + about + skills marquee | Homepage: hero + proof strip + hub grid + CTA                                |
+| Sign in: header avatar dropdown                             | Sign in: pinned to the bottom of the drawer                                  |
+
+The drawer is `components/nav/nav-drawer.tsx`. It ships the hamburger and the
+panel together so `components/header.tsx` stays a server component — the
+wordmark photo is a `priority` image on every route and must not wait on a
+client bundle.
+
+**It is portalled to `<body>`, and it has to be.** `.site-header` is
+`position: sticky; z-index: 20`, which makes it a stacking context; left inside
+it, the panel sits below `.back-to-top` (z-index 30, and it sits bottom-left,
+directly over the drawer) and the chat launcher (40), whatever z-index the
+panel declares for itself.
+
+### Two traps, both of which look fixed while still being broken
+
+**1. `.offset-card` lived in two files.** Deleting the `translateY(52px)` pair
+from `globals.css` leaves the stagger fully intact, because `motion.css`
+restated it as `.offset-card[data-tilt]` so that it would compose with the tilt
+rather than be overwritten by it — and every project card carries `data-tilt`.
+`(0,2,0)` beats `(0,1,0)`. Anyone redoing this work by grepping `globals.css`
+alone will believe they have removed an offset that is still on every card.
+
+**2. `.section-heading` was the sticky.** Directive 7 asked for the
+`/system-design` title to stop sticking, but no rule on that page did it — the
+page uses the shared `.section-heading`, which was `position: sticky` at
+`globals.css:867`. One deletion fixed the homepage columns and the
+system-design titles together.
+
+### Typography
+
+`h1` was `clamp(52px, 7.4vw, 108px)` — a **52px floor** — with a
+`max-width: 620px` override of `clamp(51px, 16vw, 74px)`. At a 620px viewport
+that override resolves to 74px against the base's 52px: the mobile rule was
+22px **larger** than the desktop rule at the same width, so the floor never
+dropped anywhere and the hero wrapped hard on every phone.
+
+It is now `clamp(2rem, 0.42rem + 7.04vw, 108px)`, a slope solved between 360px
+and 1440px. Measured on the built site: **32.06px at 360px, 96.8px at 1280px.**
+The `rem` term is load-bearing — a pure-`vw` middle term ignores the user's
+browser font size and fails WCAG 1.4.4 at 200% zoom.
+
+### /stats
+
+Fetches carry `AbortSignal.timeout`, responses are shape-checked before use,
+and the stale-on-error promise the page makes _in its own copy_ is now true.
+Charts are hand-written inline SVG on a semantic `--chart-*` scale defined per
+theme; series are separated by **texture as well as colour** (WCAG 1.4.1), and
+the darkest dark-theme series computes to ~4.7:1 against `--bg`.
+
+`components/stats/use-live-data.ts` polls the existing endpoints — visibility
+gated, single in-flight, aborted on unmount, geometric backoff, newest snapshot
+wins. **No SWR and no react-query, deliberately:** the Lighthouse budget is
+what keeps a 12–15KB data library off a page whose job is to show numbers that
+change hourly.
+
+### /system-design
+
+`PHASES` had ten entries; twenty have shipped. It now carries P1–P20 with the
+live / awaiting-a-credential status from §31, and the three "ten phases"
+strings are updated. Two rows of "spec versus reality" were also simply wrong
+and are corrected: RAG shipped as P16, and Playwright and Lighthouse both run
+in CI.
+
+### Tests
+
+`e2e/navigation.spec.ts` gained drawer coverage and two invariants that had
+none: that the hero scales monotonically across 360/768/1440, and that no two
+cards overlap and no page scrolls sideways at any of those widths. `NAV_ROUTES`
+is cut to the two links the header still has, and the `/projects` 404
+assertion is now a 200.
+
+Drawer assertions are scoped to `aside#site-drawer` rather than using
+`.first()`. A document-wide lookup resolves to the header copy of the same
+label — "System design" and "Contact" are in both surfaces, and the hub cards
+point at the same routes — so it still navigates, still passes, and asserts
+nothing at all about the drawer.
+
+**One harness change worth knowing about.** `revealEverything` waited a flat
+120ms per section. `block: "center"` cannot centre the _last_ section — that
+would mean scrolling past the end of the document — so the browser clamps to
+max scroll and the element gets whatever settling time is left. The homepage
+lost ~2,000px of height, the clamp tightened, and the IntersectionObserver
+callback began landing after the sleep expired; the scroll back to the top then
+took the element out of view, so the reveal could never fire at all. It
+reported as _"the newsletter section never reveals"_, which was **not
+happening** — verified in a real browser at `data-revealed="true"` with opacity
+settling to 1. It now polls the driver's own attribute instead of a stopwatch.
+
+### Local E2E on a small machine — read this before panicking
+
+This box has **8GB of RAM**. `playwright.config.ts` sets
+`workers: process.env.CI ? 1 : undefined`, so a local run starts several
+Chromium instances at once and the suite collapses:
+
+| Run                              | Result                           |
+| -------------------------------- | -------------------------------- |
+| default workers                  | 23 failed / 23 passed (23.2 min) |
+| `--workers=1`                    | 8 failed / 39 passed (20.8 min)  |
+| `navigation.spec.ts --workers=1` | **14 / 14 passed**               |
+
+The failures are `page.goto` timeouts, `Target page … has been closed` and
+`Protocol error … session closed` — starvation, not assertions. **Anything
+heavy run at the same time as Playwright (a build, `tsc`, `eslint`, vitest, a
+commit hook) will manufacture failures**; roughly fifteen phantom ones were
+produced that way before the cause was understood.
+
+The six axe failures are the 30s per-test budget expiring _inside_
+`AxeBuilder.analyze`. They are not violations: `/services` was measured stable
+at rest (0 unstable of 6 tracked elements), its reveal sweep settles in
+**928ms** against a 15s allowance, and the page is **275 DOM nodes**. The P11
+chat-launcher failure is `DeferredLayer`'s idle gate not firing inside 10s
+under load; the launcher renders correctly in a real browser.
+
+**Use `--workers=1` locally, and run nothing else while it runs.**
+
+---
+
+## 34. Outstanding after this session
+
+Supersedes §32, which is otherwise still accurate.
+
+1. **DNS off Wix** → verify the Resend domain →
+   `EMAIL_FROM=shivam@shivamsfolio.com`. Still the only thing between
+   transactional mail and the inbox.
+2. **Google + GitHub OAuth apps** → four variables. Highest visible impact.
+3. **A retry on unique-constraint violation** in `app/api/bookings/route.ts`.
+   Still the oldest open code defect.
+4. **The E2E suite still does not cover P17–P20** (§32 item 6). Unchanged, and
+   still the highest-value piece of test work left.
+5. **`components/providers/` was not touched.** The motion agent in the 16 Aug
+   run never executed — it died on a quota limit — so the page-transition and
+   stagger polish of directive 9 is only what `globals.css` and
+   `motion-bold.css` already provided. The existing `[data-stagger]` nth-child
+   ramp covers the new hub grid, so nothing is broken; it is the one directive
+   delivered at its existing level rather than raised.
+6. **`.nav-scrim` / `.nav-drawer` use z-index 60/61.** The audit recommended
+   44/45, which clears the chat launcher (40) while staying below the skip link
+   (50). 61 currently covers the skip link, which only matters at the very top
+   of a page with the drawer already open. Worth tidying, not urgent.
