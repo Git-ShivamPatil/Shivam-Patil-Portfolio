@@ -197,7 +197,17 @@ test.describe("client-side navigation", () => {
 
     for (const route of DRAWER_ROUTES) {
       await openDrawer(page);
-      await page.getByRole("link", { name: route.name, exact: true }).first().click();
+      // Scoped to the panel rather than `.first()` across the document. Several
+      // of these labels exist twice — "System design" is in the top bar,
+      // "Contact" is in both, and the homepage hub cards point at the same
+      // routes — so a document-wide lookup can resolve to a link that is not
+      // the one under test and quietly assert nothing about the drawer.
+      const link = page.locator("aside#site-drawer").getByRole("link", {
+        name: route.name,
+        exact: true,
+      });
+      await expect(link).toBeVisible();
+      await link.click();
       await assertPageIsNotBlank(page, route.path);
     }
   });
@@ -208,7 +218,10 @@ test.describe("client-side navigation", () => {
     // it just navigated to and the body scroll lock stays on with it.
     await page.goto("/");
     await openDrawer(page);
-    await page.getByRole("link", { name: "Skills", exact: true }).first().click();
+    await page
+      .locator("aside#site-drawer")
+      .getByRole("link", { name: "Skills", exact: true })
+      .click();
 
     await expect(page.locator("button.nav-trigger")).toHaveAttribute("aria-expanded", "false");
     await expect(page.locator("aside#site-drawer")).toHaveAttribute("aria-hidden", "true");
@@ -229,7 +242,10 @@ test.describe("client-side navigation", () => {
     // route whose entry point was itself unmounted by the close-on-navigate.
     await page.goto("/");
     await openDrawer(page);
-    await page.getByRole("link", { name: "About", exact: true }).first().click();
+    await page
+      .locator("aside#site-drawer")
+      .getByRole("link", { name: "About", exact: true })
+      .click();
     await assertPageIsNotBlank(page, "/about");
 
     await page.goBack();
