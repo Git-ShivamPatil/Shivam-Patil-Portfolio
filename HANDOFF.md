@@ -8,34 +8,44 @@ inferred rather than observed, it says so.
 
 # ▶ START HERE — state as of 16 Aug 2026
 
-**The navigation and the information architecture were rebuilt on 16 Aug.** The
-site no longer has an eight-link top bar, an eleven-link footer row, or a
-homepage that is four pages at once. If your mental model of this site predates
-that, read §33 before anything else — it invalidates a lot of what is written
-below, and the older sections have deliberately NOT been rewritten to match.
+**The site was substantially rebuilt on 16 Aug, across two sessions.** A
+visitor now meets a four-way chooser, the navigation lives in a drawer, and the
+homepage is a hub rather than four pages at once. If your mental model predates
+that, **§33, §35 and §36 are the three sections that matter** — they invalidate
+much of what is written below, and the older sections have deliberately NOT
+been rewritten to match.
 
 |               |                                                                                                    |
 | ------------- | -------------------------------------------------------------------------------------------------- |
-| Live commit   | `1b1f141` — verified in a real browser on production, not inferred from a deploy status            |
-| Production    | https://www.shivamsfolio.com on `1b1f141`                                                          |
-| CI            | **run #45, all three jobs green** — build 1m20s · e2e 3m45s · lighthouse 3m19s                     |
+| Live commit   | `ba3cd90` — verified in a real browser on production, not inferred from a deploy status            |
+| Production    | https://www.shivamsfolio.com                                                                       |
+| CI            | **run #47, all three jobs green** (#45, #46, #47 consecutive)                                      |
 | Local gate    | lint ✅ · typecheck ✅ · 385 unit ✅ · build ✅ · **53/53 E2E** ✅                                 |
 | Phases P1–P20 | **all deployed and reachable** — see §31 for what is fully live vs. switched off for want of a key |
 
-**Read next, in this order:** §35 (the audience paths, the phone, and the
-heading that broke mid-word — newest, and it contains two traps that make the
-work look done while still being broken) → §33 (the nav and IA rebuild) → §31
-(phase-by-phase live status and how to switch on what is off) → §26–§30 (the CI
-rebuild and the two features that shipped dead) → §9, §17, §24, §29 (settled
-decisions — do not re-litigate) → §34 (what is left, minus §35's last section).
+**Read next, in this order:** §37 (what is left, and the four things that look
+broken and are not) → §36 (the motion layer, and the second §2z bug — found in
+production, shipped silently) → §35 (the audience paths, the phone, and the
+heading that broke mid-word) → §33 (the nav and IA rebuild) → §31 (phase-by-
+phase live status) → §26–§30 (the CI rebuild and the two features that shipped
+dead) → §9, §17, §24, §29 (settled decisions — do not re-litigate).
 
-**Three facts stated elsewhere in this file are now false**, and are left in
-place because rewriting history makes it impossible to tell what was believed
-when. §33 supersedes them:
+**§2z has now bitten twice.** Both times the cause was an effect keyed on
+`pathname` that queried the DOM, running while `AnimatePresence mode="wait"`
+still had the outgoing page mounted. The first blanked every page and was found
+in hours (§2z). The second killed all pointer interaction after any client-side
+navigation and shipped unnoticed for weeks, because it degraded quietly (§36).
+**If you are about to write `useEffect(..., [pathname])` in a component that
+calls `querySelectorAll`, that is the bug. Use a MutationObserver.**
 
-- the header carries eight links — it carries one, plus search, theme, contact
-- the footer carries a row of eleven — it carries none
-- a bare `/projects` is a 404 by design — it is the project index
+**Facts stated elsewhere in this file that are now false**, left in place
+because rewriting history makes it impossible to tell what was believed when:
+
+- the header carries eight links — it carries one, plus search, theme, and a
+  phone/email icon pair (§33, §35)
+- the footer carries a row of eleven — it carries none (§33)
+- a bare `/projects` is a 404 by design — it is the project index (§33)
+- the E2E suite is 41 specs — it is 53 (§35)
 
 **Nothing is broken right now.** Everything in §31 marked "off" is off because a
 credential is absent, and every one of those degrades by design rather than
@@ -1811,7 +1821,11 @@ under load; the launcher renders correctly in a real browser.
 
 ---
 
-## 34. Outstanding after this session
+## 34. Outstanding after this session — SUPERSEDED BY §37
+
+> Kept for the record. **Read §37 instead.** Item 5 here (no motion work in
+> `components/providers/`) is done — see §36 — and the rest is restated there
+> with the newer items alongside.
 
 Supersedes §32, which is otherwise still accurate.
 
@@ -1949,3 +1963,137 @@ arbitrary payment pages, and referral links are by definition not this site.
   The four `/for/*` views _are_ strictly single column, with the measure capped
   at ~68 characters, which is the actual fix for hard-to-read long lines.
 - **`components/providers/` still has no motion work** (§34 item 5). Unchanged.
+
+---
+
+## 36. The motion layer, and the second §2z bug — 16 Aug
+
+This closes §34 item 5, which had stood open since the motion agent died on a
+quota limit. What it found on the way is more important than the polish.
+
+### `interaction-layer.tsx` had the §2z bug too, and had it in production
+
+The driver behind magnetic buttons, card tilt, the specular highlight and both
+parallax axes re-ran its effect on `[pathname]` and re-queried the document for
+`[data-magnetic]`, `[data-tilt]` and the parallax layers.
+
+That is the §2z ordering trap exactly. `PageTransition` wraps routes in
+`<AnimatePresence mode="wait">`, so when `pathname` changes the outgoing page is
+still mounted and the incoming one does not exist. The effect attached its
+listeners to the **outgoing** page's elements. The page that actually arrived
+got none.
+
+**ScrollReveal's version of this blanked the site and was found in hours. This
+one degraded silently** — buttons stopped being magnetic, cards stopped tilting,
+the hero stopped drifting — so it shipped and stayed. Every client-side
+navigation landed on a page with no pointer interaction at all, and only a hard
+refresh restored it.
+
+Measured after the fix, navigating `/` → `/projects` by clicking: `--tilt-x` and
+`--tilt-y` both `1.25deg`, `--spot-on` `1`. Before it, all three were unset.
+
+### How it is fixed, and why not with a re-scan
+
+Magnetic and tilt are now **delegated to one document-level `pointermove`**.
+`closest()` finds the target on each move, so an element mounted at any later
+moment is picked up with nothing to re-wire and no list to invalidate. There is
+no route dependency left to get wrong.
+
+That also collapses the listener count. It used to be two listeners per
+magnetic element, plus two per tilt surface, plus a separate window listener for
+pointer parallax, each scheduling its own frame. It is now **one rAF-batched
+handler** that does magnetic, tilt and pointer parallax in a single style flush.
+
+The parallax layers still need an actual list, because they are driven by
+scroll position rather than by what is under the cursor. That list is
+invalidated by a **MutationObserver**, not by a route change — the same
+mechanism ScrollReveal uses, and for the same reason. The observer also
+schedules a scroll frame so a new route's layers settle at their authored offset
+immediately instead of on the visitor's first scroll.
+
+**Do not reintroduce `[pathname]` here.** If pointer interaction ever needs to
+know about a route change, the answer is the MutationObserver, not the router.
+
+### What was deliberately left alone
+
+`page-transition.tsx` is unchanged. It is 27 lines, already wrapped in
+`MotionConfig reducedMotion="user"`, and its 0.22s exit is the window during
+which the incoming page does not exist. **Lengthening it widens the §2z failure
+window and buys nothing; shortening it risks a visible snap.** It is the right
+size and the temptation to "polish" it should be resisted without a measurement
+saying otherwise.
+
+The stagger and hover vocabulary were already in place from §33 —
+`motion-bold.css` has the `[data-stagger] > *` nth-child ramp capped at the
+seventh child, and `motion.css` owns the shared hover transitions. Neither
+needed work; the gap was never the CSS.
+
+---
+
+## 37. Outstanding — supersedes §32 and §34
+
+Nothing here is broken. Every item is either an absent credential or a
+deliberate choice with a cost attached.
+
+### If you only do one thing
+
+**Google + GitHub OAuth apps.** Four environment variables, no DNS change, no
+payment account. It is the only item on this list a visitor actually sees fail:
+they click a sign-in button that cannot complete. Callback URIs are in §3 and
+the `www` matters.
+
+### Credentials
+
+1. **DNS off Wix** → verify the Resend domain → `EMAIL_FROM=shivam@shivamsfolio.com`.
+   Still the only thing between transactional mail and the inbox; §3 has the
+   full account of why it is blocked and why the move is low-risk.
+2. **`AUTH_GOOGLE_ID`/`_SECRET`, `AUTH_GITHUB_ID`/`_SECRET`** — see above.
+3. **Razorpay, R2, Cal.com** — per §31. Each is built and inert.
+
+### Code
+
+4. **A retry on unique-constraint violation** in `app/api/bookings/route.ts`.
+   The oldest open defect in the repo. 40 bits of reference entropy makes a
+   collision rare, not impossible, and when it happens it is a 500 for a
+   customer mid-payment. `lib/distsys/command.ts` is the natural home.
+5. **The E2E suite still does not cover P17–P20.** Unchanged from §32 item 6,
+   and still the highest-value test work left: both features that once shipped
+   dead lived in exactly that gap.
+6. **Drawer z-index is 60/61**, where the CSS audit recommended 44/45. 61 sits
+   above the skip link (50), which only matters at the very top of a page with
+   the drawer already open. Tidy, not urgent.
+7. **Ten referral apps were removed for want of a link** — Jupiter, Binance,
+   Exness, Zerodha, Groww, Navi, INDmoney, Angel One, Upstox, and Telegram as a
+   social. Re-adding one is a single entry in `app/referrals.ts` the day its URL
+   exists; the Investing category will need putting back in
+   `referralCategories` with them.
+
+### Things that look wrong and are not — do not "fix" these
+
+8. **`sp:audience` is read but never written.** The chooser asks on every load
+   by design and persists nothing. The read exists so the E2E suite can
+   pre-answer it through `storageState`; without that, the overlay covers the
+   viewport in all fifty-plus specs. See §35.
+9. **The phone number is committed in `lib/site-contact.ts`.** It renders into
+   `tel:` and `wa.me` hrefs on a public page, so withholding it from the repo
+   would protect nothing. `NEXT_PUBLIC_CONTACT_PHONE` overrides it.
+10. **CI runs #43 and #44 are red and stay red.** Those two commits genuinely
+    were broken. Re-running them re-runs the same broken code. §35 cites that
+    failure as documentation.
+11. **`pnpm format:check` reports CRLF noise** from the Windows checkout. CI
+    does not run it.
+
+### Working on this repo
+
+- **Run E2E with `--workers=1` and nothing else on the machine.** §33 has the
+  numbers: the parallel default produced 23 failures on an 8GB box that CI
+  passes in under four minutes. A build, `tsc`, `eslint`, vitest or a commit
+  hook running alongside Playwright will manufacture failures that look real.
+- **CI serialises on the database.** `ci.yml` puts the E2E job in a
+  `ci-database` concurrency group with `cancel-in-progress: false`, because the
+  CI database is one standalone Neon project (§26). Three pushes in quick
+  succession queue end to end, so a run can sit "pending" for fifteen minutes
+  without anything being wrong.
+- **Stop the preview server before committing.** The pre-commit hook runs
+  eslint and prettier; with `next start` alive it routinely exceeds five
+  minutes.
