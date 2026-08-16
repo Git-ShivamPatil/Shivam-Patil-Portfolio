@@ -54,12 +54,20 @@ export function audienceById(id: string): Audience | undefined {
 }
 
 /**
- * Where the visitor's choice is remembered.
+ * The key that suppresses the chooser.
  *
- * localStorage rather than a cookie: nothing on the server needs to branch on
- * it, and a cookie would be sent on every request to every asset for a value
- * only the chooser reads. It is also not personal data under any reading,
- * which keeps the first-party analytics promise in §P10 intact — no consent
- * banner is owed for a key that stores the string "recruiter".
+ * **The product never writes it.** Choosing a path is not remembered — the
+ * chooser asks on every load on purpose — so for a real visitor this key is
+ * always absent and the read always returns null.
+ *
+ * It survives because the E2E suite seeds it through `storageState` in
+ * playwright.config.ts. The gate covers the viewport, so without a pre-answer
+ * every one of the fifty-plus specs would have to dismiss a modal before it
+ * could click anything, and CI run 43 is what that looks like when it is
+ * missing: twelve specs failing at once on a feature none of them test.
+ *
+ * localStorage rather than a cookie: nothing on the server branches on it, and
+ * a cookie would ride on every request to every asset for a value only the
+ * browser reads.
  */
 export const AUDIENCE_STORAGE_KEY = "sp:audience";

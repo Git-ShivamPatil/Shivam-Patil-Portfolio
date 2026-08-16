@@ -37,7 +37,7 @@ test.describe("the audience chooser", () => {
     expect((await heading.innerText()).trim().length).toBeGreaterThan(8);
   });
 
-  test("choosing a path routes there and is remembered", async ({ page }) => {
+  test("choosing a path routes there without remembering the answer", async ({ page }) => {
     await page.goto("/");
     await page
       .locator(".entry-gate")
@@ -48,16 +48,33 @@ test.describe("the audience chooser", () => {
     await expect(page.locator(".entry-gate")).toHaveCount(0);
     await expect(page.locator("main h1").first()).toBeVisible();
 
-    expect(await page.evaluate(() => localStorage.getItem("sp:audience"))).toBe("recruiter");
-
-    // The point of persisting it: a second visit goes straight in.
-    await page.goto("/");
-    await expect(page.locator(".entry-gate")).toHaveCount(0);
+    // Nothing is written. The chooser is part of how the site introduces
+    // itself, not a setting to get past once.
+    expect(await page.evaluate(() => localStorage.getItem("sp:audience"))).toBeNull();
   });
 
-  test("skipping dismisses it without answering for next time", async ({ page }) => {
-    // Skip is "not now", not "never ask again". Persisting it would retire the
-    // chooser permanently on one stray Escape.
+  test("a choice survives navigation within the visit but not a refresh", async ({ page }) => {
+    // The exact scope the behaviour is meant to have, and the pair of
+    // assertions that pins it: dismissing must not follow you around the site
+    // during one visit, and must not outlive the load either.
+    await page.goto("/");
+    await page
+      .locator(".entry-gate")
+      .getByRole("button", { name: /another human being/i })
+      .click();
+    await expect(page).toHaveURL(/\/for\/human\/?$/);
+
+    // Client-side navigation: still dismissed, because it is component state.
+    await page.getByRole("link", { name: "Shivam Patil home" }).first().click();
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.locator(".entry-gate")).toHaveCount(0);
+
+    // A real reload asks again.
+    await page.reload();
+    await expect(page.locator(".entry-gate")).toBeVisible();
+  });
+
+  test("skipping dismisses it for this load only", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: /just let me look around/i }).click();
     await expect(page.locator(".entry-gate")).toHaveCount(0);

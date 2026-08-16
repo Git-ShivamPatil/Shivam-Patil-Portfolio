@@ -124,14 +124,19 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             must land before first paint and a second inline script is a second
             parser pause for no gain.
 
-            Reading localStorage here rather than in the EntryGate component is
-            what stops a returning visitor seeing a frame of the chooser: a
-            React effect runs after paint, so the overlay would flash and then
-            vanish on every single navigation to the homepage. The try/catch is
-            not defensive dressing — localStorage *throws* on access in Safari's
-            private mode rather than returning null, and an uncaught throw here
-            would abort the script and take the reveal stamp down with it,
-            leaving every [data-reveal] section invisible forever. */}
+            Nothing in the product writes `sp:audience` — the chooser asks on
+            every load and does not persist — so this read returns null for a
+            real visitor and the stamp never lands. It exists for the E2E suite,
+            which seeds the key through `storageState` to pre-answer a modal
+            that would otherwise cover the viewport in all fifty-plus specs.
+            Doing it here rather than in the component is what makes the bypass
+            reliable: it lands before first paint, ahead of any React effect.
+
+            The try/catch is not defensive dressing — localStorage *throws* on
+            access in Safari's private mode rather than returning null, and an
+            uncaught throw here would abort the script and take the reveal stamp
+            down with it, leaving every [data-reveal] section invisible
+            forever. */}
         <script
           dangerouslySetInnerHTML={{
             __html: `document.documentElement.setAttribute("data-reveal-ready","true");try{if(localStorage.getItem("sp:audience"))document.documentElement.setAttribute("data-audience-chosen","true")}catch(e){}`,

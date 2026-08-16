@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
-import { audiences, AUDIENCE_STORAGE_KEY, type AudienceId } from "../../app/audiences";
+import { audiences, AUDIENCE_STORAGE_KEY } from "../../app/audiences";
 import "./entry-gate.css";
 
 /**
@@ -23,22 +23,31 @@ import "./entry-gate.css";
  *   route. An interstitial that empties `<main>` fails all of them, and would
  *   be failing for a reason that has nothing to do with what they test.
  *
- * The choice is read before first paint by an inline script in the root layout,
- * which stamps `data-audience-chosen` on `<html>`. The CSS keys off that
- * attribute, so a returning visitor never sees a frame of the overlay — the
- * same trick, and the same reasoning, as `data-reveal-ready`.
+ * **It asks on every load, by design.** The choice is not persisted: it is part
+ * of how the site introduces itself rather than a setting to get past, and the
+ * same person is not reliably the same kind of visitor twice. `dismissed` is
+ * component state, so a choice survives client-side navigation within the visit
+ * and resets on the next full load — which is exactly the scope wanted.
  */
-/* The stored choice, read as an external store rather than copied into state
+/* The suppression key, read as an external store rather than copied into state
    by an effect.
 
-   `useState` + `useEffect` is the obvious shape and the compiler lint rejects
-   it: setState in an effect body cascades a second render on every mount. It is
-   also wrong here for a subtler reason — localStorage is genuinely external
-   state, so reading it during render through the documented API is what this
-   hook is for. NavDrawer settled the same question the same way.
+   **Nothing in the product writes this key.** Choosing a path no longer
+   persists, so a real visitor is asked on every load and this read always
+   returns null for them. It stays because the E2E suite seeds it through
+   `storageState` in playwright.config.ts: the gate covers the viewport, so
+   without a way to pre-answer it, every one of the fifty-plus specs would have
+   to dismiss a modal before it could click anything. That is a bypass for the
+   harness, not a preference for visitors — deleting it would put twelve specs
+   back into the failure mode CI run 43 found.
+
+   `useSyncExternalStore` rather than `useState` + `useEffect`: the compiler
+   lint rejects setState in an effect body, and localStorage is genuinely
+   external state, so reading it during render through the documented API is
+   what this hook is for. NavDrawer settled the same question the same way.
 
    The server snapshot is a non-null sentinel, so the overlay is absent from the
-   SSR output and appears on the client only when nothing is stored. */
+   SSR output and appears on the client only. */
 const subscribeToNothing = () => () => {};
 const readStoredChoice = (): string | null => {
   try {
@@ -68,14 +77,18 @@ export function EntryGate() {
   }, [open]);
 
   const choose = useCallback(
-    (id: AudienceId, href: string) => {
-      try {
-        window.localStorage.setItem(AUDIENCE_STORAGE_KEY, id);
-      } catch {
-        // A visitor who cannot persist the choice still gets to make it; they
-        // are simply asked again next time. Losing the preference is a much
-        // smaller failure than refusing to route them.
-      }
+    (href: string) => {
+      // The choice is deliberately NOT persisted.
+      //
+      // It used to be, and the question was asked once per browser. Asking on
+      // every load is the intended behaviour: the chooser is part of how the
+      // site introduces itself rather than a settings prompt to get past, and a
+      // returning visitor is rarely the same kind of visitor twice — the same
+      // person arrives as a recruiter on Monday and as a human on Friday.
+      //
+      // `dismissed` is component state, so it survives client-side navigation
+      // within the visit and resets on the next full load, which is exactly the
+      // scope wanted. Nothing is written to storage.
       document.documentElement.setAttribute("data-audience-chosen", "true");
       setDismissed(true);
       router.push(href);
@@ -132,7 +145,7 @@ export function EntryGate() {
               key={audience.id}
               type="button"
               className="entry-gate-option"
-              onClick={() => choose(audience.id, audience.href)}
+              onClick={() => choose(audience.href)}
             >
               <span className="entry-gate-option-label">{audience.label}</span>
               <span className="entry-gate-option-blurb">{audience.blurb}</span>
