@@ -9,6 +9,22 @@
    Spans are produced at runtime by components/providers/split-text.tsx, which
    also sets aria-label on the heading and aria-hidden on each span, so screen
    readers still get the whole string. */
+/* The word wrapper is what keeps a heading from breaking mid-word.
+
+   Every .split-char below is inline-block, because the reveal animates
+   transform and an inline box cannot take one. That also makes each character
+   its own line-break opportunity, so a heading built from bare character spans
+   can break between any two letters — the live homepage rendered "Build syste /
+   ms that hold up." It stayed hidden for as long as the markup carried a hard
+   <br>, which chose the break itself; removing that <br> so the line could
+   reflow is what exposed it.
+
+   nowrap on an inline-block wrapper leaves the real spaces between words as the
+   only break opportunities, which is the behaviour an unsplit heading has. */
+.split-word {
+  display: inline-block;
+  white-space: nowrap;
+}
 .split-char {
   display: inline-block;
   /* Without this the rotateX below is a flat squash rather than a tilt. */

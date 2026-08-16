@@ -80,21 +80,52 @@ function split(targets: HTMLElement[], prefersReducedMotion: boolean) {
         if (!text.trim()) continue;
 
         const fragment = document.createDocumentFragment();
+
+        // Characters are grouped into a word wrapper rather than emitted as
+        // siblings, and that grouping is load-bearing.
+        //
+        // `.split-char` is `display: inline-block` (motion-bold.css) because
+        // the reveal animates transform, which inline boxes cannot take. But
+        // every inline-block is its own line-break opportunity, so a heading
+        // made of bare character spans may break between ANY two letters. It
+        // rendered "Build syste / ms that hold up." on the live homepage.
+        //
+        // It was latent for as long as the markup carried a hard <br>: the
+        // break landed at the authored point and never had to be chosen. The
+        // fluid-typography work removed that <br> so the line could reflow,
+        // which is what surfaced it.
+        //
+        // The wrapper is inline-block + nowrap, so the only break opportunities
+        // left are the real space text nodes between words.
+        let word: HTMLElement | null = null;
+        const closeWord = () => {
+          if (word) fragment.appendChild(word);
+          word = null;
+        };
+
         for (const char of text) {
           if (char === " ") {
+            closeWord();
             // Kept as a real text node: wrapping spaces in inline-block spans
             // collapses them and destroys the word spacing.
             fragment.appendChild(document.createTextNode(" "));
             continue;
+          }
+          if (!word) {
+            word = document.createElement("span");
+            word.className = "split-word";
+            word.setAttribute("aria-hidden", "true");
           }
           const span = document.createElement("span");
           span.className = "split-char";
           span.setAttribute("aria-hidden", "true");
           span.style.setProperty("--char-index", String(index));
           span.textContent = char;
-          fragment.appendChild(span);
+          word.appendChild(span);
           index += 1;
         }
+        closeWord();
+
         node.parentNode?.replaceChild(fragment, node);
       }
 

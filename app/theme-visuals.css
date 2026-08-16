@@ -289,6 +289,18 @@
   /* Fallback for the split-char spans, which each need their own clip. */
   -webkit-text-fill-color: transparent;
 }
+/* `.split-word` is in this list, and it has to be.
+
+   The gradient reaches a character span by inheritance, and split-text.tsx now
+   nests those characters inside a per-word wrapper so a heading cannot break
+   mid-word. That wrapper sits between the <em> and the characters, so without
+   a rule here `background: inherit` on a character resolves against the
+   wrapper's default `transparent` — and since -webkit-text-fill-color is also
+   transparent, the italic would clip a transparent gradient onto transparent
+   text and disappear completely. */
+.hero h1 em .split-word,
+.page-hero h1 em .split-word,
+.section-heading h2 em .split-word,
 .hero h1 em .split-char,
 .page-hero h1 em .split-char,
 .section-heading h2 em .split-char {
