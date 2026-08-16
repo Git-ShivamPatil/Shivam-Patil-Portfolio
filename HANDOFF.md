@@ -16,7 +16,9 @@ below, and the older sections have deliberately NOT been rewritten to match.
 
 |               |                                                                                                    |
 | ------------- | -------------------------------------------------------------------------------------------------- |
-| Production    | https://www.shivamsfolio.com — see §33 for the deploy of the nav/IA work                           |
+| Live commit   | `73c034a` — verified in a real browser on production, not inferred from a deploy status            |
+| Production    | https://www.shivamsfolio.com on `73c034a`                                                          |
+| CI            | **run #40, all three jobs green** — build 1m22s · e2e 3m17s · lighthouse 3m13s                     |
 | Local gate    | lint ✅ · typecheck ✅ · 385 unit ✅ · build ✅ · navigation.spec 14/14 ✅                         |
 | Phases P1–P20 | **all deployed and reachable** — see §31 for what is fully live vs. switched off for want of a key |
 
@@ -1778,11 +1780,18 @@ This box has **8GB of RAM**. `playwright.config.ts` sets
 `workers: process.env.CI ? 1 : undefined`, so a local run starts several
 Chromium instances at once and the suite collapses:
 
-| Run                              | Result                           |
-| -------------------------------- | -------------------------------- |
-| default workers                  | 23 failed / 23 passed (23.2 min) |
-| `--workers=1`                    | 8 failed / 39 passed (20.8 min)  |
-| `navigation.spec.ts --workers=1` | **14 / 14 passed**               |
+| Run                                  | Result                           |
+| ------------------------------------ | -------------------------------- |
+| local, default workers               | 23 failed / 23 passed (23.2 min) |
+| local, `--workers=1`                 | 8 failed / 39 passed (20.8 min)  |
+| local, `navigation.spec --workers=1` | **14 / 14 passed**               |
+| **CI run #40, same commit**          | **all 47 passed, 3m 17s**        |
+
+**The last row settles it.** The identical suite, including the six tests added
+in this session, passes on GitHub's runner in 3m17s — an order of magnitude
+faster than the 20.8 minutes it takes to fail here. Nothing was wrong with the
+tests or the pages. Do not "fix" a local failure in this suite before checking
+whether it reproduces in CI.
 
 The failures are `page.goto` timeouts, `Target page … has been closed` and
 `Protocol error … session closed` — starvation, not assertions. **Anything
