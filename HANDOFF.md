@@ -16,17 +16,18 @@ below, and the older sections have deliberately NOT been rewritten to match.
 
 |               |                                                                                                    |
 | ------------- | -------------------------------------------------------------------------------------------------- |
-| Live commit   | `73c034a` — verified in a real browser on production, not inferred from a deploy status            |
-| Production    | https://www.shivamsfolio.com on `73c034a`                                                          |
-| CI            | **run #40, all three jobs green** — build 1m22s · e2e 3m17s · lighthouse 3m13s                     |
-| Local gate    | lint ✅ · typecheck ✅ · 385 unit ✅ · build ✅ · navigation.spec 14/14 ✅                         |
+| Live commit   | `1b1f141` — verified in a real browser on production, not inferred from a deploy status            |
+| Production    | https://www.shivamsfolio.com on `1b1f141`                                                          |
+| CI            | **run #45, all three jobs green** — build 1m20s · e2e 3m45s · lighthouse 3m19s                     |
+| Local gate    | lint ✅ · typecheck ✅ · 385 unit ✅ · build ✅ · **53/53 E2E** ✅                                 |
 | Phases P1–P20 | **all deployed and reachable** — see §31 for what is fully live vs. switched off for want of a key |
 
-**Read next, in this order:** §33 (the nav and IA rebuild — what moved where,
-and the two traps in it) → §31 (phase-by-phase live status and how to switch on
-what is off) → §26–§30 (the CI rebuild and the two features that shipped dead)
-→ §9, §17, §24, §29 (settled decisions — do not re-litigate) → §34 (what is
-left).
+**Read next, in this order:** §35 (the audience paths, the phone, and the
+heading that broke mid-word — newest, and it contains two traps that make the
+work look done while still being broken) → §33 (the nav and IA rebuild) → §31
+(phase-by-phase live status and how to switch on what is off) → §26–§30 (the CI
+rebuild and the two features that shipped dead) → §9, §17, §24, §29 (settled
+decisions — do not re-litigate) → §34 (what is left, minus §35's last section).
 
 **Three facts stated elsewhere in this file are now false**, and are left in
 place because rewriting history makes it impossible to tell what was believed
@@ -1832,3 +1833,119 @@ Supersedes §32, which is otherwise still accurate.
    44/45, which clears the chat launcher (40) while staying below the skip link
    (50). 61 currently covers the skip link, which only matters at the very top
    of a page with the drawer already open. Worth tidying, not urgent.
+
+---
+
+## 35. Audience paths, the phone, and a heading that broke mid-word — 16 Aug
+
+Second session of 16 Aug, on top of §33. Three separate pieces of work.
+
+### The heading bug, and why it was not a layout problem
+
+The live homepage rendered **"Build syste / ms that hold up."** It looked like a
+column-width problem and it was not.
+
+`components/providers/split-text.tsx` wraps every heading character in its own
+`<span class="split-char">`, and `motion-bold.css` makes those
+`display: inline-block` because the reveal animates `transform`, which an inline
+box cannot take. **Every inline-block is a line-break opportunity**, so a
+heading built from bare character spans may break between any two letters.
+
+It was latent for as long as the markup carried a hard `<br>`: the break landed
+where it was authored and the browser never had to choose one. Removing that
+`<br>` in §33 so the line could reflow is what exposed it — which is why it
+looked like the fluid-typography work had caused it.
+
+Characters now nest inside a `.split-word` wrapper that is `inline-block` and
+`white-space: nowrap`, leaving the real spaces between words as the only break
+opportunities.
+
+**The trap in that fix.** `.split-char` takes the heading gradient by
+`background: inherit`. A wrapper between the `<em>` and the characters means
+they inherit the _wrapper's_ transparent default, and since
+`-webkit-text-fill-color` is also transparent, the italic would clip a
+transparent gradient onto transparent text and **disappear entirely**.
+`.split-word` is in the gradient-clip rule in `theme-visuals.css` for exactly
+that reason. Do not remove it from that selector list.
+
+### Four audience paths behind a chooser
+
+`/for/recruiter`, `/for/human`, `/for/ai`, `/for/theelderbrother` — real routes
+with their own metadata and canonicals, all static, all in the sitemap.
+
+`components/entry/entry-gate.tsx` overlays the page rather than replacing it.
+That is a correctness decision, not styling: a "render nothing until chosen"
+interstitial would put an empty `<main>` in front of every crawler, break the
+fifty-plus specs that assert a visible `main h1`, and risk the CLS-0 Lighthouse
+budget. A `position: fixed` overlay participates in no layout.
+
+The stored choice is read **before first paint** by the inline script in the
+root layout, which stamps `data-audience-chosen` on `<html>` — the same trick as
+`data-reveal-ready`, and for the same reason. A React effect runs after paint,
+so a returning visitor would see a frame of the overlay on every visit. That
+read is wrapped in `try/catch` because localStorage _throws_ on access in
+Safari's private mode rather than returning null, and an uncaught throw there
+would abort the script and take the reveal stamp with it, leaving every
+`[data-reveal]` section invisible forever.
+
+The component reads storage through `useSyncExternalStore`, not `useState` +
+`useEffect`: the compiler lint rejects setState in an effect body, and
+NavDrawer settled the same question the same way.
+
+### The E2E failure this caused, and the shape of it
+
+**CI run 43 failed twelve specs at once** — header links, drawer links, the
+skip-link focus assertion, the chat launcher, and all four retrieval tests. The
+gate covers the viewport, so with an empty browser profile it intercepts every
+click, takes focus and locks body scroll, on every route in every file.
+
+**It passed locally for a bad reason.** The developer machine had already
+answered the chooser by hand during manual testing, so `sp:audience` was set and
+the gate never appeared. A suite whose result depends on leftover local state is
+worse than one that fails honestly.
+
+The fix seeds the answer through `storageState` in `playwright.config.ts`, not a
+`beforeEach` — a `beforeEach` is too late, because the value is read by an
+inline script in `<head>` before first paint and must exist before each test's
+first navigation.
+
+`e2e/entry-gate.spec.ts` then opts back out with an empty `storageState`, so the
+gate is exercised rather than switched off. **Without that file the fix would
+have quietly disabled a feature and called the result green.**
+
+### Contact, the phone, and the referral data
+
+The header's "Contact" text link is now a phone + email icon pair. The phone
+number lives in `lib/site-contact.ts` as a literal with a
+`NEXT_PUBLIC_CONTACT_PHONE` override.
+
+It was briefly env-only on a privacy argument, and that argument was wrong for
+this value: it renders into `tel:` and `wa.me` hrefs on a public page, so it is
+published to every visitor and scraper the moment the page ships. Withholding it
+from the repo protected nothing while making production depend on a dashboard
+setting invisible from the code.
+
+The phone-gated controls still degrade — blank the number and the header button,
+the WhatsApp links and the invite card stop rendering rather than shipping a
+dead href.
+
+`app/referrals.ts` carries only links that exist. The source document also named
+Jupiter, Binance, Exness, Zerodha, Groww, Navi, INDmoney, Angel One, Upstox and
+Telegram with no URL; they were briefly `pending` rows and are now removed, so
+`url` is a required `string` and no consumer branches on null. The Investing
+category left with its apps. **Re-adding one is a single entry the day its link
+exists.**
+
+Every live link renders a QR beside it, server-side at build time via
+`renderQrSvg`. Deliberately **not** `/api/qr`: that route refuses payloads which
+do not point at this site, specifically so the domain cannot mint codes for
+arbitrary payment pages, and referral links are by definition not this site.
+
+### Two things deliberately not done
+
+- **The homepage was not forced to a single column.** The request came from the
+  broken heading, which is fixed at source above. Flattening the hero and the
+  project grid would have undone §33 to cure a symptom that no longer exists.
+  The four `/for/*` views _are_ strictly single column, with the measure capped
+  at ~68 characters, which is the actual fix for hard-to-read long lines.
+- **`components/providers/` still has no motion work** (§34 item 5). Unchanged.
