@@ -27,19 +27,17 @@ import { test, expect, type Page } from "@playwright/test";
 /**
  * Every route reachable from the header, in the order the header lists them.
  *
- * This list was seven entries. The top bar now carries exactly four things —
- * System design, Search, the theme toggle and Contact — and everything else
- * moved into the drawer, so a seven-route header sweep would be asserting a
- * navigation that no longer exists.
+ * This list was seven entries, then two. The top bar now carries System
+ * design, Search, the theme toggle and a phone/email icon pair — and the two
+ * icons are `tel:` and `mailto:` anchors, not routes, so there is exactly one
+ * in-site link left in the header to sweep. Everything else moved into the
+ * drawer.
  *
- * `.first()` at each call site is load-bearing now in a way it was not before:
- * both of these labels also appear inside the drawer. The drawer is portalled
- * to the end of <body>, so the header's copy is always first in DOM order.
+ * `.first()` at the call site is load-bearing: this label also appears inside
+ * the drawer. The drawer is portalled to the end of <body>, so the header's
+ * copy is always first in DOM order.
  */
-const NAV_ROUTES = [
-  { name: "System design", path: "/system-design" },
-  { name: "Contact", path: "/contact" },
-];
+const NAV_ROUTES = [{ name: "System design", path: "/system-design" }];
 
 /**
  * Routes that are now reachable ONLY by opening the drawer.

@@ -2,9 +2,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { ThemeToggle } from "./theme-toggle";
 import { NavDrawer } from "./nav/nav-drawer";
-import { SearchIcon } from "./icons";
+import { SearchIcon, PhoneIcon, MailIcon } from "./icons";
+import { mailtoHref, telHref } from "../lib/site-contact";
 
 export function Header() {
+  const phoneHref = telHref();
   return (
     <header className="site-header">
       <div className="shell header-inner">
@@ -45,12 +47,33 @@ export function Header() {
         <nav className="header-nav" aria-label="Main navigation">
           <Link href="/system-design">System design</Link>
         </nav>
+        {/* The two direct channels sit at the end of the bar, as icons.
+
+            The phone button renders only when NEXT_PUBLIC_CONTACT_PHONE is set
+            — see lib/site-contact.ts. A `tel:` built from a placeholder is
+            worse than an absent button: it looks live, it is tappable, and it
+            fails in the visitor's dialler rather than on the page. Email is
+            always present because its address is not a secret and does not
+            depend on configuration.
+
+            Both are plain anchors, not <Link>: `tel:` and `mailto:` are
+            external schemes, and handing them to the client router asks it to
+            prefetch a route that does not exist. */}
         <div className="header-actions">
           <Link href="/search" aria-label="Search" className="header-search-link" prefetch={false}>
             <SearchIcon />
           </Link>
           <ThemeToggle />
-          <Link href="/contact">Contact</Link>
+          <div className="header-contact">
+            {phoneHref ? (
+              <a href={phoneHref} className="header-icon-link" aria-label="Call Shivam Patil">
+                <PhoneIcon />
+              </a>
+            ) : null}
+            <a href={mailtoHref()} className="header-icon-link" aria-label="Email Shivam Patil">
+              <MailIcon />
+            </a>
+          </div>
         </div>
       </div>
     </header>

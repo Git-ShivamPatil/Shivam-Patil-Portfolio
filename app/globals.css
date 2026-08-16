@@ -3363,6 +3363,65 @@ h2 em {
   background: var(--line);
 }
 
+/* ---- direct contact: phone + email ----
+
+   Replaces the "Contact" text link. Grouped in their own flex box rather than
+   left as loose children of .header-actions so the pair keeps a tighter gap
+   than the 14px that separates the search, theme and contact clusters — two
+   related icons at 14px read as two unrelated ones.
+
+   34px matches .header-search-link and .theme-toggle exactly, so the three
+   controls form one optical row. That is below the 44px touch minimum, which
+   is why the tap target is widened with padding at the small breakpoint rather
+   than the icon being grown. */
+.header-contact {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.header-icon-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: var(--nav-fg);
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+.header-icon-link:hover,
+.header-icon-link:focus-visible {
+  background: var(--line);
+  color: var(--fg);
+}
+
+/* ---- QR plate ----
+   White regardless of theme, and deliberately so: a scanner needs a light
+   quiet zone around dark modules, and a code that inverted in the dark theme
+   would stop being readable by half the phones pointed at it. */
+.link-qr {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 0 0 1px var(--surface-line);
+}
+.link-qr svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .header-icon-link {
+    transition: none;
+  }
+}
+
 @media (max-width: 620px) {
   .blog-list-item {
     flex-direction: column;

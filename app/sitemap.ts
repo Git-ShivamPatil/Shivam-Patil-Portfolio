@@ -19,6 +19,16 @@ const staticRoutes = [
   "/blog",
   "/system-design",
   "/ask",
+  // The four audience paths. Listed because each is a real, linkable page with
+  // its own metadata and content, not a UI state — /for/theelderbrother in
+  // particular is an argument that wants to be findable on its own. They sit on
+  // the blanket 0.7 rather than being promoted: they are doors onto content
+  // that already has its own entries above, so ranking them above the leaves
+  // would be the mistake HUB_ROUTES exists to avoid.
+  "/for/recruiter",
+  "/for/human",
+  "/for/ai",
+  "/for/theelderbrother",
 ];
 
 // /search is deliberately absent. app/search/page.tsx sets

@@ -1,0 +1,147 @@
+/* =========================================================================
+   ENTRY GATE — the four-way chooser
+
+   Fixed, so it participates in no layout and choosing a path shifts nothing.
+   CLS on this site is 0 and the Lighthouse budget gates it.
+
+   z-index 200 clears every existing layer: the sticky header (20), the scroll
+   progress bar (21), back-to-top (30), the chat launcher (40), the skip link
+   (50), the cursor ring (60), the nav drawer (61) and the command palette (90).
+   The chooser is the one surface that must cover all of them.
+   ========================================================================= */
+
+.entry-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  overflow-y: auto;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(18px);
+}
+
+/* Hidden for anyone who has already chosen. The attribute is stamped on <html>
+   by an inline script in the root layout before first paint, so a returning
+   visitor never sees a frame of this. */
+:root[data-audience-chosen="true"] .entry-gate {
+  display: none;
+}
+
+.entry-gate-panel {
+  width: min(680px, 100%);
+  padding: clamp(24px, 4vw, 44px);
+  border: 1px solid var(--surface-line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--elev-1);
+}
+
+.entry-gate-panel h2 {
+  margin: 12px 0 10px;
+  font-size: clamp(1.75rem, 0.9rem + 3.4vw, 3rem);
+}
+.entry-gate-panel h2 em {
+  color: var(--hero-em);
+}
+
+.entry-gate-lede {
+  margin: 0 0 22px;
+  color: var(--prose-soft);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* Single column by default and two only when there is genuinely room. The
+   labels are sentences, not words, so a narrow two-up wraps them into unequal
+   ragged blocks that read worse than a list. */
+.entry-gate-options {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+@media (min-width: 620px) {
+  .entry-gate-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.entry-gate-option {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "label arrow"
+    "blurb arrow";
+  align-items: center;
+  gap: 2px 12px;
+  /* 44px is the minimum comfortable touch target; these clear it well. */
+  min-height: 76px;
+  padding: 16px 18px;
+  border: 1px solid var(--surface-line);
+  border-radius: calc(var(--radius) * 0.7);
+  background: var(--bg);
+  color: var(--fg);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+.entry-gate-option:hover,
+.entry-gate-option:focus-visible {
+  border-color: var(--fg);
+  transform: translateY(-2px);
+  box-shadow: var(--elev-1);
+}
+
+.entry-gate-option-label {
+  grid-area: label;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.entry-gate-option-blurb {
+  grid-area: blurb;
+  color: var(--prose-soft);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.entry-gate-option-arrow {
+  grid-area: arrow;
+  font-size: 18px;
+  transition: transform 0.2s;
+}
+.entry-gate-option:hover .entry-gate-option-arrow {
+  transform: translateX(4px);
+}
+
+.entry-gate-skip {
+  margin-top: 18px;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  color: var(--prose-soft);
+  font-size: 13px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.entry-gate-skip:hover {
+  color: var(--fg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .entry-gate-option,
+  .entry-gate-option-arrow {
+    transition: none;
+  }
+  .entry-gate-option:hover,
+  .entry-gate-option:focus-visible {
+    transform: none;
+  }
+  .entry-gate-option:hover .entry-gate-option-arrow {
+    transform: none;
+  }
+}

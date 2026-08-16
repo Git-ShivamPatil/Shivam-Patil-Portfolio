@@ -15,6 +15,7 @@ import { SplitText } from "../components/providers/split-text";
 // progress, back-to-top, chat launcher, toaster — moved behind an idle gate.
 // See the file for what stayed behind and why.
 import { DeferredLayer } from "../components/providers/deferred-layer";
+import { EntryGate } from "../components/entry/entry-gate";
 import { Analytics } from "@vercel/analytics/next";
 
 /**
@@ -119,9 +120,21 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             paints, which is what arms the [data-reveal] start state. Without
             this the reveal styles would apply even when JS never runs, and
             content would stay permanently invisible. */}
+        {/* The audience stamp rides along with the reveal stamp because both
+            must land before first paint and a second inline script is a second
+            parser pause for no gain.
+
+            Reading localStorage here rather than in the EntryGate component is
+            what stops a returning visitor seeing a frame of the chooser: a
+            React effect runs after paint, so the overlay would flash and then
+            vanish on every single navigation to the homepage. The try/catch is
+            not defensive dressing — localStorage *throws* on access in Safari's
+            private mode rather than returning null, and an uncaught throw here
+            would abort the script and take the reveal stamp down with it,
+            leaving every [data-reveal] section invisible forever. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `document.documentElement.setAttribute("data-reveal-ready","true")`,
+            __html: `document.documentElement.setAttribute("data-reveal-ready","true");try{if(localStorage.getItem("sp:audience"))document.documentElement.setAttribute("data-audience-chosen","true")}catch(e){}`,
           }}
         />
         <a href="#main-content" className="skip-link">
@@ -150,6 +163,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <PageTransition>{children}</PageTransition>
             </main>
             <Footer />
+            {/* Rendered after <main>, not before it. The overlay is
+                position:fixed so paint order is decided by z-index rather than
+                by document order, and keeping the real content first means a
+                crawler — and a reader with JavaScript off, for whom the chooser
+                never appears at all — meets the page rather than the gate. */}
+            <EntryGate />
             <DeferredLayer />
             {/* Rendered only on Vercel, because its script is served by Vercel's
                 edge at /_vercel/insights/script.js and exists nowhere else. Off

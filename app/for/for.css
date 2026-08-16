@@ -1,0 +1,283 @@
+/* =========================================================================
+   AUDIENCE PATHS (/for/*)
+
+   One column, everywhere, on purpose. These pages are read top to bottom and
+   nothing on them benefits from a second column — a referral row with a QR
+   beside it is already a two-part object, and putting two of those side by
+   side is where the reading order stops being obvious.
+
+   The measure is capped rather than the layout being split: `--path-measure`
+   keeps prose near 65 characters on a wide screen, which is the actual reason
+   long lines are hard to read. Widening to two columns to "use the space" is
+   the thing that causes the ragged wrapping it is meant to cure.
+
+   Route-scoped: imported by the four page.tsx files under app/for/, so no
+   visitor to any other route parses a byte of it.
+   ========================================================================= */
+
+.path-shell {
+  --path-measure: 68ch;
+  width: min(100% - 40px, 860px);
+  margin-inline: auto;
+}
+
+.path-hero {
+  padding: clamp(56px, 9vw, 104px) 0 clamp(28px, 4vw, 44px);
+}
+.path-hero h1 {
+  margin: 10px 0 16px;
+}
+.path-hero > p {
+  max-width: var(--path-measure);
+  color: var(--prose-soft);
+  font-size: clamp(15px, 0.9rem + 0.3vw, 18px);
+  line-height: 1.68;
+}
+
+.path-section {
+  padding: clamp(28px, 4vw, 44px) 0;
+  border-top: 1px solid var(--surface-line);
+}
+.path-section > h2 {
+  margin: 0 0 6px;
+  font-size: clamp(1.5rem, 0.9rem + 2.2vw, 2.4rem);
+}
+.path-section > p {
+  max-width: var(--path-measure);
+  margin: 0 0 22px;
+  color: var(--prose-soft);
+  font-size: 14.5px;
+  line-height: 1.65;
+}
+
+/* ---- stacked link rows, each with its own code ---- */
+.link-stack {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.link-row {
+  display: grid;
+  /* The QR is a fixed rail; the text takes whatever is left. At the narrow
+     breakpoint the QR moves below rather than shrinking — a code under about
+     72px stops resolving reliably on an older camera. */
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 18px;
+  border: 1px solid var(--surface-line);
+  border-radius: calc(var(--radius) * 0.7);
+  background: var(--surface);
+  transition:
+    border-color 0.2s,
+    transform 0.2s;
+}
+.link-row:hover {
+  border-color: var(--fg);
+  transform: translateY(-2px);
+}
+.link-row-name {
+  display: block;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.link-row-name a {
+  color: var(--fg);
+}
+.link-row-name a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.link-row-offer {
+  margin: 4px 0 0;
+  max-width: 52ch;
+  color: var(--prose-soft);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+.link-row-code {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 3px 8px;
+  border: 1px dashed var(--surface-line);
+  border-radius: 6px;
+  font:
+    500 11px var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+  letter-spacing: 0.06em;
+}
+.link-row-pending {
+  color: var(--muted);
+  font-size: 12px;
+  font-style: italic;
+}
+
+@media (max-width: 560px) {
+  .link-row {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
+}
+
+/* ---- the three recruiter doors ---- */
+.path-cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+.path-card {
+  display: block;
+  padding: 20px;
+  border: 1px solid var(--surface-line);
+  border-radius: calc(var(--radius) * 0.7);
+  background: var(--surface);
+  transition:
+    border-color 0.2s,
+    transform 0.2s;
+}
+.path-card:hover {
+  border-color: var(--fg);
+  transform: translateY(-2px);
+}
+.path-card h3 {
+  margin: 0 0 6px;
+  font-size: 17px;
+  letter-spacing: -0.03em;
+}
+.path-card p {
+  margin: 0 0 12px;
+  color: var(--prose-soft);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.path-card-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.path-card-links a {
+  padding: 7px 12px;
+  border: 1px solid var(--surface-line);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 12px;
+  font-weight: 700;
+}
+.path-card-links a:hover {
+  border-color: var(--fg);
+}
+
+/* ---- invite card ---- */
+.invite-card {
+  padding: 22px;
+  border: 1px solid var(--surface-line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.invite-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+.invite-form input {
+  flex: 1 1 220px;
+  min-height: 46px;
+  padding: 0 14px;
+  border: 1px solid var(--surface-line);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--fg);
+  font: inherit;
+  font-size: 15px;
+}
+.invite-form input:focus-visible {
+  outline: 2px solid var(--fg);
+  outline-offset: 1px;
+}
+
+/* ---- the AI easter egg ---- */
+.ai-plate {
+  display: grid;
+  place-items: center;
+  padding: clamp(24px, 5vw, 48px);
+  border: 1px solid var(--surface-line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  text-align: center;
+}
+.ai-plate svg {
+  width: min(340px, 100%);
+  height: auto;
+}
+.ai-caption {
+  margin: 22px 0 6px;
+  font-family: var(--font-playfair), "Playfair Display", Georgia, serif;
+  font-size: clamp(1.25rem, 0.9rem + 1.6vw, 2rem);
+  font-style: italic;
+  line-height: 1.3;
+}
+.ai-disclaimer {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* ---- theelderbrother ---- */
+.tebro-quote {
+  max-width: var(--path-measure);
+  margin: 0 0 22px;
+  padding-left: 18px;
+  border-left: 2px solid var(--accent);
+  color: var(--fg);
+  font-family: var(--font-playfair), "Playfair Display", Georgia, serif;
+  font-size: clamp(1.05rem, 0.9rem + 0.8vw, 1.5rem);
+  font-style: italic;
+  line-height: 1.5;
+}
+.tebro-topics {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 640px) {
+  .tebro-topics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.tebro-topics li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: baseline;
+  padding: 12px 14px;
+  border: 1px solid var(--surface-line);
+  border-radius: 10px;
+  background: var(--surface);
+  font-size: 13.5px;
+}
+.tebro-topics span {
+  color: var(--accent);
+  font:
+    500 10px var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .link-row,
+  .path-card {
+    transition: none;
+  }
+  .link-row:hover,
+  .path-card:hover {
+    transform: none;
+  }
+}
