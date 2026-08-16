@@ -195,11 +195,11 @@ test.describe("client-side navigation", () => {
 
     for (const route of DRAWER_ROUTES) {
       await openDrawer(page);
-      // Scoped to the panel rather than `.first()` across the document. Several
-      // of these labels exist twice — "System design" is in the top bar,
-      // "Contact" is in both, and the homepage hub cards point at the same
-      // routes — so a document-wide lookup can resolve to a link that is not
-      // the one under test and quietly assert nothing about the drawer.
+      // Scoped to the panel rather than `.first()` across the document. Some of
+      // these labels exist twice — "System design" is also in the top bar, and
+      // the homepage hub cards point at several of the same routes — so a
+      // document-wide lookup can resolve to a link that is not the one under
+      // test and quietly assert nothing about the drawer.
       const link = page.locator("aside#site-drawer").getByRole("link", {
         name: route.name,
         exact: true,
@@ -256,10 +256,16 @@ test.describe("client-side navigation", () => {
   test("returning to a route a second time still reveals it", async ({ page }) => {
     // A driver that arms an element once and never re-arms it passes a
     // single-pass sweep and fails a real visit.
+    //
+    // Was /contact, reached from a header link that no longer exists — the bar
+    // now carries a `mailto:` icon there instead, which is not a route and
+    // cannot be swept. /system-design is the one in-site link the header still
+    // has, so this keeps testing what it was written to test: a round trip made
+    // by clicking, twice.
     await page.goto("/");
     for (let visit = 0; visit < 2; visit++) {
-      await page.getByRole("link", { name: "Contact", exact: true }).first().click();
-      await assertPageIsNotBlank(page, "/contact");
+      await page.getByRole("link", { name: "System design", exact: true }).first().click();
+      await assertPageIsNotBlank(page, "/system-design");
       await page.getByRole("link", { name: "Shivam Patil home" }).first().click();
       await assertPageIsNotBlank(page, "/");
     }

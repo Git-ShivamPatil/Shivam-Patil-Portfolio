@@ -68,6 +68,30 @@ export default defineConfig({
     // browser-context option in this version, and the top-level spelling type
     // errors under `pnpm typecheck`.
     contextOptions: { reducedMotion: "no-preference" },
+
+    /**
+     * The audience chooser is pre-answered for the whole suite.
+     *
+     * EntryGate covers the viewport until a visitor picks a path, so with an
+     * empty profile it intercepts every click, takes focus, and locks body
+     * scroll — on every route, in every spec. Left unseeded it failed twelve
+     * specs at once in CI (header links, drawer links, the skip-link focus
+     * assertion, the chat launcher and all four retrieval tests) while passing
+     * locally, purely because a developer's browser had already answered it
+     * once by hand. A suite whose result depends on leftover local state is
+     * worse than one that fails honestly.
+     *
+     * Seeding it here rather than in a beforeEach means it is set before the
+     * first navigation of every test, which is the only point early enough:
+     * the value is read by an inline script in <head> before first paint.
+     *
+     * The gate itself is not left untested — e2e/entry-gate.spec.ts opts back
+     * out with an empty storageState and asserts the whole flow.
+     */
+    storageState: {
+      cookies: [],
+      origins: [{ origin: baseURL, localStorage: [{ name: "sp:audience", value: "human" }] }],
+    },
   },
 
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
