@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { NewsletterForm } from "./newsletter-form";
 import { PushToggle } from "./push-toggle";
 
@@ -24,32 +23,15 @@ export function Footer() {
         </div>
       </div>
 
+      {/* The eleven-link row that used to sit here is now a group in the drawer
+          (components/nav/nav-drawer.tsx). It was the site's only link source for
+          /skills, /experience, /certifications, /achievements and /resume, so it
+          was mirrored into the drawer before it was deleted here rather than
+          moved — those five routes would otherwise have been orphaned. Nothing
+          replaces it: a second link list at the bottom of every page is exactly
+          the clutter the drawer exists to absorb. */}
       <div className="shell footer-inner">
         <p>© {new Date().getFullYear()} Shivam Patil. Built with clarity and intent.</p>
-        <div className="footer-links">
-          {/* Same rule as the header: prefetch off for `ƒ` dynamic routes only.
-              The footer is also on every page, so these two were a second
-              server render + DB round trip per page load. */}
-          <Link href="/services" prefetch={false}>
-            Work with me
-          </Link>
-          <Link href="/stats" prefetch={false}>
-            Live stats
-          </Link>
-          <Link href="/system-design">System design</Link>
-          <Link href="/skills">Skills</Link>
-          <Link href="/experience">Experience</Link>
-          <Link href="/certifications">Certifications</Link>
-          <Link href="/achievements">Achievements</Link>
-          <Link href="/resume">Résumé</Link>
-          <a href="https://github.com/Git-ShivamPatil" target="_blank" rel="noreferrer">
-            GitHub ↗
-          </a>
-          <a href="https://www.linkedin.com/in/shivam--patil/" target="_blank" rel="noreferrer">
-            LinkedIn ↗
-          </a>
-          <Link href="/reach-out">Reach out</Link>
-        </div>
       </div>
     </footer>
   );

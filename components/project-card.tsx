@@ -6,7 +6,14 @@ export function ProjectCard({ project, index }: { project: Project; index: numbe
   return (
     <Link
       href={`/projects/${project.slug}`}
-      className={`project-card project-${project.accent} reveal ${index % 2 ? "offset-card" : ""}`}
+      className={`project-card project-${project.accent} reveal`}
+      // `index` used to alternate an `offset-card` translateY, which pushed
+      // every second card 52px out of flow and made the grid rows overlap on
+      // any width where the cards were not the same height. It now feeds a
+      // stagger custom property instead — the same `--i` the phase list on
+      // /system-design uses to order its entrance — so the ordering
+      // information survives without anything leaving normal flow.
+      style={{ ["--i" as string]: index }}
       data-tilt
     >
       <div className="project-card-top">

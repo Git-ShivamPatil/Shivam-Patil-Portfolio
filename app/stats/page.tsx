@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { GitHubPanel } from "../../components/stats/github-panel";
 import { LeetCodePanel } from "../../components/stats/leetcode-panel";
+import { PanelSkeleton } from "../../components/stats/panel-skeleton";
 import { ActivityPanel } from "../../components/devex/activity-panel";
 import "./stats.css";
 
@@ -13,23 +14,11 @@ export const metadata: Metadata = {
 };
 
 // Both panels read through a TTL cache in Postgres, so rendering is cheap —
-// but it is still I/O, and it must not be baked into a static build.
+// but it is still I/O, and it must not be baked into a static build. It also
+// has to stay dynamic for the stale-on-error contract to mean anything: a
+// statically rendered page would freeze whichever reading happened to be in
+// the cache at build time and never notice the upstream recovering.
 export const dynamic = "force-dynamic";
-
-function PanelSkeleton({ label }: { label: string }) {
-  return (
-    <div className="stat-panel">
-      <div className="stat-panel-head">
-        <p className="eyebrow">{label}</p>
-      </div>
-      <div className="stat-skeleton" aria-hidden="true">
-        <span />
-        <span />
-        <span />
-      </div>
-    </div>
-  );
-}
 
 export default function StatsPage() {
   return (
@@ -44,17 +33,20 @@ export default function StatsPage() {
         <p>
           Pulled straight from the GitHub REST API and LeetCode&apos;s public GraphQL endpoint,
           cached server-side with a stale-on-error fallback — so when an upstream rate-limits, this
-          page degrades to the last good reading instead of an error.
+          page degrades to the last good reading instead of an error. Each panel says which of the
+          two it is showing you, and refreshes itself while you read.
         </p>
       </section>
 
       <section className="stat-grid shell">
         {/* Streamed independently: a slow or throttled LeetCode response
-            shouldn't hold back the GitHub panel. */}
-        <Suspense fallback={<PanelSkeleton label="GitHub" />}>
+            shouldn't hold back the GitHub panel. Each fallback mirrors the
+            geometry of the panel it stands in for — see panel-skeleton.tsx for
+            why a generic three-bar skeleton was a CLS bug. */}
+        <Suspense fallback={<PanelSkeleton label="GitHub" shape="github" />}>
           <GitHubPanel />
         </Suspense>
-        <Suspense fallback={<PanelSkeleton label="LeetCode" />}>
+        <Suspense fallback={<PanelSkeleton label="LeetCode" shape="leetcode" />}>
           <LeetCodePanel />
         </Suspense>
       </section>
@@ -63,7 +55,7 @@ export default function StatsPage() {
           the events endpoint is the one most likely to be rate-limited, and a
           throttled heatmap must not delay the numbers beside it. */}
       <section className="shell pb-20" data-reveal>
-        <Suspense fallback={<PanelSkeleton label="Activity" />}>
+        <Suspense fallback={<PanelSkeleton label="Activity" shape="activity" />}>
           <ActivityPanel />
         </Suspense>
       </section>

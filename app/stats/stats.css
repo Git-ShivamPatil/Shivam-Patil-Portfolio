@@ -7,6 +7,137 @@
    that route's CSS chunk, so this now loads for the one page that needs it.
    ========================================================================= */
 
+/* -------------------------------------------------------------------------
+   THE CHART SCALE
+
+   Six categorical series plus grid, axis and label roles. Defined here rather
+   than in globals.css because /stats and the SVG components beside it are the
+   only consumers, and because the six general-purpose accent slots
+   (--lime/--cyan/--violet/--orange/--blue/--pink) are the wrong tool: they are
+   pastel *fills* tuned to sit under --ink text, and using them as chart marks
+   is what produced the defect this block replaces. Measured on the shipped
+   tokens, `.stat-bar-track i { background: var(--lime) }` rendered at 1.00:1
+   against the panel behind it in light theme — not dim, arithmetically the same
+   luminance — and the LeetCode difficulty bars separated from each other by
+   1.03-1.20:1. The bar length was the only working encoding; the colour carried
+   nothing. This is the third instance of that class of defect in this codebase
+   (see the project-card title and Plan/Find/Act chip comments in globals.css),
+   so it is fixed with numbers rather than with judgement.
+
+   DERIVED FROM --accent-base, NOT --accent. The theme customiser rewrites
+   --accent's hue in OKLCH, and globals.css argues that provably cannot move a
+   contrast ratio because OKLCH passes lightness through untouched. That holds
+   for OKLCH lightness; it does not hold for WCAG relative luminance, which
+   weights green ~7x more than blue. Measured across the full 360 degrees of the
+   slider, the palest step of an --accent-derived ramp falls from 3.22:1 to
+   2.71:1 — under the 1.4.11 floor. --accent-base is the unrotated original, so
+   every ratio below is unconditional.
+
+   LIGHT — measured against the tightest surface each mark is drawn on: the bar
+   track (#e7d1d4, which is --fg at 10% over --surface). Against the flat panel
+   (#f8e6e7) and the page (#fdf8f5) every value is higher still.
+     --chart-1  #4f1228   9.98:1     --chart-4  #903053   5.29:1
+     --chart-2  #721035   7.86:1     --chart-5  #9c4564   4.20:1
+     --chart-3  #841b42   6.53:1     --chart-6  #a85a75   3.30:1
+     --chart-axis  #98717d  3.50:1   --chart-label (--fg)  12.42:1
+     --chart-grid  #dcc4c8  1.37:1
+
+   DARK — same measurement, track #212a21 over --surface #0b120b.
+     --chart-1  #ccffd1  13.25:1     --chart-4  #3ebb51   5.95:1
+     --chart-2  #55ff70  11.23:1     --chart-5  #37a047   4.43:1
+     --chart-3  #45dd5e   8.29:1     --chart-6  #338a40   3.42:1
+     --chart-axis  #859485  5.94:1   --chart-label (--fg)  18.00:1
+     --chart-grid  #2e382e  1.56:1
+
+   So: every series clears the 3:1 WCAG 1.4.11 floor for non-text (worst 3.30
+   light, 3.42 dark) and every label clears 4.5:1 by a wide margin (12.42 /
+   18.00). --chart-grid is deliberately BELOW 3:1 and that is correct: no datum
+   depends on reading a gridline — the axis is drawn separately at 3.50/5.94,
+   every bar carries its value as text, and every arc carries its count.
+
+   AND THE HONEST PART. Adjacent steps of this ramp separate from each other by
+   only 1.18-1.27:1, because light theme is a strict two-colour system and a
+   six-step categorical scale inside one hue is a lightness ramp whether you
+   call it one or not. That is enough to see a boundary and not enough to match
+   a mark to a legend entry, so colour is never the sole encoding anywhere on
+   this page: every series also carries a texture (components/stats/
+   chart-textures.tsx) and prints its own value in place. WCAG 1.4.1 is
+   satisfied by the texture and the label, not by the palette.
+   ------------------------------------------------------------------------- */
+:root {
+  --chart-1: color-mix(in srgb, var(--accent-base) 10%, var(--fg));
+  --chart-2: color-mix(in srgb, var(--accent-base) 78%, var(--fg));
+  --chart-3: color-mix(in srgb, var(--accent-base) 94%, var(--line));
+  --chart-4: color-mix(in srgb, var(--accent-base) 83%, var(--line));
+  --chart-5: color-mix(in srgb, var(--accent-base) 72%, var(--line));
+  --chart-6: color-mix(in srgb, var(--accent-base) 61%, var(--line));
+  --chart-grid: color-mix(in srgb, var(--fg) 16%, transparent);
+  --chart-axis: color-mix(in srgb, var(--fg) 55%, transparent);
+  --chart-label: var(--fg);
+}
+:root[data-theme="dark"] {
+  /* Different percentages, not a different formula: --accent-base is bright on
+     a dark ground here, so the ramp runs the other way and the two ends need
+     different distances to land on the same contrast targets. */
+  --chart-1: color-mix(in srgb, var(--accent-base) 18%, var(--fg));
+  --chart-2: color-mix(in srgb, var(--accent-base) 95%, var(--fg));
+  --chart-3: color-mix(in srgb, var(--accent-base) 84%, var(--line));
+  --chart-4: color-mix(in srgb, var(--accent-base) 68%, var(--line));
+  --chart-5: color-mix(in srgb, var(--accent-base) 55%, var(--line));
+  --chart-6: color-mix(in srgb, var(--accent-base) 45%, var(--line));
+}
+/* No-JS fallback for a visitor whose OS prefers dark, mirroring the duplicate
+   block globals.css keeps for the same reason: next-themes writes data-theme
+   before first paint, so with JS this never applies, and the
+   :not([data-theme="light"]) guard is what stops it fighting an explicit light
+   choice. Kept verbatim because custom properties cannot be aliased across a
+   media query and an attribute selector. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --chart-1: color-mix(in srgb, var(--accent-base) 18%, var(--fg));
+    --chart-2: color-mix(in srgb, var(--accent-base) 95%, var(--fg));
+    --chart-3: color-mix(in srgb, var(--accent-base) 84%, var(--line));
+    --chart-4: color-mix(in srgb, var(--accent-base) 68%, var(--line));
+    --chart-5: color-mix(in srgb, var(--accent-base) 55%, var(--line));
+    --chart-6: color-mix(in srgb, var(--accent-base) 45%, var(--line));
+  }
+}
+
+/* One indirection per series slot, set on the element that carries
+   data-series. Custom properties inherit, so a <g data-series="3"> hands
+   --series to the <path> inside it and the fill rules stay generic. */
+.chart-slice[data-series="1"],
+.chart-bar[data-series="1"],
+.chart-swatch[data-series="1"] {
+  --series: var(--chart-1);
+}
+.chart-slice[data-series="2"],
+.chart-bar[data-series="2"],
+.chart-swatch[data-series="2"] {
+  --series: var(--chart-2);
+}
+.chart-slice[data-series="3"],
+.chart-bar[data-series="3"],
+.chart-swatch[data-series="3"] {
+  --series: var(--chart-3);
+}
+.chart-slice[data-series="4"],
+.chart-bar[data-series="4"],
+.chart-swatch[data-series="4"] {
+  --series: var(--chart-4);
+}
+.chart-slice[data-series="5"],
+.chart-bar[data-series="5"],
+.chart-swatch[data-series="5"] {
+  --series: var(--chart-5);
+}
+.chart-slice[data-series="6"],
+.chart-bar[data-series="6"],
+.chart-swatch[data-series="6"] {
+  --series: var(--chart-6);
+}
+
+/* ---------- panel shell ---------- */
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -27,6 +158,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  min-height: 20px;
 }
 .stat-panel-head .eyebrow {
   margin: 0;
@@ -80,6 +212,17 @@
   text-transform: uppercase;
   letter-spacing: 0.07em;
 }
+/* The only visual cue that a background poll is in flight. TRANSITION-driven,
+   never animation-driven: the reduced-motion block in globals.css cancels
+   animations outright, and a keyframed fade would leave the numbers stranded
+   at whatever opacity the cancelled frame implied. A transition that is forced
+   to 0.001ms just lands on the end state instantly, which is still legible. */
+.stat-figures {
+  transition: opacity 0.25s ease;
+}
+.stat-figures[data-live-status="refreshing"] {
+  opacity: 0.62;
+}
 .stat-subhead {
   margin: 0 0 12px;
   color: var(--muted);
@@ -90,6 +233,8 @@
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
+
+/* ---------- bar rows ---------- */
 .stat-bars {
   display: flex;
   flex-direction: column;
@@ -101,10 +246,10 @@
   align-items: center;
   gap: 12px;
   font-size: 12px;
-  color: var(--fg);
+  color: var(--chart-label);
 }
 .stat-bar-track {
-  height: 7px;
+  height: 9px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--fg) 10%, transparent);
   overflow: hidden;
@@ -113,9 +258,15 @@
   display: block;
   height: 100%;
   border-radius: 999px;
-  background: var(--lime);
+  background: var(--chart-2);
   /* Grows from nothing on first paint — the bars are the page's main
-     "this is live data" cue, so they earn a little motion. */
+     "this is live data" cue, so they earn a little motion.
+
+     Safe under prefers-reduced-motion despite the house rule about opacity
+     start states: globals.css blanket-cancels with `animation: none`, and with
+     no animation the element carries no transform at all, so it renders at its
+     inline width. A transform start state degrades to "correct"; only an
+     opacity one degrades to "invisible". */
   animation: stat-bar-grow 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
   transform-origin: left center;
 }
@@ -127,14 +278,17 @@
     transform: scaleX(1);
   }
 }
+/* Slots 1/3/5 rather than 1/2/3: neighbouring steps of the ramp separate by
+   ~1.2:1, every-other by ~1.5:1. Same mapping as difficulty-gauge.tsx, so the
+   dial and the bars under it are describing the same three colours. */
 .stat-bar-easy {
-  background: var(--cyan);
+  background: var(--chart-1);
 }
 .stat-bar-medium {
-  background: var(--orange);
+  background: var(--chart-3);
 }
 .stat-bar-hard {
-  background: var(--pink);
+  background: var(--chart-5);
 }
 .stat-bar-row b {
   color: var(--muted);
@@ -144,6 +298,175 @@
     monospace;
   text-align: right;
 }
+
+/* ---------- hand-written SVG charts ---------- */
+.chart-block {
+  margin: 0;
+}
+.chart-donut-layout {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  align-items: center;
+  gap: 20px;
+}
+.chart-donut {
+  display: block;
+  width: 120px;
+  height: 120px;
+}
+.chart-impact {
+  display: block;
+  width: 100%;
+  /* Caps how far the viewBox is upscaled, which is what caps the SVG text
+     size — see the geometry comment in repo-impact-chart.tsx. */
+  max-width: 400px;
+}
+.chart-gauge {
+  display: block;
+  width: 100%;
+  max-width: 264px;
+  margin-inline: auto;
+}
+.chart-slice-fill,
+.chart-bar {
+  fill: var(--series);
+}
+/* The texture is a second shape stacked on the first. Painting the pattern as
+   the only fill would show the panel through its gaps and lose the series
+   colour entirely. */
+.chart-slice-texture,
+.chart-bar-texture {
+  pointer-events: none;
+}
+.chart-texture {
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+.chart-texture-dot {
+  fill: var(--surface);
+}
+.chart-gauge-rail {
+  fill: color-mix(in srgb, var(--fg) 8%, transparent);
+}
+.chart-axis-line {
+  stroke: var(--chart-axis);
+  stroke-width: 1;
+}
+.chart-grid-line {
+  stroke: var(--chart-grid);
+  stroke-width: 1;
+}
+.chart-tick,
+.chart-bar-value {
+  fill: var(--muted);
+  font:
+    500 9px var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+}
+.chart-bar-value {
+  font-size: 9.5px;
+}
+.chart-row-name {
+  fill: var(--chart-label);
+  font-size: 11px;
+  letter-spacing: -0.01em;
+}
+.chart-arc-label {
+  fill: var(--chart-label);
+  font:
+    500 13px var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+}
+.chart-centre-value {
+  fill: var(--chart-label);
+  font:
+    500 22px var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+  letter-spacing: -0.05em;
+}
+.chart-centre-label {
+  fill: var(--muted);
+  font:
+    500 7px var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+  letter-spacing: 0.12em;
+}
+
+/* ---------- legends ---------- */
+.chart-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.chart-legend-inline {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin-top: 12px;
+}
+.chart-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--chart-label);
+}
+.chart-legend-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chart-legend-inline .chart-legend-name {
+  flex: 0 0 auto;
+}
+.chart-legend-value {
+  flex-shrink: 0;
+  color: var(--muted);
+  font:
+    500 10px var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+}
+/* The swatch repeats the SVG texture in CSS so the legend and the chart are
+   matched by pattern, not only by a 1.2:1 colour step. Same --surface strokes,
+   so both re-derive on theme change with no dark-theme overrides. */
+.chart-swatch {
+  flex-shrink: 0;
+  width: 13px;
+  height: 13px;
+  border-radius: 3px;
+  background-color: var(--series);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fg) 22%, transparent);
+}
+.chart-swatch[data-series="2"] {
+  background-image: repeating-linear-gradient(45deg, transparent 0 3px, var(--surface) 3px 5px);
+}
+.chart-swatch[data-series="3"] {
+  background-image: radial-gradient(var(--surface) 1.4px, transparent 1.5px);
+  background-size: 6px 6px;
+}
+.chart-swatch[data-series="4"] {
+  background-image: repeating-linear-gradient(0deg, transparent 0 3px, var(--surface) 3px 5px);
+}
+.chart-swatch[data-series="5"] {
+  background-image:
+    repeating-linear-gradient(45deg, transparent 0 3px, var(--surface) 3px 5px),
+    repeating-linear-gradient(-45deg, transparent 0 3px, var(--surface) 3px 5px);
+}
+.chart-swatch[data-series="6"] {
+  background-image: repeating-linear-gradient(-45deg, transparent 0 3px, var(--surface) 3px 5px);
+}
+
+/* ---------- repo list ---------- */
 .stat-repos ul {
   margin: 0;
   padding: 0;
@@ -186,6 +509,23 @@
   color: var(--muted);
   font-size: 12px;
 }
+
+/* ---------- provenance + live refresh ---------- */
+.stat-live-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  /* margin-top:auto pins this to the bottom of the flex column, so two panels
+     of different heights in the same grid row still line their footers up. */
+  margin-top: auto;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.stat-live-foot .stat-provenance {
+  padding-top: 0;
+  border-top: 0;
+}
 .stat-provenance {
   display: flex;
   align-items: center;
@@ -199,35 +539,109 @@
     "DM Mono",
     monospace;
 }
+/* Stale is signalled by weight and by a different mark, not by a warning hue.
+   Light theme is a two-colour system so no warning hue exists — the --orange
+   this used to carry measured 1.14:1 against the panel, i.e. invisible. The
+   accent reads at 11.25:1 light / 15.7:1 dark and the hollow pip beside it
+   survives greyscale. */
 .stat-provenance.is-stale {
-  color: var(--orange);
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+.stale-pip {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 100%;
+  border: 2px solid currentColor;
 }
 .stat-provenance time {
   margin-left: 4px;
 }
-.stat-skeleton {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.stat-refresh {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid var(--surface-line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font:
+    500 10px var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    border-color 0.2s;
 }
-.stat-skeleton span {
+.stat-refresh:hover:not(:disabled) {
+  color: var(--fg);
+  border-color: var(--fg);
+}
+.stat-refresh:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+.stat-refresh-icon {
+  width: 7px;
+  height: 7px;
+  border-radius: 100%;
+  background: currentColor;
+}
+/* Route-scoped rather than a global .visually-hidden: this file owns /stats,
+   and claiming a generic utility name from a route stylesheet is how two
+   stylesheets end up disagreeing about one class. */
+.stat-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* -------------------------------------------------------------------------
+   SKELETONS
+
+   Built from the panel's own containers (see panel-skeleton.tsx), so the only
+   thing this block has to supply is the shimmer and the block sizes. Every
+   height below matches a real element: 32px is `.stat-figures strong` at
+   32px/1, 120px is `.chart-donut`, and the aspect ratios are the chart
+   viewBoxes. The old fallback was three 20px bars — about 90px against a panel
+   of 500-700px — and swapped in a ~500px layout shift on every slow upstream.
+   ------------------------------------------------------------------------- */
+.stat-skeleton .stat-panel-link,
+.stat-skeleton .stat-bar-track {
+  pointer-events: none;
+}
+.sk {
   display: block;
-  height: 20px;
-  border-radius: 8px;
-  background: linear-gradient(
+  border-radius: 6px;
+  background-color: color-mix(in srgb, var(--fg) 9%, transparent);
+  background-image: linear-gradient(
     90deg,
     color-mix(in srgb, var(--fg) 7%, transparent),
-    color-mix(in srgb, var(--fg) 14%, transparent),
+    color-mix(in srgb, var(--fg) 15%, transparent),
     color-mix(in srgb, var(--fg) 7%, transparent)
   );
   background-size: 200% 100%;
+  /* The resting position is the MIDDLE of the gradient, not an edge. Under
+     prefers-reduced-motion globals.css cancels the animation outright, and the
+     element then paints whatever this static declaration says — so the block
+     has to look finished, not like frame zero of a sweep. The shimmer is a
+     background-position animation rather than an opacity one for the same
+     reason the house rule exists: a cancelled opacity animation strands
+     content invisible, a cancelled background-position animation cannot. */
+  background-position: 50% 0;
   animation: skeleton-sweep 1.4s ease-in-out infinite;
-}
-.stat-skeleton span:nth-child(2) {
-  width: 80%;
-}
-.stat-skeleton span:nth-child(3) {
-  width: 55%;
 }
 @keyframes skeleton-sweep {
   from {
@@ -236,6 +650,77 @@
   to {
     background-position: -200% 0;
   }
+}
+.sk-link {
+  width: 92px;
+  height: 12px;
+}
+.sk-figure {
+  width: 62%;
+  height: 32px;
+}
+.sk-figure-label {
+  width: 84%;
+  height: 10px;
+  margin-top: 8px;
+}
+.sk-subhead {
+  width: 148px;
+  height: 9px;
+  margin-bottom: 12px;
+}
+.sk-donut {
+  width: 120px;
+  height: 120px;
+  border-radius: 100%;
+}
+.sk-row {
+  width: 100%;
+  height: 13px;
+}
+.sk-impact {
+  width: 100%;
+  max-width: 400px;
+  /* The repo-impact viewBox at its five-row height: 8 + 5x32 + 16. */
+  aspect-ratio: 260 / 184;
+}
+.sk-gauge {
+  width: 100%;
+  max-width: 264px;
+  margin-inline: auto;
+  aspect-ratio: 240 / 178;
+}
+.sk-repo {
+  width: 100%;
+  height: 40px;
+}
+.sk-provenance {
+  width: 232px;
+  height: 10px;
+}
+/* Matches `.stat-refresh`: 5px padding, 10px type, 1px border. */
+.sk-refresh {
+  flex-shrink: 0;
+  width: 86px;
+  height: 26px;
+  border-radius: 999px;
+}
+.stat-skeleton .stat-repos li {
+  padding: 13px 0;
+  border-bottom: 1px solid var(--line);
+}
+/* The heatmap lives in components/devex/terminal.css and is not styled from
+   here, so this is the one skeleton block sized by measurement rather than by
+   sharing a rule: 7 rows of 9px cells with 3px gaps is 81px, plus the grid's
+   22px top margin. */
+.sk-heatmap {
+  width: 100%;
+  height: 104px;
+}
+.stat-skeleton[data-shape="activity"] {
+  padding: 26px;
+  border-color: var(--line);
+  background: transparent;
 }
 
 /* ---------- responsive ---------- */
@@ -252,5 +737,21 @@
   }
   .stat-bar-row {
     grid-template-columns: 74px 1fr 30px;
+  }
+  /* Below this the donut and its legend fight over ~250px and the language
+     names ellipsis away to two characters. Stacking gives the legend the full
+     width, which is where the readable version of this chart lives. */
+  .chart-donut-layout {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 16px;
+  }
+  .chart-legend {
+    width: 100%;
+  }
+  .stat-live-foot {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
   }
 }

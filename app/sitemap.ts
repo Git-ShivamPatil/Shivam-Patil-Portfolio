@@ -7,6 +7,7 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://shivamsfolio.com";
 
 const staticRoutes = [
   "",
+  "/projects",
   "/about",
   "/skills",
   "/experience",
@@ -17,9 +18,21 @@ const staticRoutes = [
   "/reach-out",
   "/blog",
   "/system-design",
-  "/search",
   "/ask",
 ];
+
+// /search is deliberately absent. app/search/page.tsx sets
+// `robots: { index: false, follow: true }`, so listing it here asked crawlers
+// to index a page the page itself tells them not to — the sitemap and the
+// meta tag were contradicting each other. The route is still reachable (the
+// header keeps its search link); it just no longer claims to be indexable.
+
+// A hub has to outrank the leaves it lists. The per-project entries below are
+// 0.8, so leaving /projects on the blanket 0.7 for non-home routes would tell
+// a crawler that every individual case study matters more than the index that
+// links to all of them. Both hubs also change whenever a project ships, which
+// is a different cadence from the profile pages.
+const HUB_ROUTES: Record<string, number> = { "": 1, "/projects": 0.9 };
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
@@ -39,8 +52,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticEntries: MetadataRoute.Sitemap = staticRoutes.map((route) => ({
     url: `${siteUrl}${route}`,
     lastModified: now,
-    changeFrequency: route === "" ? "weekly" : "monthly",
-    priority: route === "" ? 1 : 0.7,
+    changeFrequency: route in HUB_ROUTES ? "weekly" : "monthly",
+    priority: HUB_ROUTES[route] ?? 0.7,
   }));
   const projectEntries: MetadataRoute.Sitemap = projects.map((project) => ({
     url: `${siteUrl}/projects/${project.slug}`,

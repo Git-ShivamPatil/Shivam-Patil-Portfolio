@@ -1,0 +1,23 @@
+/* =========================================================================
+   PROJECTS INDEX (/projects)
+
+   Deliberately two rules. The filter buttons, the grid and the cards are all
+   global because <ProjectFilter> is shared markup, so the only thing that is
+   genuinely this route's own is the space between its hero and its grid, and
+   the state it shows when the database read falls back. Same reason
+   app/stats/stats.css exists: a page-imported stylesheet is scoped by Next to
+   that route's CSS chunk, so no other page parses these bytes.
+   ========================================================================= */
+
+.projects-index {
+  /* .page-hero already carries 60px of bottom padding, so this only needs the
+     gap under the lede — matching .stat-grid, the other page that sits a grid
+     directly beneath a page-hero. */
+  padding: 40px 0 132px;
+}
+
+.projects-empty {
+  padding: 60px 0;
+  text-align: center;
+  color: var(--muted);
+}

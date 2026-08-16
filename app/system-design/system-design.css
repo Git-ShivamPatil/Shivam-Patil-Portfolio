@@ -16,9 +16,13 @@
 .sd-section {
   padding: 56px 0;
 }
+/* The measure now comes from the global .section-heading cap; the narrower one
+   that used to be here was left over from when this heading sat in a sidebar
+   track. The margin is the whole separation between a heading and the thing it
+   titles now that it no longer rides down the viewport on a sticky, so it is
+   wider than the 28px a heading that scrolled away from its content needed. */
 .sd-section .section-heading {
-  max-width: 640px;
-  margin-bottom: 28px;
+  margin-bottom: 32px;
 }
 .sd-section .section-heading p {
   color: var(--prose-soft);
@@ -169,11 +173,16 @@
   animation-delay: calc(var(--i, 0) * 60ms);
 }
 
-/* ---- phase map ---- */
+/* ---- phase map ----
+   Twenty cards now, not the ten this grid was sized for. At the old 168px floor
+   the 1180px shell fits six across, so twenty leave a last row holding two and
+   the whole block reads as a wall with a stub; 150px fits seven, which divides
+   into 7/7/6. The cards hold three short lines and a status, never a sentence,
+   so the narrower track costs nothing. */
 .sd-phases {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -183,22 +192,26 @@
   display: flex;
   flex-direction: column;
   gap: 3px;
-  padding: 16px 14px;
+  padding: 13px 13px 11px;
   border: 1px solid var(--surface-line);
-  border-radius: 14px;
+  border-radius: 12px;
   background: var(--surface);
   transition:
-    transform 0.25s,
-    border-color 0.25s;
+    border-color 0.25s,
+    box-shadow 0.25s;
 }
+/* Was translateY(-4px). A card that lifts is a card that moves, and twenty of
+   them in a dense grid made the block twitch under the pointer; the border and
+   the shadow say "this one" without anything leaving the flow it was laid out
+   in. */
 .sd-phase:hover {
-  transform: translateY(-4px);
   border-color: var(--accent);
+  box-shadow: var(--elev-1);
 }
 .sd-phase-n {
   color: var(--accent);
   font:
-    600 10px var(--font-dm-mono),
+    600 9.5px var(--font-dm-mono),
     "DM Mono",
     monospace;
   letter-spacing: 0.1em;
@@ -206,12 +219,68 @@
 .sd-phase-label {
   color: var(--fg);
   font-weight: 600;
-  font-size: 15px;
+  font-size: 14px;
   letter-spacing: -0.02em;
 }
 .sd-phase-note {
   color: var(--prose-soft);
-  font-size: 12px;
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+/* Every phase is deployed; five keep one feature switched off until a credential
+   exists (HANDOFF §31). That distinction is carried three ways — the word
+   itself, a dashed border, and a hollow marker — because a reader who cannot
+   separate --accent from --muted still has to be able to separate the states,
+   and the word is the one that reaches a screen reader. */
+.sd-phase[data-state="keyed"] {
+  border-style: dashed;
+}
+.sd-phase-state {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 10px;
+  color: var(--muted);
+  font:
+    500 9px var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.sd-phase-state::before {
+  content: "";
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border: 1.5px solid var(--accent);
+  border-radius: 50%;
+  background: var(--accent);
+}
+.sd-phase[data-state="keyed"] .sd-phase-state::before {
+  border-color: var(--muted);
+  background: none;
+}
+
+/* The stagger is a TRANSITION and never an animation. The reduced-motion block
+   in globals.css blanket-cancels animations, so an animation-driven
+   opacity:0 would strand all twenty cards invisible forever — the §2z failure in
+   miniature. Gated on [data-reveal-ready] for the same reason every other reveal
+   on the site is: without JS the attribute never lands and the cards are simply
+   visible. The delay rides --i rather than :nth-child because the shared stagger
+   flattens after the seventh child and this list has twenty; it is set per
+   property so it cannot also delay the hover by half a second. */
+[data-reveal-ready="true"] .sd-phase {
+  opacity: 0;
+  transition:
+    opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1) calc(var(--i, 0) * 28ms),
+    border-color 0.25s,
+    box-shadow 0.25s;
+}
+[data-reveal-ready="true"] [data-revealed="true"] .sd-phase {
+  opacity: 1;
 }
 
 /* ---- decisions ---- */
@@ -301,13 +370,19 @@
   }
 }
 
-/* The draw-in is decoration; honour the OS setting like the rest of the site. */
+/* The draw-in is decoration; honour the OS setting like the rest of the site.
+   Cancelling the edge animation is safe because .sd-edge/.sd-rel carry their
+   real opacity in the base rule and the keyframe only supplies a start state.
+   The phase cards do not have that luxury — their start state IS opacity:0 — so
+   this clears it outright rather than waiting on [data-revealed], which keeps
+   them visible even if the observer never arms them. */
 @media (prefers-reduced-motion: reduce) {
   [data-revealed="true"] .sd-edge,
   [data-revealed="true"] .sd-rel {
     animation: none;
   }
-  .sd-phase:hover {
-    transform: none;
+  [data-reveal-ready="true"] .sd-phase {
+    opacity: 1;
+    transition: none;
   }
 }

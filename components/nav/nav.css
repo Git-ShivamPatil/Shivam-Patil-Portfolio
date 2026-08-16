@@ -1,0 +1,347 @@
+/* =========================================================================
+   PRIMARY NAVIGATION — hamburger + left drawer
+
+   Imported by components/nav/nav-drawer.tsx, not by app/globals.css. Same rule
+   as components/chat/chat-widget.css and app/stats/stats.css: a surface that
+   belongs to one component travels with that component's chunk, and it is what
+   keeps the unused-css-rules budget in lighthouserc.json green.
+
+   Z-INDEX. 60 for the scrim, 61 for the panel. The ladder they have to clear is
+   sticky .site-header 20, .scroll-progress 21, .back-to-top 30 (bottom-LEFT, so
+   it lands directly on the panel), .chat-widget 40 and .skip-link 50. They stay
+   below the command palette's 90 so Cmd+K still opens over an open drawer.
+   Those numbers only work because nav-drawer.tsx portals both elements to
+   <body>: .site-header is position:sticky with z-index:20, which is a stacking
+   context, and a descendant of it cannot climb past 20 no matter what it asks
+   for.
+   ========================================================================= */
+
+/* ---------- hamburger ---------- */
+.nav-trigger {
+  display: grid;
+  place-content: center;
+  gap: 5px;
+  /* 44px box around 18px bars. The drawer is now the only route to most of the
+     site on a phone, so the target is sized for a thumb and the padding does
+     the work rather than the ink. The negative margin pulls the ink back to the
+     shell's left edge, where the wordmark used to start. */
+  width: 44px;
+  height: 44px;
+  /* flex:none or .header-inner shrinks it: at 375px the top bar's five items
+     overflow, and a flex item with the default shrink factor gave up 12px of
+     its 44px box — measured 31.8px wide, under the touch minimum, on exactly
+     the viewport where this button is the only way into the site. */
+  flex: none;
+  margin-left: -13px;
+  border: none;
+  border-radius: 12px;
+  background: none;
+  color: var(--nav-fg);
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    background 0.2s;
+}
+.nav-trigger:hover {
+  color: var(--fg);
+  background: var(--warm);
+}
+.nav-trigger-bar {
+  display: block;
+  width: 18px;
+  height: 1.5px;
+  border-radius: 2px;
+  background: currentColor;
+  transition:
+    transform 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.16s;
+}
+/* 6.5px is the row pitch: the 5px grid gap plus the 1.5px bar. Anything else
+   leaves the two strokes of the X crossing off-centre. */
+.nav-trigger[aria-expanded="true"] .nav-trigger-bar:nth-child(1) {
+  transform: translateY(6.5px) rotate(45deg);
+}
+.nav-trigger[aria-expanded="true"] .nav-trigger-bar:nth-child(2) {
+  opacity: 0;
+}
+.nav-trigger[aria-expanded="true"] .nav-trigger-bar:nth-child(3) {
+  transform: translateY(-6.5px) rotate(-45deg);
+}
+
+/* ---------- scrim ---------- */
+.nav-scrim {
+  position: fixed;
+  z-index: 60;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--ink) 46%, transparent);
+  transition: opacity 0.28s ease;
+}
+/* backdrop-filter is declared only in the open state. A full-viewport blur
+   layer that is merely opacity:0 still gets composited every frame in WebKit,
+   and this element is mounted on every route. */
+.nav-scrim[data-open="true"] {
+  opacity: 1;
+  pointer-events: auto;
+  backdrop-filter: blur(6px);
+}
+
+/* ---------- panel ---------- */
+.nav-drawer {
+  position: fixed;
+  z-index: 61;
+  top: 0;
+  left: 0;
+  width: min(340px, 86vw);
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--fg);
+  box-shadow: 0 0 60px color-mix(in srgb, var(--ink) 26%, transparent);
+  /* Closed state is a transform, never an opacity — under
+     prefers-reduced-motion the blanket `animation: none` in globals.css would
+     strand an animation-driven panel, and a transition-driven opacity:0 would
+     still leave a full-height invisible sheet over the page. */
+  transform: translateX(-100%);
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.nav-drawer[data-open="true"] {
+  transform: translateX(0);
+}
+
+.nav-drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 22px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.nav-drawer-label {
+  margin: 0;
+  color: var(--muted);
+  font:
+    500 10px/1.1 var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.nav-drawer-close {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  /* Same reason as .nav-trigger: it is a flex item next to the head label. */
+  flex: none;
+  margin-right: -11px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--muted);
+  font-size: 21px;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    background 0.2s;
+}
+.nav-drawer-close:hover {
+  color: var(--fg);
+  background: var(--warm);
+}
+
+.nav-drawer-nav {
+  flex: 1;
+  /* min-height:0 or the flex item refuses to shrink below its content height
+     and the foot is pushed off the bottom of the viewport on short screens. */
+  min-height: 0;
+  padding: 16px 14px 10px;
+  overflow-y: auto;
+  /* The page behind is already scroll-locked; this stops the lock being handed
+     back to it when the group list hits its own end. */
+  overscroll-behavior: contain;
+}
+.nav-drawer-group + .nav-drawer-group {
+  margin-top: 22px;
+}
+.nav-drawer-group-label {
+  margin: 0 0 5px;
+  padding-inline: 10px;
+  color: var(--muted);
+  font:
+    500 10px/1.1 var(--font-dm-mono),
+    "DM Mono",
+    monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.nav-drawer-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 10px;
+  border-radius: 11px;
+  color: var(--fg);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  transition:
+    color 0.18s,
+    background 0.18s,
+    transform 0.18s;
+}
+/* translateX rather than a padding shift, matching .booking-offering:hover and
+   .button-text:hover span. Same 3-4px nudge, but it stays off the layout path —
+   this list is nineteen links and the pointer sweeps most of them on the way to
+   one. */
+.nav-drawer-link:hover,
+.nav-drawer-link:focus-visible {
+  color: var(--accent-strong);
+  background: var(--warm);
+  transform: translateX(4px);
+}
+.nav-drawer-link[aria-current="page"] {
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+}
+/* The ↗ on the two external links, pushed right so they line up as a column. */
+.nav-drawer-link > span {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* ---------- foot ---------- */
+.nav-drawer-foot {
+  /* margin-top:auto rather than a fixed offset: the group list above is a
+     scroller, so on a tall screen the foot has to sit at the bottom and on a
+     short one it has to sit immediately under the last group. */
+  margin-top: auto;
+  padding: 15px 20px calc(16px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+.drawer-auth {
+  display: grid;
+  gap: 12px;
+}
+.drawer-auth-identity {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+.drawer-auth-avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--ink);
+  /* --ink is near-black in BOTH themes, so the initial has to come from the
+     light end of the palette rather than --fg. */
+  color: var(--lime);
+  font-size: 13px;
+  font-weight: 700;
+}
+.drawer-auth-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.drawer-auth-who {
+  display: grid;
+  min-width: 0;
+}
+.drawer-auth-who strong {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.drawer-auth-email {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.drawer-auth-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.drawer-auth-action {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--surface-line);
+  border-radius: 999px;
+  background: none;
+  color: var(--fg);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    border-color 0.2s;
+}
+.drawer-auth-action:hover {
+  color: var(--accent-strong);
+  border-color: var(--accent);
+}
+.drawer-auth-signin {
+  display: grid;
+  place-items: center;
+  min-height: 46px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--lime);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+/* Sized to the signed-in block, not to the "Sign in" button: the placeholder
+   exists to stop the foot changing height when the session resolves, and the
+   signed-in block is the taller of the two outcomes. */
+.drawer-auth-placeholder {
+  height: 90px;
+  border-radius: 14px;
+  background: var(--line);
+  opacity: 0.55;
+}
+
+/* ---------- reduced motion ---------- */
+/* globals.css already collapses every transition-duration site-wide. Stating it
+   here as well keeps the drawer correct if that blanket rule is ever narrowed:
+   the panel snaps open instead of sliding, which is the intended behaviour, not
+   a fallback. */
+@media (prefers-reduced-motion: reduce) {
+  .nav-trigger-bar,
+  .nav-scrim,
+  .nav-drawer,
+  .nav-drawer-link {
+    transition: none;
+  }
+}
+
+/* ---------- responsive ---------- */
+@media (max-width: 620px) {
+  .nav-drawer-head {
+    padding: 16px 18px 14px;
+  }
+  .nav-drawer-nav {
+    padding: 14px 10px 8px;
+  }
+  .nav-drawer-foot {
+    padding-inline: 16px;
+  }
+}

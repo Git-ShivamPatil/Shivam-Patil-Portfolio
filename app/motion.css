@@ -94,8 +94,8 @@
 
 /* ---- tilt surfaces ----
    Project cards restate their full transform because they already own
-   translateY for the hover lift and the .offset-card stagger; tilt has to
-   compose with those rather than replace them. */
+   translateY for the hover lift; tilt has to compose with it rather than
+   replace it. */
 [data-tilt] {
   transform-style: preserve-3d;
   transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
@@ -110,14 +110,14 @@
   transform: perspective(900px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg))
     translateY(-8px);
 }
-.offset-card[data-tilt] {
-  transform: perspective(900px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg))
-    translateY(52px);
-}
-.offset-card[data-tilt]:hover {
-  transform: perspective(900px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg))
-    translateY(44px);
-}
+/* `.offset-card[data-tilt]` sat here, restating the 52px/44px stagger so it
+   composed with the tilt instead of being overwritten by it. It is deleted
+   with the class, and deleting it *here* is the part that actually mattered:
+   every project card carries `data-tilt` (components/project-card.tsx), so
+   `.offset-card[data-tilt]` (0,2,0) outranked the plain `.offset-card` (0,1,0)
+   rule in globals.css. Removing only the globals.css pair would have left the
+   52px offset — and the row overlap it causes — fully intact on every card,
+   while making the codebase read as though the offset were gone. */
 /* The graphic and title lift out of the card plane so the tilt reads as
    depth rather than as a flat sheet being rotated. */
 .project-card[data-tilt] .project-card-graphic,
@@ -126,11 +126,17 @@
   transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* ---- nav underline ---- */
-.primary-nav a {
+/* ---- nav underline ----
+   Renamed from `.primary-nav` with the element itself: the top bar now carries
+   one link (System design) instead of eight, and globals.css calls the nav
+   `.header-nav`. Left as `.primary-nav` these four rules matched nothing, so
+   the one remaining link would have silently lost its hover and focus
+   underline — a focus indicator that disappears is an accessibility
+   regression, not a cosmetic one. */
+.header-nav a {
   position: relative;
 }
-.primary-nav a::after {
+.header-nav a::after {
   content: "";
   position: absolute;
   left: 0;
@@ -142,8 +148,8 @@
   transform-origin: left center;
   transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.primary-nav a:hover::after,
-.primary-nav a:focus-visible::after {
+.header-nav a:hover::after,
+.header-nav a:focus-visible::after {
   transform: scaleX(1);
 }
 

@@ -13,7 +13,7 @@ import "./system-design.css";
 export const metadata: Metadata = {
   title: "System design — Shivam Patil",
   description:
-    "How this site is actually built: the request path, the data model, the ten build phases, and the trade-offs behind each decision.",
+    "How this site is actually built: the request path, the data model, the twenty build phases, and the trade-offs behind each decision.",
   alternates: { canonical: "/system-design" },
 };
 
@@ -32,9 +32,12 @@ export const metadata: Metadata = {
  * defect of the theme work.
  *
  * The content is the REAL architecture, not the original brief's. BUILD-SPEC.md
- * asked for Redis, WebSockets, pgvector and Docker; none of them are here, and
- * the "spec vs built" section at the bottom is the honest accounting of that
- * rather than a diagram of a system that does not exist.
+ * asked for Redis, WebSockets, pgvector and Docker; two of those four have since
+ * arrived — pgvector carries the P16 retrieval index, and a Dockerfile exists
+ * that is deliberately not the deploy path — and the "spec vs built" section at
+ * the bottom accounts for all four either way, rather than diagramming a system
+ * that does not exist. A page whose whole premise is that it describes what is
+ * running has to be re-checked against HANDOFF.md whenever a phase lands.
  */
 
 /* ---------- diagram 1: the request path ---------- */
@@ -222,27 +225,57 @@ function DataModelDiagram() {
 
 /* ---------- diagram 3: the phase map ---------- */
 
-const PHASES = [
+/**
+ * Every phase is deployed and reachable — the status below is HANDOFF §31,
+ * which was checked in a browser against production rather than read off the
+ * source, so this list is a record and not an aspiration.
+ *
+ * `awaiting` does not mean unfinished. The feature is built and shipped and one
+ * part of it is switched off until a specific credential exists, degrading by
+ * design rather than erroring. Naming the credential is the point: "needs a key"
+ * on its own is indistinguishable from "we never got to it".
+ */
+type Phase = { n: string; label: string; note: string; awaiting?: string };
+
+const PHASES: readonly Phase[] = [
   { n: "P1", label: "Foundation", note: "TS, Tailwind, CI" },
-  { n: "P2", label: "Auth & RBAC", note: "Auth.js v5, JWT" },
-  { n: "P3", label: "CMS", note: "Prisma, admin CRUD" },
-  { n: "P4", label: "Public site", note: "search, OG, sitemap" },
-  { n: "P5", label: "Integrations", note: "GitHub, LeetCode" },
-  { n: "P6", label: "Realtime", note: "SSE chat, web push" },
-  { n: "P7", label: "Payments", note: "Razorpay, invoices" },
+  { n: "P2", label: "Auth", note: "Auth.js v5, RBAC", awaiting: "OAuth apps" },
+  { n: "P3", label: "Admin", note: "Prisma CRUD, gated" },
+  { n: "P4", label: "Content", note: "ranked search, sitemap" },
+  { n: "P5", label: "Integrations", note: "GitHub, LeetCode", awaiting: "Cal.com" },
+  { n: "P6", label: "Comms", note: "SSE chat, web push", awaiting: "a domain move" },
+  { n: "P7", label: "Payments", note: "Razorpay, invoices", awaiting: "Razorpay keys" },
   { n: "P8", label: "Growth", note: "short links, QR" },
-  { n: "P9", label: "Storage", note: "R2, content-addressed" },
+  { n: "P9", label: "Storage", note: "R2, content-addressed", awaiting: "R2 keys" },
   { n: "P10", label: "Analytics", note: "first-party, cookieless" },
-] as const;
+  { n: "P11", label: "Realtime", note: "presence, live dashboard" },
+  { n: "P12", label: "Delivery", note: "vendored fonts, split CSS" },
+  { n: "P13", label: "Security", note: "CSP, CSRF, HSTS" },
+  { n: "P14", label: "DevOps", note: "health checks, metrics" },
+  { n: "P15", label: "QA", note: "41 E2E, axe" },
+  { n: "P16", label: "AI", note: "hybrid retrieval, cited" },
+  { n: "P17", label: "DevEx UI", note: "Cmd+K, terminal" },
+  { n: "P18", label: "DistSys", note: "outbox, leases, Raft" },
+  { n: "P19", label: "Low-level", note: "WASM, threads, WebGPU" },
+  { n: "P20", label: "Data eng", note: "ELT, DuckDB, lineage" },
+];
 
 function PhaseMap() {
   return (
     <ol className="sd-phases">
       {PHASES.map((p, i) => (
-        <li key={p.n} className="sd-phase" style={{ ["--i" as string]: i }}>
+        <li
+          key={p.n}
+          className="sd-phase"
+          data-state={p.awaiting ? "keyed" : "live"}
+          style={{ ["--i" as string]: i }}
+        >
           <span className="sd-phase-n">{p.n}</span>
           <span className="sd-phase-label">{p.label}</span>
           <span className="sd-phase-note">{p.note}</span>
+          {/* The state is spelled out rather than left to the marker: colour is
+              the third signal here, behind the word and the dashed border. */}
+          <span className="sd-phase-state">{p.awaiting ? `needs ${p.awaiting}` : "live"}</span>
         </li>
       ))}
     </ol>
@@ -257,8 +290,12 @@ const DECISIONS = [
     body: "Vercel functions cannot hold a socket open, and module-scope memory is not shared between invocations. Chat streams over SSE; typing indicators are deadline columns in Postgres rather than in-process state.",
   },
   {
-    title: "No Redis",
-    body: "The brief called for it. There is no free managed tier, so rate limiting is an in-memory token bucket per instance — an accepted weaker ceiling for chat sends and newsletter signups. Anything that must hold, like payment capture, is guarded by auth and idempotency keys instead.",
+    title: "Redis is optional, not infrastructure",
+    body: "The brief made it load-bearing. The limiter prefers Upstash when a key is configured and falls back to an in-memory token bucket per instance when one is not — a weaker ceiling, accepted deliberately, because a limiter that returns 429 while its own dependency is down has converted someone else's outage into ours. Anything that must actually hold, like payment capture, is guarded by auth and idempotency keys instead.",
+  },
+  {
+    title: "The answer is extractive by default",
+    body: "Retrieval is hybrid: dense vectors and Postgres full-text search fail in different ways, so both run on every question and the results fuse by reciprocal rank. The answer is then assembled from sentences that exist verbatim on the site, each linking to where it came from. Generation is opt-in and runs in the visitor's own browser — on a page about a real person's real work, a fluent invented claim is not a smaller failure than an awkward true one.",
   },
   {
     title: "Reads degrade instead of failing",
@@ -280,14 +317,32 @@ const DECISIONS = [
 
 /* ---------- spec vs built ---------- */
 
+/**
+ * Four of these seven rows were stale, and each is corrected in place rather
+ * than quietly dropped: P16 put the retrieval index in a pgvector column with
+ * cited answers, P15 put 41 Playwright specs plus axe and Lighthouse into CI —
+ * all three jobs green together for the first time on run #38 — the Dockerfile
+ * has existed since P14 as a proof that the deploy is not Vercel-shaped, and
+ * the limiter has preferred Upstash over its in-memory fallback since P13.
+ * Claiming restraint that is no longer being shown is the one failure a page
+ * whose premise is "this is what actually runs" cannot afford.
+ */
 const DIVERGENCE = [
-  ["Redis", "In-memory token bucket", "no free managed tier"],
+  ["Redis", "Upstash-capable, memory today", "no key set; it degrades rather than failing closed"],
   ["WebSockets", "SSE + DB poll", "serverless cannot host a socket"],
-  ["pgvector / RAG", "not built", "every LLM API is metered"],
-  ["Docker", "not present", "deploy is Vercel-native"],
+  [
+    "pgvector / RAG",
+    "built in P16 — hybrid, cited",
+    "the embedding is in-process TF-IDF; every hosted one is metered",
+  ],
+  ["Docker", "a Dockerfile, not the deploy path", "it proves nothing here depends on Vercel"],
   ["Better Auth", "Auth.js v5", "the spec allowed the swap"],
   ["Stripe", "Razorpay", "India-side rails"],
-  ["Playwright / Lighthouse CI", "Vitest only", "genuine remaining gap"],
+  [
+    "Playwright / Lighthouse CI",
+    "41 E2E + axe + Lighthouse",
+    "built in P15; green in CI since run #38",
+  ],
 ] as const;
 
 export default function SystemDesignPage() {
@@ -305,8 +360,8 @@ export default function SystemDesignPage() {
         </h1>
         <p>
           Not the brief it was commissioned from — the system that exists. The request path, the
-          data model, the ten phases it was built in, and the trade-offs behind the parts that were
-          deliberately left out.
+          data model, the twenty phases it was built in, and the trade-offs behind the parts that
+          are deliberately not here.
         </p>
       </section>
 
@@ -353,9 +408,14 @@ export default function SystemDesignPage() {
       <section className="sd-section shell" data-reveal>
         <div className="section-heading">
           <h2>
-            Built in <em>ten phases.</em>
+            Built in <em>twenty phases.</em>
           </h2>
-          <p>Each one shipped and verified before the next started.</p>
+          <p>
+            Each one shipped and verified before the next started, and all twenty are deployed and
+            reachable today. Five are marked as waiting on something outside the code — four on a
+            credential, one on a DNS move. Those phases are live; one feature inside each stays
+            switched off, degrading quietly rather than erroring, until it lands.
+          </p>
         </div>
         <PhaseMap />
       </section>
@@ -383,8 +443,9 @@ export default function SystemDesignPage() {
             Spec versus <em>reality.</em>
           </h2>
           <p>
-            The original brief asked for a larger stack than this. Each row is something
-            deliberately not built, and why.
+            The original brief asked for a larger stack than this. Each row is what it specified,
+            what runs instead, and why — including the four that have shifted since this table was
+            written, two of them from <em>not built</em> to built.
           </p>
         </div>
         <div className="sd-table-wrap">

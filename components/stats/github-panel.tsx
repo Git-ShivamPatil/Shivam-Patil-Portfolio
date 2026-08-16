@@ -1,6 +1,8 @@
 import { getGitHubStats, GITHUB_USERNAME } from "../../lib/integrations/github";
 import { ArrowUpRight } from "../icons";
-import { StaleNote } from "./stale-note";
+import { LanguageDonut } from "./language-donut";
+import { RepoImpactChart } from "./repo-impact-chart";
+import { LiveGitHubFigures } from "./live-figures";
 
 function relativeTime(iso: string): string {
   const diffDays = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
@@ -15,32 +17,47 @@ export async function GitHubPanel() {
   const result = await getGitHubStats();
 
   if (!result) {
+    // Two distinct causes, one state, and the copy has to cover both: either
+    // GITHUB_USERNAME resolved to nothing (configuration) or there is no cached
+    // row and the fetch failed (upstream). A missing username also means there
+    // is no profile URL to offer, so the link is conditional rather than
+    // interpolated into "github.com/null".
     return (
       <div className="stat-panel" data-reveal>
         <div className="stat-panel-head">
           <p className="eyebrow">GitHub</p>
-          <a
-            href={`https://github.com/${GITHUB_USERNAME}`}
-            target="_blank"
-            rel="noreferrer"
-            className="stat-panel-link"
-          >
-            @{GITHUB_USERNAME} <ArrowUpRight />
-          </a>
+          {GITHUB_USERNAME && (
+            <a
+              href={`https://github.com/${GITHUB_USERNAME}`}
+              target="_blank"
+              rel="noreferrer"
+              className="stat-panel-link"
+            >
+              @{GITHUB_USERNAME} <ArrowUpRight />
+            </a>
+          )}
         </div>
         <p className="stat-panel-empty">
-          Live GitHub data isn&apos;t reachable right now. The profile is still at{" "}
-          <a href={`https://github.com/${GITHUB_USERNAME}`} target="_blank" rel="noreferrer">
-            github.com/{GITHUB_USERNAME}
-          </a>
-          .
+          {GITHUB_USERNAME ? (
+            <>
+              Live GitHub data isn&apos;t reachable right now. The profile is still at{" "}
+              <a href={`https://github.com/${GITHUB_USERNAME}`} target="_blank" rel="noreferrer">
+                github.com/{GITHUB_USERNAME}
+              </a>
+              .
+            </>
+          ) : (
+            <>
+              No GitHub account is configured for this deployment, so this panel has nothing to
+              read.
+            </>
+          )}
         </p>
       </div>
     );
   }
 
   const { data } = result;
-  const maxLanguage = Math.max(...data.languages.map(([, count]) => count), 1);
 
   return (
     <div className="stat-panel" data-reveal>
@@ -51,58 +68,40 @@ export async function GitHubPanel() {
         </a>
       </div>
 
-      <div className="stat-figures">
-        <div>
-          <strong>{data.publicRepos}</strong>
-          <span>public repos</span>
-        </div>
-        <div>
-          <strong>{data.totalStars}</strong>
-          <span>stars earned</span>
-        </div>
-        <div>
-          <strong>{data.followers}</strong>
-          <span>followers</span>
-        </div>
-      </div>
+      {/* Everything between the figures and the provenance line is passed
+          through LiveGitHubFigures as children, which means it renders on the
+          server and never reaches the browser as code. See live-figures.tsx. */}
+      <LiveGitHubFigures
+        initial={{
+          data,
+          fetchedAt: result.fetchedAt.toISOString(),
+          stale: result.stale,
+        }}
+      >
+        <LanguageDonut languages={data.languages} languageTotal={data.languageTotal} />
+        <RepoImpactChart repos={data.topRepos} />
 
-      {data.languages.length > 0 && (
-        <div className="stat-bars">
-          <p className="stat-subhead">Languages by repo count</p>
-          {data.languages.map(([language, count]) => (
-            <div key={language} className="stat-bar-row">
-              <span>{language}</span>
-              <div className="stat-bar-track">
-                <i style={{ width: `${Math.round((count / maxLanguage) * 100)}%` }} />
-              </div>
-              <b>{count}</b>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {data.topRepos.length > 0 && (
-        <div className="stat-repos">
-          <p className="stat-subhead">Most-starred repositories</p>
-          <ul>
-            {data.topRepos.map((repo) => (
-              <li key={repo.name}>
-                <a href={repo.url} target="_blank" rel="noreferrer">
-                  <div>
-                    <strong>{repo.name}</strong>
-                    {repo.description && <p>{repo.description}</p>}
-                  </div>
-                  <span>
-                    ★ {repo.stars} · {relativeTime(repo.pushedAt)}
-                  </span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      <StaleNote fetchedAt={result.fetchedAt} stale={result.stale} />
+        {data.topRepos.length > 0 && (
+          <div className="stat-repos">
+            <p className="stat-subhead">Most-starred repositories</p>
+            <ul>
+              {data.topRepos.map((repo) => (
+                <li key={repo.name}>
+                  <a href={repo.url} target="_blank" rel="noreferrer">
+                    <div>
+                      <strong>{repo.name}</strong>
+                      {repo.description && <p>{repo.description}</p>}
+                    </div>
+                    <span>
+                      ★ {repo.stars} · {relativeTime(repo.pushedAt)}
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </LiveGitHubFigures>
     </div>
   );
 }

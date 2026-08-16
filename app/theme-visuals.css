@@ -342,9 +342,6 @@
 .button-light:hover {
   box-shadow: var(--glow-accent);
 }
-.nav-cta:hover {
-  box-shadow: var(--glow-accent);
-}
 
 /* ---- scroll progress picks up the full ramp ---- */
 .scroll-progress span {

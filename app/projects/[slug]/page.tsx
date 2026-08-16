@@ -47,7 +47,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
     <>
       <section className={`project-hero project-${project.accent}`}>
         <div className="shell project-hero-inner">
-          <Link href="/#work" className="back-link">
+          <Link href="/projects" className="back-link">
             ← All projects
           </Link>
           <div className="project-hero-meta">

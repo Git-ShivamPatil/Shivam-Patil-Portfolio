@@ -360,9 +360,10 @@ button {
   border-radius: 4px;
 }
 /* Lime surfaces need an ink outline — a lime outline on a lime background
-   would be invisible. */
-.button-light:focus-visible,
-.nav-cta:hover:focus-visible {
+   would be invisible. The rule used to carry `.nav-cta:hover:focus-visible`
+   too; the pill it named is gone from the top bar, so only .button-light is
+   left on a lime ground. */
+.button-light:focus-visible {
   outline-color: var(--ink);
 }
 .skip-link {
@@ -495,17 +496,60 @@ h3,
 p {
   margin-top: 0;
 }
+/* Headings balance their lines, body copy only avoids the orphaned last word.
+   `balance` is capped by browsers at a handful of lines, which is the shape of
+   a heading and the wrong tool for a paragraph — `pretty` is the paragraph
+   version. Both degrade to normal wrapping where unsupported, so no layout
+   depends on either. */
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+/* Every [data-split] heading is opted back out. components/providers/
+   split-text.tsx replaces each non-space character with its own inline-block
+   span, and a line may break between two adjacent atomic inlines — so a split
+   heading carries a break opportunity inside every word. Balancing minimises
+   the longest line, which means it will take one of those and hyphen-less
+   mid-word breaks appear. Greedy wrapping has the same opportunities but only
+   uses the last one that fits, which lands on a space far more often.
+   The real fix is a word-level wrapper in split-text.tsx (B6's file); once
+   that lands this opt-out can go and the hero can balance too. */
+[data-split] {
+  text-wrap: wrap;
+}
+p {
+  text-wrap: pretty;
+}
 h1,
 h2 {
   letter-spacing: -0.055em;
   line-height: 0.96;
 }
+/* Two-point slopes rather than a bare vw middle term.
+
+   The old ramps were clamp(52px, 7.4vw, 108px) and clamp(40px, 5vw, 72px).
+   7.4vw only reaches 52px at a 703px viewport, so on every phone the floor
+   was the whole rule: "Build systems that hold up." rendered at a flat 52px
+   in a 328px-wide shell and broke after two words. The @media(max-width:620px)
+   override that was supposed to rescue it made it worse — clamp(51px, 16vw,
+   74px) resolves to 74px at 620px against the base's 52px, so the mobile rule
+   was 22px LARGER than the desktop rule at the same width and the floor never
+   dropped anywhere. Those overrides are deleted; this pair covers the range.
+
+   Each slope is solved between two named viewports — h1 runs 32px at 360px to
+   108px at 1440px, h2 runs 26px to 72px across the same span — so the size
+   moves continuously instead of snapping at a breakpoint.
+
+   The rem term is load-bearing, not decoration: a middle term of pure vw
+   ignores the user's browser font size entirely, which fails WCAG 1.4.4 at
+   200% zoom. calc(rem + vw) keeps the text responding to both. */
 h1 {
-  font-size: clamp(52px, 7.4vw, 108px);
+  font-size: clamp(2rem, 0.42rem + 7.04vw, 108px);
   font-weight: 700;
 }
 h2 {
-  font-size: clamp(40px, 5vw, 72px);
+  font-size: clamp(1.625rem, 0.67rem + 4.26vw, 72px);
   font-weight: 700;
 }
 h1 em,
@@ -522,11 +566,18 @@ h2 em {
   background: var(--header-bg);
   backdrop-filter: blur(14px);
 }
+/* `justify-content: space-between` distributed three children — wordmark, nav,
+   actions. The bar now starts with the hamburger, so space-between had four
+   items to spread and scattered them across the width. An explicit gap plus
+   one `margin-left: auto` on .header-nav is the same layout stated once:
+   trigger and wordmark left, nav and actions right. (The drawer and scrim also
+   render inside .header-inner, but both are position:fixed, so they never
+   become flex items.) */
 .header-inner {
   height: 76px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 16px;
 }
 .header-actions {
   display: flex;
@@ -553,38 +604,31 @@ h2 em {
   object-fit: cover;
   box-shadow: 0 0 0 1px var(--line);
 }
-.primary-nav {
-  display: flex;
-  gap: 28px;
-  margin-left: auto;
-  margin-right: 42px;
-}
-.primary-nav a,
-.nav-cta {
-  font-size: 12px;
-  font-weight: 700;
-}
-.primary-nav a {
-  color: var(--nav-fg);
-  transition: color 0.2s;
-}
-.primary-nav a:hover {
-  color: var(--fg);
-}
-.nav-cta {
+/* Was .primary-nav, an eight-link row with `margin-right: 42px` holding it off
+   the "Let's talk" pill. The pill is gone and so are seven of the links — they
+   live in the drawer — so this is one link and the auto margin is all the
+   positioning it needs. The underline sweep that decorates it is
+   .header-nav a::after in app/motion.css. */
+.header-nav {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  border: 1px solid var(--fg);
-  border-radius: 999px;
-  transition:
-    background 0.2s,
-    color 0.2s;
+  gap: 20px;
+  margin-left: auto;
 }
-.nav-cta:hover {
-  background: var(--ink);
-  color: var(--lime);
+/* The Contact link in .header-actions carries no class of its own, so it is
+   matched by position and excluded by the one class in there that is not a
+   text link. Without this it renders at the body's 16px next to a 12px nav
+   link, which reads as a mistake rather than as emphasis. */
+.header-nav a,
+.header-actions > a:not(.header-search-link) {
+  color: var(--nav-fg);
+  font-size: 12px;
+  font-weight: 700;
+  transition: color 0.2s;
+}
+.header-nav a:hover,
+.header-actions > a:not(.header-search-link):hover {
+  color: var(--fg);
 }
 .hero {
   min-height: 720px;
@@ -604,11 +648,15 @@ h2 em {
 .hero h1 em {
   color: var(--hero-em);
 }
+/* Same treatment as the h1 above it, at lede scale: 15px at 360px up to 18px
+   at 1024px. It was a flat 18px with a 15px @media(max-width:620px) override,
+   so the lede stepped down by 3px in a single frame while the heading above it
+   was scaling continuously. */
 .hero-intro {
   max-width: 530px;
   margin-bottom: 34px;
   color: var(--hero-intro-fg);
-  font-size: 18px;
+  font-size: clamp(0.9375rem, 0.84rem + 0.45vw, 18px);
   line-height: 1.68;
 }
 .hero-actions {
@@ -858,15 +906,21 @@ h2 em {
 .section {
   padding: 136px 0;
 }
-.work-section {
-  display: grid;
-  grid-template-columns: 360px 1fr;
-  gap: 80px;
-}
+/* `.work-section` was the homepage's two-column `360px 1fr` grid, with the
+   heading in the narrow track and the project list in the wide one. The list
+   moved to /projects and the homepage section is a plain `.section shell`, so
+   nothing in the repo carries the class any more and the rule is deleted
+   rather than left as a definition without a user. */
+
+/* Was position:sticky/top:128px/align-self:start — the heading rode down the
+   viewport while its list scrolled past. Only the narrow grid track made that
+   read as deliberate; stacked above full-width content it just detached the
+   title from the thing it titles, and it was doing the same on /system-design,
+   /ask, /data, /compute, /terminal and /skills, which all use this class. The
+   cap replaces the old track width: a heading and a lede want a measure, and
+   540px at <=900px was a second copy of the same intent. */
 .section-heading {
-  position: sticky;
-  top: 128px;
-  align-self: start;
+  max-width: 720px;
 }
 .section-heading h2 {
   margin: 0 0 24px;
@@ -876,11 +930,26 @@ h2 em {
   font-size: 14px;
   line-height: 1.7;
 }
+/* auto-fit, not a fixed column count. `repeat(2, minmax(0, 1fr))` gave two
+   579px cards on the 1180px shell and, whenever the filter narrowed the set to
+   an odd number, left a 579px hole beside the last one. auto-fit sizes the
+   count from the 300px floor instead — three columns at full shell width, and
+   when the filter drops the set below one row the empty tracks collapse so the
+   survivors fill the row rather than sitting beside dead space.
+
+   That floor is also what retires the @media overrides that used to hand-set
+   this at 900px and 620px: below a ~622px container two 300px tracks plus the
+   gap stop fitting and the grid drops to one column on its own.
+
+   justify-content is inert while the tracks are 1fr — flexible tracks eat all
+   the free space, so there is none left to distribute. It is here because it
+   is the half of the pair that matters the moment the max stops being 1fr, and
+   because auto-fit without it silently left-aligns. */
 .project-list {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 22px;
-  padding-top: 12px;
+  justify-content: center;
 }
 .project-card {
   min-height: 376px;
@@ -909,12 +978,13 @@ h2 em {
   transform: translateY(-8px);
   box-shadow: 0 20px 40px rgba(17, 17, 16, 0.13);
 }
-.offset-card {
-  transform: translateY(52px);
-}
-.offset-card:hover {
-  transform: translateY(44px);
-}
+/* `.offset-card` sat here: a translateY(52px) on every odd card, plus a 44px
+   hover pair. It pushed half the grid out of its own row, so the last card in
+   a column hung past the section's bottom edge and the next section started
+   underneath it. The class is gone from components/project-card.tsx and the
+   tilt-composed copy at app/motion.css:113 went with it — that one carried the
+   same offset at higher specificity, so deleting only this pair would have
+   left the stagger running on every card. */
 .project-card-top,
 .project-card-bottom {
   display: flex;
@@ -1403,25 +1473,10 @@ h2 em {
   background: var(--ink);
   color: var(--pink);
 }
-.about-section {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 100px;
-  align-items: start;
-  padding-top: 210px;
-}
-.about-statement h2 {
-  margin: 0;
-}
-.about-details {
-  padding-top: 47px;
-}
-.about-details > p {
-  max-width: 450px;
-  font-size: 18px;
-  line-height: 1.7;
-  color: var(--prose-fg);
-}
+/* .about-section / .about-statement / .about-details lived here. They styled
+   the homepage's #about block, whose three principles were character-for-
+   character the ones on /about — that section is gone and the homepage links
+   to the page instead. `.principles` below stays: /about still renders it. */
 .principles {
   margin-top: 50px;
   border-top: 1px solid var(--line);
@@ -1447,62 +1502,106 @@ h2 em {
   color: var(--muted);
   font-size: 12px;
 }
-.about-details > .button-text {
-  margin-top: 28px;
+/* .capabilities, .skill-marquee and @keyframes skill-marquee-scroll lived
+   here. The strip they styled was a flat scrolling list of skill names — the
+   weaker half of /skills, which groups the same data and adds the graph — and
+   it left with the rest of the homepage's duplicated sections.
+   app/theme-visuals.css still names `.capabilities` in its theme-transition
+   list and `.about-statement h2 em` in its gradient-heading rule; that file is
+   B6's to prune. */
+
+/* ===== homepage hub directory ===== */
+/* Same track as .project-list, deliberately: the two grids sit one click apart
+   and a different minmax floor would make /projects read as a different site.
+   Three columns on the full shell, two from ~640px, one below ~622px, with no
+   breakpoint written anywhere — the 300px floor decides. */
+.hub-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 22px;
+  justify-content: center;
+  margin-top: 44px;
 }
-.capabilities {
-  overflow: hidden;
-  padding: 34px 0;
-  border-block: 1px solid var(--line);
+/* Three rows rather than a flex column, so the middle one can take the slack:
+   the copy varies from one line to three, and without a 1fr row the note would
+   sit at a different height on every card in a row. The arrow is placed into
+   row 1 / column 2 instead of being absolutely positioned — it is a flex/grid
+   item like everything else, so it cannot end up on top of the label when the
+   label wraps. */
+.hub-card {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto 1fr auto;
+  gap: 12px 14px;
+  padding: 26px;
+  border: 1px solid var(--surface-line);
+  border-radius: var(--radius);
   background: var(--surface);
   color: var(--fg);
+  transition:
+    transform 0.3s,
+    box-shadow 0.3s,
+    border-color 0.3s;
 }
-.capabilities .eyebrow {
-  margin-bottom: 22px;
+/* The hub grid carries data-stagger, and motion-bold.css gives every
+   [data-stagger] child `transition: opacity/transform 0.6s` plus a per-child
+   transition-delay, then `transform: none` once revealed. All three outrank a
+   bare .hub-card rule, so left alone the hover lift is cancelled outright and
+   the shadow snaps. Restating the transition on the *revealed* container is
+   scoped to after the reveal has played, so the delays that produce the
+   stagger are untouched — but they have to be zeroed here, or card eight would
+   wait half a second before responding to a pointer. */
+[data-stagger][data-revealed="true"] .hub-card {
+  transition:
+    transform 0.3s,
+    box-shadow 0.3s,
+    border-color 0.3s;
+  transition-delay: 0s;
 }
-/* The eyebrow's trailing counter span is hardcoded to --ink elsewhere, which
-   is always near-black — on the dark capability strip that reads as a hole. */
-.capabilities .eyebrow span:not(.live-dot) {
-  color: var(--fg);
+/* Same lift and duration as .project-card: a hub card and a project card are
+   the same kind of object to a visitor, and two different lifts would say they
+   are not. The second selector is what beats the stagger's `transform: none`;
+   the first keeps the hover working if the container ever loses data-stagger.
+   --elev-3 rather than a literal shadow because a drop shadow is invisible on
+   the dark theme's near-black surface — that token swaps to a deeper black. */
+.hub-card:hover,
+[data-stagger][data-revealed="true"] .hub-card:hover {
+  transform: translateY(-8px);
+  border-color: var(--fg);
+  box-shadow: var(--elev-3);
 }
-.skill-marquee {
-  display: flex;
-  width: max-content;
-  gap: 22px;
-  white-space: nowrap;
-  /* Deliberately slow: this is ambient texture, not something to read in a
-     hurry. Duration scales with the track length, so it stays legible whether
-     there are 12 skills or 40. */
-  animation: skill-marquee-scroll 95s linear infinite;
+.hub-card-label {
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
 }
-.skill-marquee:hover,
-.skill-marquee:focus-within {
-  animation-play-state: paused;
+.hub-card .arrow-icon {
+  grid-row: 1;
+  grid-column: 2;
+  justify-self: end;
+  color: var(--accent);
+  transition: transform 0.2s;
 }
-@keyframes skill-marquee-scroll {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    /* The list is rendered twice (see the [...skills, ...skills] map in
-       app/page.tsx), so -50% lands exactly on the seam between the two
-       copies — the loop resets invisibly instead of visibly jumping. */
-    transform: translateX(-50%);
-  }
+.hub-card:hover .arrow-icon {
+  transform: translate(3px, -3px);
 }
-.skill-marquee span {
-  display: flex;
-  align-items: center;
-  gap: 22px;
+.hub-card-copy {
+  grid-column: 1 / -1;
+  align-self: start;
+  color: var(--prose-soft);
+  font-size: 14px;
+  line-height: 1.65;
+}
+.hub-card-note {
+  grid-column: 1 / -1;
+  align-self: end;
+  color: var(--muted);
   font:
-    500 28px "DM Mono",
+    500 10px var(--font-dm-mono),
+    "DM Mono",
     monospace;
-  letter-spacing: -0.09em;
-}
-.skill-marquee i {
-  color: var(--marquee-accent);
-  font-style: normal;
-  font-size: 19px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
 }
 .contact-banner {
   padding: 132px 0;
@@ -1550,14 +1649,9 @@ h2 em {
 .footer-inner p {
   margin: 0;
 }
-.footer-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px 18px;
-}
-.footer-links a:hover {
-  color: var(--fg);
-}
+/* `.footer-links` styled the eleven-link wrapping row. That row is now a group
+   in the drawer (components/nav/nav.css), and .footer-inner is left holding
+   the copyright line alone. */
 .project-hero {
   position: relative;
   overflow: hidden;
@@ -1625,10 +1719,16 @@ h2 em {
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
+/* The case-study title runs slightly hotter than the base h1 — 34px at 360px
+   to 112px at 1440px against the base's 32/108 — because it is the only thing
+   on the page above the fold. Same two-point form and the same rem term, and
+   the @media(max-width:620px) clamp(47px, 14vw, 72px) that used to override it
+   is gone: 14vw put this at 72px on a 360px phone, wider than the viewport for
+   any title longer than five words. */
 .project-hero h1 {
   max-width: 900px;
   margin: 0 0 24px;
-  font-size: clamp(55px, 7.5vw, 112px);
+  font-size: clamp(2.125rem, 0.5rem + 7.22vw, 112px);
 }
 .project-hero > div > p {
   max-width: 720px;
@@ -1651,14 +1751,19 @@ h2 em {
     500 9px "DM Mono",
     monospace;
 }
+/* The outcome label and its metric are content, not decoration, and they used
+   to be position:absolute at the hero's bottom-right corner, where they landed
+   on top of the tag row at any width between the tags getting long and the
+   viewport getting wide. The proof it never worked in flow is that a
+   @media(max-width:900px) block already reset it to position:static — the same
+   three declarations now sit here unconditionally, which is one rule instead
+   of a rule and its own contradiction. */
 .project-outcome {
-  position: absolute;
-  right: 0;
-  bottom: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  text-align: right;
+  width: max-content;
+  margin-top: 30px;
 }
 .project-outcome span {
   color: #4f4e48;
@@ -2253,10 +2358,10 @@ h2 em {
   .shell {
     width: min(100% - 40px, 760px);
   }
-  .primary-nav {
-    gap: 17px;
-    margin-right: 18px;
-  }
+  /* .primary-nav's gap/margin tuning, .work-section's column collapse,
+     .section-heading's position:static, .project-list's padding reset and
+     .about-section's gap all lived here. Every one of them was undoing
+     something the base rule no longer does. */
   .hero {
     grid-template-columns: 1fr;
     gap: 10px;
@@ -2266,20 +2371,6 @@ h2 em {
     width: min(440px, 85vw);
     min-height: 440px;
     margin: 15px auto 0;
-  }
-  .work-section {
-    grid-template-columns: 1fr;
-    gap: 24px;
-  }
-  .section-heading {
-    position: static;
-    max-width: 540px;
-  }
-  .project-list {
-    padding-top: 0;
-  }
-  .about-section {
-    gap: 50px;
   }
   .architecture-flow {
     overflow-x: auto;
@@ -2294,12 +2385,6 @@ h2 em {
   .architecture-connector {
     width: 33px;
     flex: 0 0 33px;
-  }
-  .project-outcome {
-    position: static;
-    width: max-content;
-    margin-top: 30px;
-    text-align: left;
   }
   .project-hero {
     padding-bottom: 50px;
@@ -2324,29 +2409,37 @@ h2 em {
   .shell {
     width: calc(100% - 32px);
   }
-  .site-header {
-    position: relative;
-  }
+  /* `.site-header { position: relative }` used to sit here, un-sticking the
+     bar below 620px. That was survivable when the eight-link row was hidden on
+     phones and the header carried nothing but a wordmark; it is not now. The
+     hamburger is the only way into most of the site on a phone, so a header
+     that scrolls away takes the navigation with it and never gives it back.
+     It stays sticky at every width. */
   .header-inner {
     height: 65px;
+    gap: 10px;
   }
-  .primary-nav {
+  /* Photo-only wordmark below 620px. Measured at 360px: the trigger, wordmark,
+     "System design" and the three actions want ~450px of a 328px shell, and
+     the name is the widest thing in there that is said somewhere else — the
+     link keeps its aria-label="Shivam Patil home", so its accessible name is
+     unchanged and only the duplicate ink goes. Shedding it is what keeps the
+     single header link visible on phones instead of hiding the nav the way
+     .primary-nav's `display: none` used to. */
+  .wordmark span {
     display: none;
   }
-  .nav-cta {
-    padding: 8px 10px;
-    font-size: 10px;
+  .header-actions {
+    gap: 10px;
   }
   .hero {
     min-height: 0;
     padding: 66px 0 48px;
   }
-  .hero h1 {
-    font-size: clamp(51px, 16vw, 74px);
-  }
-  .hero-intro {
-    font-size: 15px;
-  }
+  /* `.hero h1 { font-size: clamp(51px, 16vw, 74px) }` and
+     `.hero-intro { font-size: 15px }` were here. Both are covered by the base
+     ramps now — see the note on h1 — and the h1 one was the override that made
+     mobile type larger than desktop type at the same width. */
   .hero-actions {
     align-items: flex-start;
     flex-direction: column;
@@ -2382,42 +2475,11 @@ h2 em {
   .section {
     padding: 85px 0;
   }
-  .work-section {
-    gap: 18px;
-  }
   .section-heading > p:last-child {
     font-size: 13px;
   }
-  .project-list {
-    grid-template-columns: 1fr;
-  }
-  .offset-card,
-  .offset-card:hover {
-    transform: none;
-  }
   .project-card {
     min-height: 348px;
-  }
-  .about-section {
-    grid-template-columns: 1fr;
-    padding-top: 97px;
-  }
-  .about-details {
-    padding-top: 0;
-  }
-  .about-details > p {
-    font-size: 16px;
-  }
-  .capabilities {
-    padding: 25px 0;
-  }
-  .skill-marquee {
-    gap: 17px;
-    animation-duration: 68s;
-  }
-  .skill-marquee span {
-    gap: 17px;
-    font-size: 22px;
   }
   .contact-banner {
     padding: 82px 0;
@@ -2433,17 +2495,11 @@ h2 em {
     gap: 14px;
     text-align: center;
   }
-  .footer-links {
-    justify-content: center;
-  }
   .project-hero {
     padding-top: 33px;
   }
   .back-link {
     margin-bottom: 51px;
-  }
-  .project-hero h1 {
-    font-size: clamp(47px, 14vw, 72px);
   }
   .project-hero > div > p {
     font-size: 15px;
@@ -2515,9 +2571,9 @@ h2 em {
     margin-bottom: 72px;
     padding: 31px 24px;
   }
-  .next-project h2 {
-    font-size: 43px;
-  }
+  /* `.next-project h2 { font-size: 43px }` was here — a fixed pixel size that
+     could not move with the base h2 ramp, and the reason this heading was
+     unchanged at 620px and at 360px. Same for .resume-download h2 below. */
   .contact-hero {
     padding: 76px 0;
   }
@@ -2579,9 +2635,6 @@ h2 em {
     align-items: start;
     flex-direction: column;
     padding: 31px 25px;
-  }
-  .resume-download h2 {
-    font-size: 43px;
   }
 }
 

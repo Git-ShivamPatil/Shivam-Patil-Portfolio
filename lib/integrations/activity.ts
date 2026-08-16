@@ -1,4 +1,6 @@
-import { cached, fetchWithTimeout } from "./cache";
+import { cached, fetchWithTimeout, parseJson, isRecord } from "./cache";
+import { GITHUB_USERNAME } from "./github";
+import { pathSegment } from "./env";
 
 /**
  * P17 — a real activity heatmap, from data that is actually available.
@@ -17,8 +19,28 @@ import { cached, fetchWithTimeout } from "./cache";
  * cannot support.
  */
 
-const GITHUB_USERNAME = process.env.GITHUB_USERNAME ?? "";
-const CACHE_KEY = "github:activity";
+/**
+ * The same resolved value github.ts uses, imported rather than re-read.
+ *
+ * This module used to do its own `process.env.GITHUB_USERNAME ?? ""`, with no
+ * fallback, while github.ts defaulted to "Git-ShivamPatil". With the variable
+ * unset that produced the worst possible page: the GitHub panel rendered real
+ * data for the default account and the heatmap beside it silently rendered
+ * nothing, so the site looked half-broken for a reason no log line mentioned.
+ * One source of truth means the two features are always describing the same
+ * person.
+ */
+const USERNAME = GITHUB_USERNAME;
+
+/**
+ * Keyed by username, and versioned.
+ *
+ * The flat "github:activity" key was the one cache entry not parameterised by
+ * account. Changing GITHUB_USERNAME made the other two panels key-miss and
+ * refetch immediately while the heatmap kept serving the previous account's
+ * events under the new name for up to six hours.
+ */
+const CACHE_KEY = `github:activity:v2:${USERNAME ?? "unset"}`;
 
 /**
  * Six hours. The upstream only updates when something is pushed, and this
@@ -29,6 +51,27 @@ const TTL_SECONDS = 6 * 60 * 60;
 
 /** The window the events endpoint can actually cover. */
 export const ACTIVITY_DAYS = 90;
+
+/**
+ * GitHub caps the public-events feed at 300 records, served as three pages of
+ * 100. Fetching only page 1 covered roughly the last two to three weeks for an
+ * active account, so about 70 of the 90 rendered cells were zero-filled by
+ * `dayKeys` below — visually identical to genuine inactivity, and `total`,
+ * `busiestDay` and `currentStreak` were all computed over that truncated set.
+ * The file's own header argues a chart must not claim more than its data
+ * supports; three pages is what makes the 90-day claim true.
+ */
+const MAX_PAGES = 3;
+const PER_PAGE = 100;
+
+/**
+ * Paginating serially could stack three 8s timeouts onto one server render.
+ * The budget caps the whole walk instead: whatever has been collected when it
+ * expires is summarised, because a heatmap built from two pages is still a
+ * better answer than a page that never finishes streaming.
+ */
+const PAGINATION_BUDGET_MS = 6000;
+const PER_REQUEST_TIMEOUT_MS = 4000;
 
 export interface ActivityDay {
   /** "YYYY-MM-DD", UTC. */
@@ -64,6 +107,21 @@ function headers(): HeadersInit {
   return base;
 }
 
+/**
+ * A 200 carrying `{"message":"API rate limit exceeded"}` is a real GitHub
+ * response, and `for (const event of events)` on an object throws
+ * "events is not iterable" — an anonymous TypeError where the log should have
+ * said "throttled". Records without a usable `created_at` are dropped rather
+ * than rejected: one malformed event should not discard the other 299.
+ */
+const isEventList = (value: unknown): value is unknown[] => Array.isArray(value);
+
+const isUsableEvent = (value: unknown): value is GitHubEvent =>
+  isRecord(value) &&
+  typeof value.type === "string" &&
+  typeof value.created_at === "string" &&
+  !Number.isNaN(Date.parse(value.created_at));
+
 /** UTC day keys for the window, oldest first — gaps included. */
 function dayKeys(days: number, now: number): string[] {
   const keys: string[] = [];
@@ -73,7 +131,10 @@ function dayKeys(days: number, now: number): string[] {
   return keys;
 }
 
-export function summariseEvents(events: GitHubEvent[], now = Date.now()): Omit<ActivityStats, "username"> {
+export function summariseEvents(
+  events: GitHubEvent[],
+  now = Date.now(),
+): Omit<ActivityStats, "username"> {
   const counts = new Map<string, number>();
   const types = new Map<string, number>();
 
@@ -82,7 +143,8 @@ export function summariseEvents(events: GitHubEvent[], now = Date.now()): Omit<A
     // A push carrying five commits is more activity than a single star, and
     // counting both as "1" makes the map flat and uninformative. Commits are
     // the unit where they exist; everything else counts as one.
-    const weight = event.type === "PushEvent" ? Math.max(1, event.payload?.commits?.length ?? 1) : 1;
+    const weight =
+      event.type === "PushEvent" ? Math.max(1, event.payload?.commits?.length ?? 1) : 1;
     counts.set(day, (counts.get(day) ?? 0) + weight);
     types.set(event.type, (types.get(event.type) ?? 0) + 1);
   }
@@ -113,20 +175,52 @@ export function summariseEvents(events: GitHubEvent[], now = Date.now()): Omit<A
   };
 }
 
-async function fetchActivity(): Promise<ActivityStats> {
-  const response = await fetchWithTimeout(
-    `https://api.github.com/users/${GITHUB_USERNAME}/events/public?per_page=100`,
-    { headers: headers() },
-  );
-  if (!response.ok) {
-    throw new Error(`GitHub events request failed: ${response.status} ${response.statusText}`);
+async function fetchActivity(username: string): Promise<ActivityStats> {
+  const deadline = Date.now() + PAGINATION_BUDGET_MS;
+  const collected: GitHubEvent[] = [];
+
+  for (let page = 1; page <= MAX_PAGES; page++) {
+    const response = await fetchWithTimeout(
+      `https://api.github.com/users/${pathSegment(username)}/events/public?per_page=${PER_PAGE}&page=${page}`,
+      { headers: headers() },
+      PER_REQUEST_TIMEOUT_MS,
+    );
+    if (!response.ok) {
+      // Page 1 failing is a real failure — there is nothing to show. A later
+      // page failing is not: 200 events is a fine heatmap, and throwing would
+      // discard them and write a two-minute tombstone over data we already
+      // have in hand.
+      if (page === 1) {
+        throw new Error(`GitHub events request failed: ${response.status} ${response.statusText}`);
+      }
+      break;
+    }
+
+    const raw = await parseJson(response, `GitHub events for "${username}"`, isEventList);
+    collected.push(...raw.filter(isUsableEvent));
+
+    // A short page is the last page — GitHub has no more history to give.
+    if (raw.length < PER_PAGE) break;
+    if (Date.now() > deadline) break;
   }
-  const events = (await response.json()) as GitHubEvent[];
-  return { username: GITHUB_USERNAME, ...summariseEvents(events) };
+
+  return { username, ...summariseEvents(collected) };
 }
 
-/** Null when the username is unset — the panel then renders nothing. */
+/** Guards the cached row — the fields activity-heatmap.tsx dereferences. */
+const isActivityStats = (value: unknown): value is ActivityStats =>
+  isRecord(value) &&
+  typeof value.username === "string" &&
+  Array.isArray(value.days) &&
+  Array.isArray(value.eventTypes) &&
+  typeof value.total === "number";
+
+/**
+ * Null when no username resolves — the panel then renders a labelled empty
+ * state. See lib/integrations/env.ts for why the check is not `?? ""`.
+ */
 export async function getActivity() {
-  if (!GITHUB_USERNAME) return null;
-  return cached(CACHE_KEY, TTL_SECONDS, fetchActivity);
+  const username = USERNAME;
+  if (!username) return null;
+  return cached(CACHE_KEY, TTL_SECONDS, () => fetchActivity(username), isActivityStats);
 }

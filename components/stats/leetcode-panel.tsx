@@ -1,6 +1,7 @@
-import { getLeetCodeStats } from "../../lib/integrations/leetcode";
+import { getLeetCodeStats, LEETCODE_USERNAME } from "../../lib/integrations/leetcode";
 import { ArrowUpRight } from "../icons";
-import { StaleNote } from "./stale-note";
+import { DifficultyGauge } from "./difficulty-gauge";
+import { LiveLeetCodeFigures } from "./live-figures";
 
 export async function LeetCodePanel() {
   const result = await getLeetCodeStats();
@@ -12,8 +13,9 @@ export async function LeetCodePanel() {
           <p className="eyebrow">LeetCode</p>
         </div>
         <p className="stat-panel-empty">
-          LeetCode&apos;s public endpoint isn&apos;t responding right now — it rate-limits server
-          traffic. This panel fills in on the next successful fetch.
+          {LEETCODE_USERNAME
+            ? "LeetCode's public endpoint isn't responding right now — it rate-limits server traffic. This panel fills in on the next successful fetch."
+            : "No LeetCode account is configured for this deployment, so this panel has nothing to read."}
         </p>
       </div>
     );
@@ -23,7 +25,10 @@ export async function LeetCodePanel() {
   const { easy, medium, hard, total } = data.solved;
   const widest = Math.max(easy, medium, hard, 1);
 
-  const buckets: [string, number, string][] = [
+  // The tone suffixes map to .stat-bar-easy/-medium/-hard, which stats.css
+  // pins to chart slots 1/3/5 — the same three difficulty-gauge.tsx uses, so
+  // the dial and the bars beneath it are never two different colour schemes.
+  const buckets: [string, number, "easy" | "medium" | "hard"][] = [
     ["Easy", easy, "easy"],
     ["Medium", medium, "medium"],
     ["Hard", hard, "hard"],
@@ -38,52 +43,42 @@ export async function LeetCodePanel() {
         </a>
       </div>
 
-      <div className="stat-figures">
-        <div>
-          <strong>{total}</strong>
-          <span>problems solved</span>
-        </div>
-        {data.contest ? (
-          <div>
-            <strong>{data.contest.rating}</strong>
-            <span>contest rating</span>
-          </div>
-        ) : (
-          <div>
-            <strong>{hard}</strong>
-            <span>hard solved</span>
-          </div>
-        )}
-        <div>
-          <strong>{data.ranking ? data.ranking.toLocaleString("en-US") : "—"}</strong>
-          <span>global rank</span>
-        </div>
-      </div>
+      <LiveLeetCodeFigures
+        initial={{
+          data,
+          fetchedAt: result.fetchedAt.toISOString(),
+          stale: result.stale,
+        }}
+      >
+        <DifficultyGauge easy={easy} medium={medium} hard={hard} total={total} />
 
-      <div className="stat-bars">
-        <p className="stat-subhead">Solved by difficulty</p>
-        {buckets.map(([label, count, tone]) => (
-          <div key={label} className="stat-bar-row">
-            <span>{label}</span>
-            <div className="stat-bar-track">
-              <i
-                className={`stat-bar-${tone}`}
-                style={{ width: `${Math.round((count / widest) * 100)}%` }}
-              />
+        {/* The dial answers "what share"; these answer "how many". Keeping both
+            is not duplication — a dial cannot show that Hard is 41 rather than
+            4 without printing the number, and a bar row cannot show that Hard
+            is a sixth of the total without arithmetic. */}
+        <div className="stat-bars">
+          <p className="stat-subhead">Counts by difficulty</p>
+          {buckets.map(([label, count, tone]) => (
+            <div key={label} className="stat-bar-row">
+              <span>{label}</span>
+              <div className="stat-bar-track">
+                <i
+                  className={`stat-bar-${tone}`}
+                  style={{ width: `${Math.round((count / widest) * 100)}%` }}
+                />
+              </div>
+              <b>{count}</b>
             </div>
-            <b>{count}</b>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
 
-      {data.contest && (
-        <p className="stat-footnote">
-          {data.contest.attended} rated contests · top {data.contest.topPercentage.toFixed(1)}%
-          worldwide
-        </p>
-      )}
-
-      <StaleNote fetchedAt={result.fetchedAt} stale={result.stale} />
+        {data.contest && (
+          <p className="stat-footnote">
+            {data.contest.attended} rated contests · top {data.contest.topPercentage.toFixed(1)}%
+            worldwide
+          </p>
+        )}
+      </LiveLeetCodeFigures>
     </div>
   );
 }
