@@ -3,6 +3,7 @@ import { clientIp, consume } from "../../../../lib/rate-limit";
 import { collectSchema } from "../../../../lib/validations/analytics";
 import { recordVisit } from "../../../../lib/analytics/collect";
 import { geoFromHeaders } from "../../../../lib/analytics/geo";
+import { withRed } from "../../../../lib/sre/red";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -43,7 +44,11 @@ function optedOut(headers: Headers): boolean {
   return headers.get("dnt") === "1" || headers.get("sec-gpc") === "1";
 }
 
-export async function POST(request: Request) {
+/* P21 — measured. The highest-volume route on the site by a wide margin, which
+   makes it the one that decides what the site-wide p50 actually says. */
+export const POST = withRed("/api/analytics/collect", handlePOST);
+
+async function handlePOST(request: Request) {
   if (optedOut(request.headers)) return noContent();
 
   const ip = clientIp(request);

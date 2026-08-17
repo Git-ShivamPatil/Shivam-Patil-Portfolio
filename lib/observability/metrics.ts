@@ -1,39 +1,53 @@
 import { prisma } from "../prisma";
 import { freshSince } from "../realtime/presence";
+import { redCumulative } from "../sre/report";
+import { LATENCY_BUCKETS_MS } from "../sre/red";
 
 /**
- * P14 — Prometheus exposition.
+ * P14, extended by P21 — Prometheus exposition.
  *
- * **Every metric here is a gauge read from Postgres, and there is not a single
- * counter. That is deliberate, and it is the interesting part of this file.**
+ * **This file used to argue that it contained no counters, and that argument
+ * was right at the time. P21 removed the thing that made it true.** The
+ * original reasoning is kept below because it is still the reasoning — what
+ * changed is one premise, not the logic.
  *
- * The blueprint asks for RED metrics — rate, errors, duration — which are
- * counters incremented in the process handling each request. On a serverless
- * runtime those counters live in one instance's memory, and a Prometheus scrape
- * reaches whichever instance the platform happens to route it to. The series
- * would jump between unrelated instances' totals on consecutive scrapes, so
- * `rate()` over it would produce numbers that look precise and mean nothing.
- * A counter that resets without warning is worse than no counter, because a
- * dashboard built on it looks like it is working.
+ * The argument was: RED metrics are counters incremented in the process
+ * handling each request; on a serverless runtime those counters live in one
+ * instance's memory; a scrape reaches whichever instance the platform routes it
+ * to; so the series would jump between unrelated instances' totals and `rate()`
+ * over it would produce numbers that look precise and mean nothing. Everything
+ * exposed here was therefore a gauge read from Postgres — state that is
+ * genuinely shared, and the same no matter which instance answers.
  *
- * So what is exposed instead is the state that is genuinely shared: the
- * database. Those numbers are the same no matter which instance answers, which
- * is the property a scrape target has to have. Request rate and latency are
- * already answered by the platform's own per-function metrics, which can see
- * every invocation — something no endpoint running *inside* one invocation ever
- * can.
+ * The premise P21 removed is "those counters live in one instance's memory".
+ * lib/sre/red.ts accumulates deltas per instance and appends them to Postgres,
+ * so the counter is now in exactly the same shared state every gauge below
+ * already used. The conclusion follows unchanged: shared state can be scraped,
+ * per-instance memory cannot.
  *
- * If this were self-hosted from the Dockerfile, the honest RED implementation
- * would be an in-process registry here plus one replica per scrape target. The
- * shape of the runtime decides the shape of the metrics, not the other way
- * round.
+ * The old note said the honest self-hosted implementation would be "an
+ * in-process registry here plus one replica per scrape target". That is still
+ * true and still cheaper. This is the version that works without controlling
+ * the replica count.
+ *
+ * See lib/sre/report.ts `redCumulative` for why the request counter is typed
+ * as a counter despite the retention sweep deleting rows underneath it.
  */
 
 interface Metric {
   name: string;
   help: string;
-  type: "gauge";
-  samples: { labels?: Record<string, string>; value: number }[];
+  type: "gauge" | "counter" | "histogram";
+  samples: {
+    labels?: Record<string, string>;
+    value: number;
+    /**
+     * Overrides the series name for this sample. Only histograms need it: the
+     * format requires one metric family to emit three differently-suffixed
+     * series (`_bucket`, `_sum`, `_count`) under a single HELP/TYPE pair.
+     */
+    name?: string;
+  }[];
 }
 
 /** Prometheus label values escape backslash, double-quote and newline. */
@@ -47,9 +61,94 @@ function render(metric: Metric): string {
     const labels = Object.entries(sample.labels ?? {})
       .map(([key, value]) => `${key}="${escapeLabel(value)}"`)
       .join(",");
-    lines.push(`${metric.name}${labels ? `{${labels}}` : ""} ${sample.value}`);
+    lines.push(`${sample.name ?? metric.name}${labels ? `{${labels}}` : ""} ${sample.value}`);
   }
   return lines.join("\n");
+}
+
+/**
+ * The RED family, built from the shared counters in lib/sre/red.ts.
+ *
+ * Three metric families rather than one, because they answer different
+ * questions and a dashboard needs to divide one by another: requests and errors
+ * share label sets so `errors / requests` is a valid PromQL expression, and the
+ * histogram drops `status_class` because a p95 split by status class is a p95
+ * of two unrelated populations.
+ */
+function redMetrics(series: Awaited<ReturnType<typeof redCumulative>>): Metric[] {
+  if (series.length === 0) return [];
+
+  // Merge away status_class for the latency family. Buckets are cumulative
+  // counts, so they add — the property lib/sre/histogram.ts exists to rely on.
+  const byRoute = new Map<
+    string,
+    { route: string; method: string; buckets: number[]; sum: number }
+  >();
+  for (const row of series) {
+    const key = `${row.route}|${row.method}`;
+    const existing = byRoute.get(key);
+    if (existing) {
+      existing.sum += row.durationSumMs;
+      for (let i = 0; i < row.buckets.length; i += 1) existing.buckets[i] += row.buckets[i];
+    } else {
+      byRoute.set(key, {
+        route: row.route,
+        method: row.method,
+        buckets: [...row.buckets],
+        sum: row.durationSumMs,
+      });
+    }
+  }
+
+  const boundaryLabels = [...LATENCY_BUCKETS_MS.map(String), "+Inf"];
+
+  return [
+    {
+      name: "portfolio_http_requests_total",
+      help: "Requests handled, by route pattern, method and status class. Resets when the retention sweep prunes.",
+      type: "counter",
+      samples: series.map((row) => ({
+        labels: { route: row.route, method: row.method, status_class: row.statusClass },
+        value: row.requests,
+      })),
+    },
+    {
+      name: "portfolio_http_request_errors_total",
+      help: "Requests that returned 5xx. A 4xx is not counted here — a rejected input is the guard working.",
+      type: "counter",
+      samples: series
+        .filter((row) => row.errors > 0)
+        .map((row) => ({
+          labels: { route: row.route, method: row.method },
+          value: row.errors,
+        })),
+    },
+    {
+      name: "portfolio_http_request_duration_ms",
+      help: "Request duration in milliseconds. Buckets are fixed in lib/sre/red.ts and are a one-way door.",
+      type: "histogram",
+      samples: [...byRoute.values()].flatMap((row) => [
+        ...row.buckets.map((count, index) => ({
+          name: "portfolio_http_request_duration_ms_bucket",
+          labels: { route: row.route, method: row.method, le: boundaryLabels[index] },
+          value: count,
+        })),
+        {
+          name: "portfolio_http_request_duration_ms_sum",
+          labels: { route: row.route, method: row.method },
+          value: row.sum,
+        },
+        {
+          name: "portfolio_http_request_duration_ms_count",
+          labels: { route: row.route, method: row.method },
+          // The +Inf bucket *is* the count, by definition of a cumulative
+          // histogram. Deriving it rather than storing it separately means the
+          // two can never disagree.
+          value: row.buckets[row.buckets.length - 1],
+        },
+      ]),
+    },
+  ];
 }
 
 export async function collectMetrics(now = Date.now()): Promise<string> {
@@ -66,6 +165,7 @@ export async function collectMetrics(now = Date.now()): Promise<string> {
     messagesByStatus,
     subscribers,
     rageDay,
+    redSeries,
   ] = await Promise.all([
     prisma.pageView.count({ where: { createdAt: { gte: since24h } } }),
     prisma.pageView.count({ where: { createdAt: { gte: since1h } } }),
@@ -80,6 +180,13 @@ export async function collectMetrics(now = Date.now()): Promise<string> {
     // The one error-shaped signal that is genuinely shared state: a rage click
     // is a visitor telling us something did not work.
     prisma.analyticsEvent.count({ where: { createdAt: { gte: since24h }, type: "RAGE" } }),
+    // P21. Tolerated rather than awaited strictly: a scrape that fails entirely
+    // because the RED table is missing would take the nine gauges below down
+    // with it, and those predate this and work.
+    redCumulative().catch((error) => {
+      console.error("[metrics] RED series unavailable:", error);
+      return [];
+    }),
   ]);
 
   const metrics: Metric[] = [
@@ -155,6 +262,7 @@ export async function collectMetrics(now = Date.now()): Promise<string> {
       type: "gauge",
       samples: [{ value: subscribers }],
     },
+    ...redMetrics(redSeries),
   ];
 
   // A trailing newline is required by the exposition format; without it the

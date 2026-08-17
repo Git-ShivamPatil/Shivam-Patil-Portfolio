@@ -1,6 +1,7 @@
 import { NextResponse, after } from "next/server";
 import { contactFormSchema } from "../../../lib/validations/contact";
 import { runCommand } from "../../../lib/distsys/command";
+import { withRed } from "../../../lib/sre/red";
 
 /**
  * P18 — the first route through the command boundary.
@@ -34,7 +35,10 @@ import { runCommand } from "../../../lib/distsys/command";
  * the lease in lib/distsys/lock.ts means a concurrent cron run and this one
  * cannot both process the same event.
  */
-export async function POST(request: Request) {
+/* P21 — measured. */
+export const POST = withRed("/api/contact", handlePOST);
+
+async function handlePOST(request: Request) {
   // Read once, as text, because the command boundary hashes the raw body to
   // detect a reused idempotency key carrying different content.
   const raw = await request.text().catch(() => "");
@@ -50,7 +54,12 @@ export async function POST(request: Request) {
   // field trip it. Report success without doing anything, so the bot gets no
   // signal either way — and crucially before the command runs, so a bot cannot
   // fill the outbox.
-  if (body && typeof body === "object" && "website" in body && (body as { website?: unknown }).website) {
+  if (
+    body &&
+    typeof body === "object" &&
+    "website" in body &&
+    (body as { website?: unknown }).website
+  ) {
     return NextResponse.json({ message: "Message sent." });
   }
 

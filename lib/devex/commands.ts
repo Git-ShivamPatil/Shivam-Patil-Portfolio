@@ -117,6 +117,15 @@ export const NAVIGATION_COMMANDS: Command[] = [
     keywords: "duckdb olap sql warehouse etl elt lineage stream",
   },
   {
+    id: "nav-reliability",
+    label: "Reliability",
+    href: "/reliability",
+    kind: "navigate",
+    group: "Go to",
+    keywords:
+      "sre red metrics prometheus latency p95 circuit breaker chaos otel tracing observability",
+  },
+  {
     id: "nav-system",
     label: "System design",
     href: "/system-design",

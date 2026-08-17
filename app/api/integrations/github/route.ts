@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getGitHubStats } from "../../../../lib/integrations/github";
+import { withRed } from "../../../../lib/sre/red";
 
 export const runtime = "nodejs";
 // The freshness window is owned by the integration cache, not by Next's
@@ -22,7 +23,12 @@ export const dynamic = "force-dynamic";
  */
 const EDGE_CACHE = "public, s-maxage=60, stale-while-revalidate=600";
 
-export async function GET() {
+/* P21 — measured. This one and its LeetCode twin are the routes whose numbers
+   are most worth having: both sit behind a circuit breaker, so their latency
+   distribution is the evidence for whether the breaker is earning its place. */
+export const GET = withRed("/api/integrations/github", handleGET);
+
+async function handleGET() {
   const result = await getGitHubStats();
   if (!result) {
     // A 503 must not be cached at the edge — the next request has to be allowed

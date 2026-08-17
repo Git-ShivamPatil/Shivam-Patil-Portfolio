@@ -1,0 +1,557 @@
+/* =========================================================================
+   P21 — RELIABILITY: RED TABLE, BREAKERS, CHAOS STRIP, TRACES
+   Route-scoped. Theme tokens only.
+
+   The site runs a strict two-colour theme (§2b), which rules out the usual
+   red/amber/green status vocabulary. Every state below is therefore carried by
+   FORM — fill, outline, dash, stripe — with accent used only for emphasis.
+   That is a constraint, and it happens to be the accessible answer anyway:
+   none of these states is distinguishable by colour alone, so none of them
+   fails for a reader who cannot separate the two hues.
+   ========================================================================= */
+
+.rel-figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1px;
+  margin: 0 0 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--line);
+  overflow: hidden;
+}
+.rel-figures > div {
+  padding: 16px 18px;
+  background: var(--surface);
+}
+.rel-figures dt {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font:
+    500 11px var(--font-dm-mono),
+    monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.rel-figures dd {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 0;
+  color: var(--fg);
+  font:
+    600 25px/1.1 var(--font-manrope),
+    sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.rel-figures dd small {
+  color: var(--muted);
+  font:
+    400 11px var(--font-dm-mono),
+    monospace;
+}
+/* An error rate above the budget gets weight and a rule under it, not a colour. */
+.rel-figures > div[data-bad] dd {
+  color: var(--accent-strong);
+  text-decoration: underline;
+  text-decoration-style: wavy;
+  text-underline-offset: 5px;
+}
+
+.rel-spark {
+  display: block;
+  width: 100%;
+  height: 90px;
+  margin: 0 0 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.rel-spark-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+.rel-spark-errors {
+  fill: none;
+  stroke: var(--accent-strong);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.rel-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.rel-table {
+  width: 100%;
+  border-collapse: collapse;
+  font:
+    400 12.5px var(--font-dm-mono),
+    monospace;
+}
+.rel-table th,
+.rel-table td {
+  padding: 11px 14px;
+  text-align: right;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--line);
+}
+.rel-table thead th {
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.rel-table tbody th {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  text-align: left;
+  font-weight: 400;
+  color: var(--fg);
+}
+.rel-table tbody tr:last-child th,
+.rel-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.rel-table td {
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+.rel-table td[data-bad] {
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+.rel-method {
+  padding: 2px 7px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+}
+
+.rel-note,
+.rel-empty {
+  margin: 16px 0 0;
+  color: var(--muted);
+  font:
+    400 13.5px/1.75 var(--font-manrope),
+    sans-serif;
+}
+.rel-empty {
+  padding: 18px 20px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+}
+
+/* ------------------------------------------------------------- breakers */
+
+.rel-breakers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+}
+.rel-breaker {
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.rel-breaker h3 {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font:
+    500 11px var(--font-dm-mono),
+    monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.rel-breaker-state {
+  margin: 0 0 8px;
+  color: var(--fg);
+  font:
+    600 21px var(--font-manrope),
+    sans-serif;
+  text-transform: capitalize;
+}
+.rel-breaker-detail,
+.rel-breaker-store {
+  margin: 0;
+  color: var(--muted);
+  font:
+    400 11.5px/1.6 var(--font-dm-mono),
+    monospace;
+}
+.rel-breaker-store {
+  margin-top: 6px;
+  opacity: 0.75;
+}
+/* Open: a dashed edge and an accent rule, so "this one is not serving" is
+   legible without a red. Half-open gets the dash without the fill — mid-way
+   between the two, which is what the state is. */
+.rel-breaker[data-state="open"] {
+  border-style: dashed;
+  border-color: var(--accent);
+}
+.rel-breaker[data-state="open"] .rel-breaker-state {
+  color: var(--accent-strong);
+}
+.rel-breaker[data-state="half-open"] {
+  border-style: dashed;
+}
+
+.rel-history {
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+}
+.rel-history li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--line);
+  font:
+    400 12px var(--font-dm-mono),
+    monospace;
+}
+.rel-history li:last-child {
+  border-bottom: none;
+}
+.rel-history code {
+  color: var(--accent-strong);
+}
+.rel-history span {
+  flex: 1;
+  min-width: 180px;
+  color: var(--fg);
+}
+.rel-history time {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+/* ------------------------------------------------------------ chaos lab */
+
+.chaos-lab {
+  display: grid;
+  gap: 14px;
+}
+.chaos-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.chaos-scenarios {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.chaos-scenario,
+.chaos-reseed {
+  padding: 7px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font:
+    500 12px var(--font-manrope),
+    sans-serif;
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    border-color 0.2s;
+}
+.chaos-scenario:hover,
+.chaos-reseed:hover {
+  color: var(--fg);
+  border-color: var(--fg);
+}
+.chaos-scenario[data-active="true"] {
+  color: var(--accent-strong);
+  border-color: var(--accent);
+  /* Selected state carries a second signal beyond colour, for the same reason
+     the strip below does. */
+  font-weight: 600;
+}
+.chaos-reseed {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.chaos-seed-value {
+  color: var(--fg);
+  font:
+    400 11px var(--font-dm-mono),
+    monospace;
+  opacity: 0.7;
+}
+.chaos-blurb {
+  margin: 0;
+  color: var(--muted);
+  font:
+    400 13.5px/1.7 var(--font-manrope),
+    sans-serif;
+}
+
+.chaos-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin: 0;
+  padding: 14px;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.chaos-cell {
+  width: 13px;
+  height: 22px;
+  border-radius: 3px;
+  border: 1px solid var(--line);
+}
+/* Four states, four distinct fills.
+
+   **Not accent versus accent-strong.** Those two are a shade apart in both
+   themes — #7d1039/#5e0a2a in light, #4dff6a/#7cff92 in dark — so "succeeded"
+   and "failed" rendered as two greens a reader had to compare side by side to
+   tell apart. The axis is instead accent (the thing worked) against --fg (it
+   did not), which are the two furthest-apart inks the palette has, in both
+   themes, and stay distinct in greyscale. Pattern carries the rest: failed is
+   solid, timed out is the same ink striped, refused is an empty dashed box.
+   Every cell also has a tooltip with the same information as text. */
+.chaos-cell[data-result="ok"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  opacity: 0.4;
+}
+.chaos-cell[data-result="error"] {
+  background: var(--fg);
+  border-color: var(--fg);
+}
+.chaos-cell[data-result="timeout"] {
+  border-color: var(--fg);
+  background: repeating-linear-gradient(45deg, var(--fg) 0 2px, transparent 2px 5px);
+}
+.chaos-cell[data-result="rejected"] {
+  border-style: dashed;
+  border-color: var(--muted);
+  background: transparent;
+}
+/* The moment the circuit moved. A detached ring rather than an inset rule: an
+   inset mark in --fg disappears entirely on the solid --fg fill of a failed
+   call, which is exactly the cell a transition most often lands on. The --bg
+   spacer ring is what keeps it legible against every fill above. */
+.chaos-cell[data-transition] {
+  box-shadow:
+    0 0 0 1.5px var(--bg),
+    0 0 0 3px var(--accent);
+}
+
+.chaos-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+  font:
+    400 11px var(--font-dm-mono),
+    monospace;
+}
+.chaos-legend li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.chaos-legend li::before {
+  content: "";
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid var(--line);
+}
+/* Kept in lockstep with the cell rules above — a legend that disagrees with the
+   thing it labels is worse than no legend. */
+.chaos-legend li[data-result="ok"]::before {
+  background: var(--accent);
+  border-color: var(--accent);
+  opacity: 0.4;
+}
+.chaos-legend li[data-result="error"]::before {
+  background: var(--fg);
+  border-color: var(--fg);
+}
+.chaos-legend li[data-result="timeout"]::before {
+  border-color: var(--fg);
+  background: repeating-linear-gradient(45deg, var(--fg) 0 2px, transparent 2px 5px);
+}
+.chaos-legend li[data-result="rejected"]::before {
+  border-style: dashed;
+  border-color: var(--muted);
+}
+
+.chaos-figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1px;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--line);
+  overflow: hidden;
+}
+.chaos-figures > div {
+  padding: 15px 18px;
+  background: var(--surface);
+}
+.chaos-figures dt {
+  margin: 0 0 5px;
+  color: var(--muted);
+  font:
+    500 11px var(--font-dm-mono),
+    monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.chaos-figures dd {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 0;
+  color: var(--fg);
+  font:
+    600 23px/1.1 var(--font-manrope),
+    sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.chaos-figures dd small {
+  color: var(--muted);
+  font:
+    400 11px var(--font-dm-mono),
+    monospace;
+}
+
+.chaos-log summary {
+  color: var(--muted);
+  font:
+    500 12px var(--font-dm-mono),
+    monospace;
+  cursor: pointer;
+}
+.chaos-log summary:hover {
+  color: var(--fg);
+}
+.chaos-log ol {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+.chaos-log li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: baseline;
+  font:
+    400 11.5px/1.6 var(--font-dm-mono),
+    monospace;
+  color: var(--muted);
+}
+.chaos-log code {
+  color: var(--accent-strong);
+  white-space: nowrap;
+}
+.chaos-policy {
+  margin: 0;
+  color: var(--muted);
+  font:
+    400 12.5px/1.8 var(--font-manrope),
+    sans-serif;
+}
+.chaos-policy strong {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------------- traces */
+
+.rel-traces {
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+.rel-traces > li {
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.rel-trace-id {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 10px;
+  font:
+    400 11.5px var(--font-dm-mono),
+    monospace;
+  color: var(--muted);
+}
+.rel-trace-spans {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 5px;
+}
+.rel-trace-spans li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 10px;
+  font:
+    400 11.5px var(--font-dm-mono),
+    monospace;
+  color: var(--fg);
+}
+.rel-trace-bar {
+  grid-column: 1 / -1;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--accent);
+  opacity: 0.55;
+}
+.rel-trace-spans li[data-error] .rel-trace-bar {
+  background: repeating-linear-gradient(45deg, var(--accent-strong) 0 3px, transparent 3px 6px);
+  opacity: 1;
+}
+.rel-trace-ms {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 640px) {
+  .chaos-cell {
+    width: 10px;
+    height: 18px;
+  }
+}

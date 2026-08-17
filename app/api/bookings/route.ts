@@ -4,6 +4,7 @@ import { bookingSchema } from "../../../lib/validations/booking";
 import { getAdapter, defaultProviderFor } from "../../../lib/payments";
 import { generateReference, checkoutIdempotencyKey } from "../../../lib/bookings";
 import { consume, clientIp } from "../../../lib/rate-limit";
+import { withRed } from "../../../lib/sre/red";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,7 +20,11 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://shivamsfolio.com";
  * treated as confirmed here — only a verified webhook promotes a booking to
  * CONFIRMED, because a client-side "success" redirect is trivially forged.
  */
-export async function POST(request: Request) {
+/* P21 — measured. The route that most needs it: it takes a payment, so a 5xx
+   here is a customer stuck mid-checkout rather than a panel that renders empty. */
+export const POST = withRed("/api/bookings", handlePOST);
+
+async function handlePOST(request: Request) {
   const limit = await consume(`booking:${clientIp(request)}`, 5, 0.1);
   if (!limit.ok) {
     return NextResponse.json(

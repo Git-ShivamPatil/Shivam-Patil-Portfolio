@@ -7,6 +7,8 @@ import {
   type CachedResult,
 } from "./cache";
 import { pathSegment, resolveUsername } from "./env";
+import { guard } from "../sre/breaker-store";
+import { withChaos } from "../sre/chaos";
 
 /** Null when the env var is unusable and no fallback survives — see env.ts. */
 export const LEETCODE_USERNAME = resolveUsername(process.env.LEETCODE_USERNAME, "shivam2op");
@@ -190,5 +192,15 @@ const isLeetCodeStats = (value: unknown): value is LeetCodeStats =>
 export function getLeetCodeStats(): Promise<CachedResult<LeetCodeStats> | null> {
   const username = LEETCODE_USERNAME;
   if (!username) return Promise.resolve(null);
-  return cached(CACHE_KEY, TTL_SECONDS, () => fetchLeetCodeStats(username), isLeetCodeStats);
+  // P21 — see the note on getGitHubStats. This is the breaker's better case of
+  // the two: LeetCode's endpoint is unofficial and throttles serverless IPs
+  // often enough that the stale-payload path is the common one, not the edge
+  // case, so a circuit that stops re-asking for two minutes is saving real
+  // latency on a real page rather than guarding against a hypothetical.
+  return cached(
+    CACHE_KEY,
+    TTL_SECONDS,
+    () => guard("leetcode", () => withChaos("leetcode", () => fetchLeetCodeStats(username))),
+    isLeetCodeStats,
+  );
 }

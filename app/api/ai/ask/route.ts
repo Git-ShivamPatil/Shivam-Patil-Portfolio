@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { clientIp, consume } from "../../../../lib/rate-limit";
 import { retrieve } from "../../../../lib/ai/retrieve";
 import { buildGroundedPrompt, composeAnswer } from "../../../../lib/ai/answer";
+import { withRed } from "../../../../lib/sre/red";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,7 +26,11 @@ export const dynamic = "force-dynamic";
 
 const MAX_QUESTION = 400;
 
-export async function POST(request: Request) {
+/* P21 — measured. Retrieval runs a pgvector query, which makes this the
+   slowest route on the site and the one whose p95 is worth watching. */
+export const POST = withRed("/api/ai/ask", handlePOST);
+
+async function handlePOST(request: Request) {
   // Retrieval is two database queries plus an embedding, so it is metered like
   // the other anonymous endpoints that do real work. 12 burst at 1 every 3s
   // covers someone genuinely exploring and stops a scripted crawl of the index.

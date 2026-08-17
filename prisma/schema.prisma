@@ -917,3 +917,97 @@ model Lease {
 
   @@index([expiresAt])
 }
+
+// P21 — one flushed batch of request observations from one instance.
+//
+// **Append-only, and aggregated on read.** The obvious design is one row per
+// (bucket, route, method, statusClass) upserted with `increment`, and it is
+// wrong here for two reasons. It puts every warm instance in a write conflict
+// on the same row for the whole minute, and it needs a unique constraint that
+// concurrent upserts race on — which is already the oldest open defect in this
+// repo (Booking.reference), and adding a second instance of the same bug to
+// fix a metrics gap would be a poor trade. Appending a delta per instance per
+// flush has no contention and no constraint to race: two instances writing the
+// same instant produce two rows that sum correctly.
+//
+// The cost is row count and a GROUP BY on read, both bounded by the retention
+// sweep in /api/cron/prune-analytics.
+//
+// This is the file lib/observability/metrics.ts said did not exist: counters
+// that mean something because the state is shared rather than per-instance.
+model RequestMetric {
+  id String @id @default(cuid())
+
+  /// Minute-truncated, so grouping never has to date_trunc() across the table.
+  bucketStart DateTime
+  /// The route *pattern* ("/api/projects/[id]"), never the resolved path —
+  /// otherwise every id becomes its own time series and the cardinality is
+  /// unbounded. lib/sre/red.ts enforces this.
+  route       String
+  method      String
+  /// "2xx" | "3xx" | "4xx" | "5xx". The full status would multiply series for
+  /// no operational gain; what a burn rate needs is "is it erroring".
+  statusClass String
+
+  /// Which serverless instance flushed this delta. Not a label on the exported
+  /// metric — the whole point is that instances aggregate away — but it makes
+  /// "one region is slow" answerable when it happens.
+  instance String
+
+  count         Int
+  /// 5xx only. A 404 is not an error budget event; a 500 is.
+  errors        Int
+  durationSumMs Int
+  durationMaxMs Int
+
+  /// Prometheus histogram buckets, cumulative, in milliseconds. Fixed columns
+  /// rather than a Json blob because these are summed across rows on read, and
+  /// summing inside JSON in Postgres costs more than ten integer columns do.
+  le10   Int
+  le25   Int
+  le50   Int
+  le100  Int
+  le250  Int
+  le500  Int
+  le1000 Int
+  le2500 Int
+  le5000 Int
+  leInf  Int
+
+  createdAt DateTime @default(now())
+
+  @@index([bucketStart])
+  @@index([route, bucketStart])
+}
+
+// P21 — the shared half of a circuit breaker's state.
+//
+// The breaker itself (lib/sre/breaker.ts) prefers Redis, which is where a
+// breaker belongs: the decision is read on every guarded call and must be
+// cheap. This table is the durable record behind it — every transition, kept —
+// so /reliability can show what the breaker actually did rather than only what
+// it is doing this second, and so the history survives a Redis eviction.
+//
+// Transitions, not state: a row per change rather than one row mutated. A
+// breaker that opened, closed and opened again inside a minute is the single
+// most interesting thing a breaker can do, and a mutable row erases it.
+model BreakerTransition {
+  id String @id @default(cuid())
+
+  /// The guarded dependency: "github", "leetcode", "resend".
+  target String
+  from   String
+  to     String
+
+  /// Failures in the rolling window at the moment of the transition, and the
+  /// window size they were counted over — so a threshold change later does not
+  /// make old rows unreadable.
+  failures  Int
+  samples   Int
+  /// Why it moved. Free text, written by the breaker, read by humans only.
+  reason    String
+  createdAt DateTime @default(now())
+
+  @@index([target, createdAt])
+  @@index([createdAt])
+}

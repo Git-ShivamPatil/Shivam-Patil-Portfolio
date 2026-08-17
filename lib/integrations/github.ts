@@ -7,6 +7,8 @@ import {
   type CachedResult,
 } from "./cache";
 import { pathSegment, resolveUsername } from "./env";
+import { guard } from "../sre/breaker-store";
+import { withChaos } from "../sre/chaos";
 
 /**
  * Null when GITHUB_USERNAME is set to something unusable and there is no
@@ -224,5 +226,16 @@ export function getGitHubStats(): Promise<CachedResult<GitHubStats> | null> {
   // that is retried every two minutes forever — is what makes the panel's
   // empty state a deliberate configuration signal instead of a mystery.
   if (!username) return Promise.resolve(null);
-  return cached(CACHE_KEY, TTL_SECONDS, () => fetchGitHubStats(username), isGitHubStats);
+  // P21 — the breaker sits *inside* cached(), between the TTL check and the
+  // network. That ordering is the whole point: a cache hit never consults the
+  // breaker (there is no call to protect), and a `CircuitOpenError` is thrown
+  // where cached() already catches upstream failures, so an open circuit lands
+  // on the existing stale-payload path and the panel renders last-good data
+  // instead of an error state. Nothing above this line needed changing.
+  return cached(
+    CACHE_KEY,
+    TTL_SECONDS,
+    () => guard("github", () => withChaos("github", () => fetchGitHubStats(username))),
+    isGitHubStats,
+  );
 }

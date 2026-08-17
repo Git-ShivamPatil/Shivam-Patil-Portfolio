@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { clientIp, consume } from "../../../../lib/rate-limit";
 import { buildWarehouse } from "../../../../lib/dataeng/pipeline";
+import { withRed } from "../../../../lib/sre/red";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,7 +19,11 @@ export const dynamic = "force-dynamic";
  * heaviest read on the site. Without this, every visitor who opens the OLAP
  * console runs four groupBy queries against Neon.
  */
-export async function GET(request: Request) {
+/* P21 — measured. One of the two routes that shipped dead once (HANDOFF §27);
+   an error rate on it would have said so within a minute. */
+export const GET = withRed("/api/data/warehouse", handleGET);
+
+async function handleGET(request: Request) {
   if (!(await consume(`warehouse:${clientIp(request)}`, 10, 0.2)).ok) {
     return NextResponse.json({ error: "Too many requests." }, { status: 429 });
   }

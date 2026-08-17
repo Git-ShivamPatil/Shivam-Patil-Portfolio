@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getLeetCodeStats } from "../../../../lib/integrations/leetcode";
+import { withRed } from "../../../../lib/sre/red";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,7 +15,10 @@ export const dynamic = "force-dynamic";
  */
 const EDGE_CACHE = "public, s-maxage=300, stale-while-revalidate=3600";
 
-export async function GET() {
+/* P21 — measured; see the GitHub route. */
+export const GET = withRed("/api/integrations/leetcode", handleGET);
+
+async function handleGET() {
   const result = await getLeetCodeStats();
   if (!result) {
     return NextResponse.json(
