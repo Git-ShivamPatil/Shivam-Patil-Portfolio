@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { contactFormSchema, type ContactFormInput } from "../lib/validations/contact";
 import { readReferralCookie } from "../lib/referral";
+import { enqueue } from "../lib/pwa/outbox";
 import { FormField } from "./auth/form-field";
 
 export function ContactForm() {
@@ -17,11 +18,33 @@ export function ContactForm() {
 
   async function onSubmit(values: ContactFormInput) {
     const ref = new URLSearchParams(window.location.search).get("ref") ?? readReferralCookie();
-    const res = await fetch("/api/contact", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...values, ref }),
-    });
+    const payload = { ...values, ref };
+
+    let res: Response;
+    try {
+      res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    } catch {
+      // P23 — a throw from fetch means the request never reached a server, which
+      // for a message someone has just written is the worst possible moment to
+      // hand back an error they cannot act on: acting requires signal.
+      //
+      // Only this path queues. A server that answered and refused (below) has
+      // made a decision, and re-sending identical bytes later would just
+      // collect the same refusal.
+      const queued = await enqueue("/api/contact", payload);
+      if (queued) {
+        toast.success("You're offline — the message is queued and will send when you reconnect.");
+        reset();
+      } else {
+        toast.error("Couldn't send your message, and this browser can't queue it either.");
+      }
+      return;
+    }
+
     const data = await res.json().catch(() => null);
 
     if (!res.ok) {

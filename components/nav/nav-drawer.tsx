@@ -76,6 +76,8 @@ const NAV_GROUPS: { label: string; links: DrawerLink[] }[] = [
       // reason /stats and /services have it off.
       { href: "/reliability", label: "Reliability", prefetch: false },
       { href: "/security", label: "Security", prefetch: false },
+      // Static (revalidate 3600), so prefetch stays on like the other ISR routes.
+      { href: "/edge", label: "Edge & offline" },
     ],
   },
   {

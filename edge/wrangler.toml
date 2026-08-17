@@ -1,0 +1,40 @@
+# P23 — Cloudflare Worker configuration.
+#
+# Not deployed. The site is served by Vercel, and putting Cloudflare in front of
+# it requires moving DNS off Wix — the same blocked task that has held up Resend
+# domain verification since P5 (HANDOFF §3). This file exists so that the day
+# DNS moves, the Worker is one `wrangler deploy` away rather than one design
+# session away.
+#
+#   cd edge && npx wrangler deploy
+#
+# wrangler is deliberately NOT a devDependency. It is ~40MB of tooling for a
+# file that is not currently in any request path, and `npx` fetches it on the
+# one day it is needed.
+
+name = "shivamsfolio-edge"
+main = "worker.ts"
+compatibility_date = "2026-01-01"
+
+# The Worker imports lib/edge/waf.ts from the repository root, so the bundler
+# needs to resolve above this directory.
+[build]
+command = ""
+
+[vars]
+# The Vercel deployment this Worker proxies to. Overridden per environment.
+ORIGIN = "https://www.shivamsfolio.com"
+
+# Canary routing is off by default. Set CANARY_ORIGIN to a Vercel preview URL
+# and CANARY_SHARE to a fraction to start bleeding traffic onto it.
+#
+# CANARY_ORIGIN = "https://shivamsfolio-git-next.vercel.app"
+CANARY_SHARE = "0"
+
+# Routes are commented out because binding them while DNS points at Vercel
+# would do nothing, and an active route pointing at a Worker that is not ready
+# is an outage rather than a no-op.
+#
+# [[routes]]
+# pattern = "www.shivamsfolio.com/*"
+# zone_name = "shivamsfolio.com"

@@ -135,6 +135,15 @@ export const NAVIGATION_COMMANDS: Command[] = [
       "audit ledger hash chain kms encryption rotation sbom sast saml sso mtls signing supply chain",
   },
   {
+    id: "nav-edge",
+    label: "Edge & offline",
+    href: "/edge",
+    kind: "navigate",
+    group: "Go to",
+    keywords:
+      "pwa offline service worker background sync indexeddb waf cloudflare worker canary webusb usb install",
+  },
+  {
     id: "nav-system",
     label: "System design",
     href: "/system-design",

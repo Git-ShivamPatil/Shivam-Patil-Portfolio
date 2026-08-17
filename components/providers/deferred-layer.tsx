@@ -79,6 +79,14 @@ const PresenceTracker = dynamic(
   () => import("../presence-tracker").then((m) => m.PresenceTracker),
   { ssr: false },
 );
+// P23. Registers the service worker on every load rather than only when
+// someone opts into notifications — the worker now also serves the offline
+// shell and drains the outbox, and tying those to a permission prompt would
+// give offline support only to people who wanted notifications.
+const RegisterServiceWorker = dynamic(
+  () => import("../pwa/register-sw").then((m) => m.RegisterServiceWorker),
+  { ssr: false },
+);
 
 export function DeferredLayer() {
   const [ready, setReady] = useState(false);
@@ -110,6 +118,7 @@ export function DeferredLayer() {
       <CursorFollower />
       <BackToTop />
       <PresenceTracker />
+      <RegisterServiceWorker />
       <CommandPalette />
       <ThemeCustomizer />
       <ChatWidget />
