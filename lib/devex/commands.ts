@@ -144,6 +144,15 @@ export const NAVIGATION_COMMANDS: Command[] = [
       "pwa offline service worker background sync indexeddb waf cloudflare worker canary webusb usb install",
   },
   {
+    id: "nav-api-lab",
+    label: "API lab",
+    href: "/api-lab",
+    kind: "navigate",
+    group: "Go to",
+    keywords:
+      "openapi swagger rest graphql subgraph federation sdl grpc protobuf proto rpc feature flags sandbox console",
+  },
+  {
     id: "nav-system",
     label: "System design",
     href: "/system-design",

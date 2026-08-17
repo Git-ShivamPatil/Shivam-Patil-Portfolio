@@ -1,0 +1,228 @@
+/* =========================================================================
+   P24 — API LAB: SANDBOX, FIGURES, SOURCE BLOCKS
+   Route-scoped. Theme tokens only.
+   ========================================================================= */
+
+.api-sandbox {
+  display: grid;
+  gap: 12px;
+}
+
+.api-operations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.api-operation {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font:
+    400 12px var(--font-dm-mono),
+    monospace;
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    border-color 0.2s;
+}
+.api-operation:hover {
+  color: var(--fg);
+  border-color: var(--fg);
+}
+.api-operation[data-active="true"] {
+  color: var(--accent-strong);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+.api-method {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  opacity: 0.75;
+}
+
+.api-body textarea {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--fg);
+  font:
+    400 12.5px/1.7 var(--font-dm-mono),
+    monospace;
+  resize: vertical;
+}
+.api-body textarea:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.api-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+.api-send {
+  padding: 8px 20px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--accent-strong);
+  font:
+    600 12.5px var(--font-manrope),
+    sans-serif;
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    border-color 0.2s,
+    opacity 0.2s;
+}
+.api-send:hover:not(:disabled) {
+  color: var(--fg);
+  border-color: var(--fg);
+}
+.api-send:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.api-note {
+  margin: 0;
+  color: var(--muted);
+  font:
+    400 13px/1.75 var(--font-manrope),
+    sans-serif;
+}
+.api-note code {
+  font:
+    400 12px var(--font-dm-mono),
+    monospace;
+  color: var(--accent-strong);
+}
+.api-note strong {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.api-result {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+}
+/* A non-2xx is dashed rather than coloured — the two-colour palette has no red,
+   and in a console a 404 is often the expected answer anyway. */
+.api-result[data-ok="false"] {
+  border-style: dashed;
+  border-color: var(--accent);
+}
+.api-result-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 0;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font:
+    400 11.5px var(--font-dm-mono),
+    monospace;
+}
+.api-result-meta strong {
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+.api-result pre {
+  margin: 0;
+  padding: 14px 16px;
+  max-height: 340px;
+  overflow: auto;
+  font:
+    400 12px/1.65 var(--font-dm-mono),
+    monospace;
+  color: var(--fg);
+}
+.api-result .api-note {
+  padding: 0 16px 14px;
+}
+
+.api-figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1px;
+  margin: 0 0 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--line);
+  overflow: hidden;
+}
+.api-figures > div {
+  padding: 16px 18px;
+  background: var(--surface);
+}
+.api-figures dt {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font:
+    500 11px var(--font-dm-mono),
+    monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.api-figures dd {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 0;
+  color: var(--fg);
+  font:
+    600 25px/1.1 var(--font-manrope),
+    sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.api-figures dd small {
+  color: var(--muted);
+  font:
+    400 11px var(--font-dm-mono),
+    monospace;
+}
+
+.api-source {
+  margin-top: 14px;
+}
+.api-source summary {
+  color: var(--muted);
+  font:
+    500 12px var(--font-dm-mono),
+    monospace;
+  cursor: pointer;
+}
+.api-source summary:hover {
+  color: var(--fg);
+}
+.api-source pre {
+  margin: 12px 0 0;
+  padding: 16px 18px;
+  max-height: 420px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--fg);
+  font:
+    400 12px/1.7 var(--font-dm-mono),
+    monospace;
+}
+
+.api-panel {
+  padding: 18px 20px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+}
