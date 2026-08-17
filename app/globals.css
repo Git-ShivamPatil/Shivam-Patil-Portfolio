@@ -88,8 +88,13 @@
   /* P17 — the theme customiser writes these two on <html>. Declared here so
      they always resolve: a var() with no fallback and no definition collapses
      the whole declaration, which would drop the radius entirely for anyone who
-     has never opened the customiser. */
-  --accent-hue-shift: 0deg;
+     has never opened the customiser.
+
+     UNITLESS, and it has to be. In relative colour syntax the `h` channel
+     resolves to a <number>, not an <angle>, so `calc(h + 0deg)` is a number
+     plus an angle — invalid, and it silently poisoned --accent site-wide until
+     P21 caught it. See the @supports block further down. */
+  --accent-hue-shift: 0;
   --density: 1;
 }
 
@@ -293,8 +298,25 @@
    Behind @supports because the relative-colour syntax is recent. Where it is
    missing the accent simply stays at its authored value and the slider does
    nothing — which is the right failure: an unsupported browser gets the
-   designed palette, not a broken one. */
-@supports (color: oklch(from red l c h)) {
+   designed palette, not a broken one.
+
+   **The guard must test the expression it guards, and once did not.** It asked
+   for `oklch(from red l c h)` — which every current browser supports — while
+   the declarations below used `calc(h + var(--accent-hue-shift))` with the
+   shift authored as `0deg`. In relative colour syntax `h` is a <number>, so
+   adding an angle to it is invalid. The guard therefore passed everywhere and
+   then overwrote --accent and --accent-strong with a value that computes to
+   nothing, in every browser, since the day it shipped.
+
+   Nothing looked broken, which is why it survived: an invalid colour falls back
+   per-property, so `background` went transparent, `border-color` fell to
+   currentColor and SVG `stroke` went to none — each of which reads as a design
+   choice rather than a failure. It was found by P21's sparkline, whose stroke
+   is the one place on the site where "no colour" means "no line at all".
+
+   Both the guard and the shift are now unitless, and a test asserts the guard
+   and the declaration use the same expression. */
+@supports (color: oklch(from red l c calc(h + 0))) {
   :root {
     --accent: oklch(from var(--accent-base) l c calc(h + var(--accent-hue-shift)));
     --accent-strong: oklch(from var(--accent-strong-base) l c calc(h + var(--accent-hue-shift)));

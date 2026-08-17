@@ -64,7 +64,10 @@ function apply(preferences: Preferences): void {
   // A filter on the root would rotate *everything*, including the photograph
   // and the project card illustrations. Custom properties let only the tokens
   // that opt in respond.
-  root.style.setProperty("--accent-hue-shift", `${preferences.hueShift}deg`);
+  // Unitless. `h` in relative colour syntax is a <number>, so `calc(h + 30deg)`
+  // is invalid and takes --accent down with it — see the @supports note in
+  // globals.css for how long that went unnoticed.
+  root.style.setProperty("--accent-hue-shift", String(preferences.hueShift));
   root.style.setProperty("--radius", `${preferences.radius}px`);
   root.style.setProperty("--density", String(preferences.density));
 }
@@ -146,7 +149,8 @@ export function ThemeCustomizer() {
 
       <label>
         <span>
-          Accent hue <em>{preferences.hueShift > 0 ? `+${preferences.hueShift}` : preferences.hueShift}°</em>
+          Accent hue{" "}
+          <em>{preferences.hueShift > 0 ? `+${preferences.hueShift}` : preferences.hueShift}°</em>
         </span>
         <input
           type="range"
@@ -187,9 +191,9 @@ export function ThemeCustomizer() {
       </label>
 
       <p className="customizer-note">
-        Hue is clamped to ±{MAX_HUE_SHIFT}° so the palette stays two-colour and every contrast
-        ratio holds — lightness is never touched, which is what the 7:1 floor depends on. Stored in
-        this browser only.
+        Hue is clamped to ±{MAX_HUE_SHIFT}° so the palette stays two-colour and every contrast ratio
+        holds — lightness is never touched, which is what the 7:1 floor depends on. Stored in this
+        browser only.
       </p>
 
       <button type="button" className="customizer-reset" onClick={reset}>

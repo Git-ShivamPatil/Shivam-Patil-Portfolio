@@ -65,7 +65,7 @@ describe("fuzzy matching", () => {
     expect(results[0].item.id).toBe(allCommands()[0].id);
   });
 
-  it("folds accents, so \"resume\" finds \"Résumé\"", () => {
+  it('folds accents, so "resume" finds "Résumé"', () => {
     // A real hole this test caught: strict comparison scored the Résumé page
     // ZERO for the spelling almost everyone types, and ranked "Achievements"
     // first — "resume" is a subsequence of its keyword list. The palette
@@ -296,13 +296,49 @@ describe("the theme customiser", () => {
 
   it("degrades where the relative-colour syntax is missing", () => {
     // An unsupported browser must get the designed palette, not a broken one.
-    expect(css).toContain("@supports (color: oklch(from red l c h))");
+    expect(css).toContain("@supports (color: oklch(from red l c calc(h + 0)))");
+  });
+
+  it("guards the expression it actually uses, not a simpler one", () => {
+    // The regression this pins, found by P21 and live since P17 shipped.
+    //
+    // The guard asked for `oklch(from red l c h)` — supported everywhere —
+    // while the declaration used `calc(h + 0deg)`. In relative colour syntax
+    // `h` is a <number>, so adding an <angle> is invalid. The guard passed in
+    // every browser and then overwrote --accent and --accent-strong with a
+    // value computing to nothing, site-wide.
+    //
+    // It hid because an invalid colour degrades per-property: background went
+    // transparent, border-color fell to currentColor, SVG stroke went to none.
+    // Each reads as a design choice. The test therefore asserts the *shape*
+    // rather than a literal: whatever arithmetic the declaration does on `h`,
+    // the @supports condition has to do the same arithmetic.
+    const declaration = /--accent:\s*oklch\(from var\(--accent-base\) l c ([^)]+\))\)/.exec(css);
+    expect(declaration).not.toBeNull();
+
+    const guard = /@supports \(color: oklch\(from red l c ([^)]+\))\)\)/.exec(css);
+    expect(guard).not.toBeNull();
+
+    // Both sides reduced to "what happens to h": the declaration adds a custom
+    // property, the guard adds a literal. They must agree on unit-ness, which
+    // is the axis the bug was on.
+    const usesAngleUnits = (expression: string) => /\d+(deg|rad|grad|turn)/.test(expression);
+    expect(usesAngleUnits(guard![1])).toBe(false);
+    expect(css).not.toMatch(/--accent-hue-shift:\s*-?\d+(deg|rad|grad|turn)/);
+  });
+
+  it("writes the hue shift unitless from the customiser too", () => {
+    // The CSS being right does not help if the component writes "18deg" onto
+    // <html> the moment someone drags the slider — that is the same invalid
+    // calc(), applied at runtime to the visitors who opted in.
+    expect(source).not.toContain("}deg`");
+    expect(source).toContain("String(preferences.hueShift)");
   });
 
   it("declares defaults for the properties it writes", () => {
     // A var() with no fallback and no definition collapses the whole
     // declaration — the radius would vanish for anyone who never opened it.
-    expect(css).toContain("--accent-hue-shift: 0deg;");
+    expect(css).toContain("--accent-hue-shift: 0;");
     expect(css).toContain("--density: 1;");
   });
 });
