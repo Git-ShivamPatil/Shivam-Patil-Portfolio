@@ -2097,3 +2097,154 @@ the `www` matters.
 - **Stop the preview server before committing.** The pre-commit hook runs
   eslint and prettier; with `next start` alive it routinely exceeds five
   minutes.
+
+---
+
+# Phases 21–25 — 17 Aug 2026
+
+The roadmap always had 25 phases; P21–P25 were never started. They were
+recovered from the original `<ROADMAP_25_PHASES>` prompt, which survives in the
+session transcripts rather than anywhere in this repo:
+
+```
+P21_SRE:        OTel, Prometheus RED metrics, Chaos testing, Circuit Breakers
+P22_SecOps:     mTLS, OIDC/SAML SSO, Vault KMS, SAST/SBOM, Audit Ledger
+P23_EdgeMobile: CF Workers, Offline PWA Sync, React Native app, WebUSB
+P24_API_Infra:  OpenAPI 3.0, GraphQL Fed, gRPC, Feature Flags, Sandbox
+P25_MLOps:      Local Quantized LLM, Vector Search, Drift/Token Analytics
+```
+
+**BUILD-SPEC.md lists only nine phases and does not mention any of this.** The
+P-numbering comes from the roadmap prompt, not the spec.
+
+## 38. The rule these five phases are built to
+
+Several roadmap items name infrastructure that cannot exist in a Next.js app on
+Vercel: an Envoy gateway terminating mTLS, a Kafka cluster, a gRPC server over
+HTTP/2, a React Native binary. The repo already had a convention for this — P18
+shipped a Raft _model_, P19 "a benchmark that argues against itself", §16
+documents "what it honestly is".
+
+**Build the real thing wherever the runtime allows; build a working, labelled
+model where it does not; never a mock dressed as infrastructure.** Every page
+in these phases states its own limits in the same breath as its claims. If you
+are tempted to remove one of those paragraphs because it undersells the work,
+do not — they are the work.
+
+## 39. P21 — SRE (`8096547`)
+
+`/reliability`. New: `lib/sre/{trace,red,histogram,breaker,breaker-store,chaos,report}.ts`,
+`components/sre/chaos-lab.tsx`, `tests/p21-sre.test.ts` (33 tests).
+
+**RED metrics — the point of the phase.** `lib/observability/metrics.ts` opened
+with a long argument for why it contained no counters: an in-process counter
+lives in one instance's memory, a scrape hits an arbitrary instance, the series
+jumps between unrelated totals. That argument was right and it named its own
+fix. `lib/sre/red.ts` removes the premise — each instance accumulates deltas and
+appends them to Postgres from inside `after()`, so the counter now lives in the
+same shared state every gauge already used. **That file's opening comment was
+rewritten; the original reasoning is preserved inside it.**
+
+- **Appends, never upserts.** Two instances flushing the same instant write two
+  rows that sum. An upsert would need a unique constraint for concurrent
+  writers to race on, and that is already the oldest open defect in this repo
+  (§37 item 4). Do not "optimise" this into an upsert.
+- **Fixed histogram buckets** (`LATENCY_BUCKETS_MS`) because buckets are the
+  only representation that adds across instances. **They are a one-way door** —
+  a test asserts their exact values so changing them is loud.
+- Instrumentation is **opt-in per route** via `withRed("/api/x", handler)`,
+  applied to nine routes. A route absent from the table is unwrapped, not
+  unused, and the page says so.
+
+**Circuit breakers** guard the GitHub and LeetCode fetchers, inside `cached()`
+so an open circuit lands on the existing stale-payload path. The state machine
+(`breaker.ts`) is pure and clock-free, which is what lets the _same module_ run
+server-side and drive the browser chaos lab — the demo is the production
+breaker. Opens on a failure **ratio**, not a count. Half-open is asymmetric on
+purpose: one failed probe re-opens, two successes are needed to close.
+
+**Tracing** is W3C Trace Context + OTLP/HTTP, hand-rolled. **No
+auto-instrumentation** — a span exists because a call site asked. The span ring
+buffer is per-instance and the page says so; `OTEL_EXPORTER_OTLP_ENDPOINT` is
+the fix and it is a URL, not a code change.
+
+Two bugs the tests found, not review:
+
+1. The breaker's outcome log **grew by one entry per call, forever** — `prune`
+   capped at MAX_OUTCOMES and `recordOutcome` then appended.
+2. **p99 above the observed max.** `/api/search` reported p99 1.28s against a
+   935ms maximum. Histogram interpolation overshooting into a bucket. Now
+   clamped by `clampQuantile`; Prometheus cannot do this because it has no max
+   to check against.
+
+## 40. The accent colour had been dead site-wide since P17 (`1678922`)
+
+Found by P21's sparkline. **`--accent` and `--accent-strong` computed to nothing
+in every browser.**
+
+`@supports (color: oklch(from red l c h))` — true everywhere — guarded
+declarations using `calc(h + var(--accent-hue-shift))` with the shift authored
+as `0deg`. In relative colour syntax `h` is a `<number>`, so adding an `<angle>`
+is invalid. The guard passed, then overwrote both tokens with a value that
+computes to nothing.
+
+It hid because an invalid colour degrades **per-property**: `background` →
+transparent, `border-color` → currentColor, SVG `stroke` → none. Each reads as
+a design choice. The sparkline was the first place where "no colour" meant "no
+line at all".
+
+Both the guard and the shift are unitless now, and `theme-customizer.tsx` writes
+the shift without `deg`. The new test asserts the _invariant_ — the guard must
+do the same arithmetic on `h` as the declaration — rather than a literal.
+
+## 41. P22 — SecOps (`9316159`)
+
+`/security`. New: `lib/secops/{ledger,kms,signing,saml,sast,demo}.ts`,
+`scripts/{sast,sbom}.mts`, `public/sbom.json`, `tests/p22-secops.test.ts`
+(50 tests). New models: `AuditEntry`.
+
+- **Audit ledger** — hash-chained, verified live on every page load. Appends
+  take `pg_advisory_xact_lock`; the **transaction-scoped** form, because the
+  session-scoped one leaks on error paths and on a pooled connection leaks into
+  the next request. It is **tamper-evident, not tamper-proof** — an attacker who
+  re-hashes the tail produces a chain that verifies, and a test pins that.
+- **Envelope encryption** — DEK per record, master key wraps only the DEK, so
+  rotation rewraps ~60 bytes and never touches a payload. All key versions stay
+  loadable; deleting the old one at rotation is the classic outage. Record
+  identity is bound in as AAD.
+- **SAML** — the cryptographic signature check is **deliberately absent and
+  reports itself as `skipped`**, because c14n is where SAML CVEs live. What is
+  implemented is signature wrapping detection, which needs no crypto. The demo
+  forges a _complete_ assertion so eight checks pass and only the two structural
+  ones fail.
+- **SBOM** — `pnpm sbom` does the generating (pnpm 11 ships it; the hand-rolled
+  version was deleted as strictly worse). The wrapper adds determinism — **pnpm
+  emits components in a different order every run** — and `--check` for CI.
+- **SAST** — 10 rules. First run: 19 findings, all false. Now 0 across 330
+  files.
+
+**Script names are `security:sast` / `security:sbom`, NOT `sbom`** — pnpm 11 has
+a built-in `sbom` command and a package script cannot shadow it.
+
+**Three self-references surfaced, each given a narrow named exclusion**: the
+rule table matches its own patterns, P13's raw-SQL test matches the rule table,
+and the scanner matches its own test corpus. Two scanners in one repo always
+find each other.
+
+## 42. Resuming this work
+
+Both `prisma db push` runs went to the **production** Neon database. Additive
+only — `RequestMetric`, `BreakerTransition`, `AuditEntry`. Nothing was altered
+or dropped.
+
+State at the time of writing: **P21 and P22 are committed, verified in a
+browser, and green** (lint, typecheck, 470 unit tests, SAST, build). P23–P25 are
+not started. The next phase is P23_EdgeMobile.
+
+Local gate for these phases, in order:
+
+```
+pnpm lint && pnpm typecheck && pnpm test && pnpm security:sast && pnpm security:sbom:check && pnpm build
+```
+
+E2E still needs `--workers=1` (§33) and still does not cover P17–P25.
