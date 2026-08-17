@@ -67,6 +67,27 @@ jobs:
       - name: Test
         run: pnpm test
 
+      # P22. Placed before the build rather than after: both are fast, and a
+      # high-severity finding should fail the run without first spending two
+      # minutes producing an artifact that must not ship anyway.
+      #
+      # `security:sast` exits non-zero only on `high`. Medium and low are
+      # printed and do not block — a scanner that fails a merge over a
+      # low-severity nit is a scanner that gets muted within the week, and the
+      # highs go with it.
+      - name: Static analysis
+        run: pnpm security:sast
+
+      # Fails when a dependency moved without public/sbom.json being
+      # regenerated. An SBOM that silently drifts out of date is worse than
+      # none, because during an incident it will be trusted.
+      #
+      # Needs the full install above, not --prod: the check regenerates from
+      # the installed tree and compares byte-for-byte against the committed
+      # file, so a partial store would report a false staleness.
+      - name: SBOM is current
+        run: pnpm security:sbom:check
+
       - name: Build
         run: pnpm build
 

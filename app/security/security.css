@@ -1,0 +1,274 @@
+/* =========================================================================
+   P22 — SECURITY: LEDGER VERDICT, SAML CHECK LISTS, SBOM FIGURES
+   Route-scoped. Theme tokens only.
+
+   Same two-colour constraint as /reliability: pass and fail are carried by
+   form — solid versus dashed, filled mark versus hollow — never by hue alone.
+   Every check also states its status in visually-hidden text, so the mark is
+   decoration rather than the only signal.
+   ========================================================================= */
+
+.sec-verdict {
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+/* A failed verification gets a dashed edge and an accent rule — legible
+   without a red, and distinguishable in greyscale. */
+.sec-verdict[data-ok="false"] {
+  border-style: dashed;
+  border-color: var(--accent);
+}
+.sec-verdict-state {
+  margin: 0 0 6px;
+  color: var(--fg);
+  font:
+    600 24px var(--font-manrope),
+    sans-serif;
+}
+.sec-verdict[data-ok="false"] .sec-verdict-state {
+  color: var(--accent-strong);
+}
+.sec-verdict-detail {
+  margin: 0;
+  color: var(--muted);
+  font:
+    400 13px var(--font-manrope),
+    sans-serif;
+}
+.sec-verdict-head {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font:
+    400 11.5px var(--font-dm-mono),
+    monospace;
+  overflow-wrap: anywhere;
+}
+
+.sec-faults {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+.sec-faults li {
+  display: flex;
+  gap: 10px;
+  padding: 8px 14px;
+  border: 1px dashed var(--accent);
+  border-radius: var(--radius);
+  font:
+    400 12px var(--font-dm-mono),
+    monospace;
+  color: var(--accent-strong);
+}
+
+.sec-table-wrap {
+  margin-top: 16px;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.sec-table {
+  width: 100%;
+  border-collapse: collapse;
+  font:
+    400 12.5px var(--font-dm-mono),
+    monospace;
+}
+.sec-table th,
+.sec-table td {
+  padding: 11px 14px;
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--line);
+  color: var(--fg);
+}
+.sec-table thead th {
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.sec-table tbody tr:last-child th,
+.sec-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.sec-table tbody th {
+  font-weight: 400;
+  color: var(--muted);
+}
+.sec-hash {
+  color: var(--accent-strong);
+}
+
+.sec-note,
+.sec-empty {
+  margin: 16px 0 0;
+  color: var(--muted);
+  font:
+    400 13.5px/1.75 var(--font-manrope),
+    sans-serif;
+}
+.sec-note strong {
+  color: var(--fg);
+  font-weight: 600;
+}
+.sec-note code,
+.sec-empty code {
+  font:
+    400 12.5px var(--font-dm-mono),
+    monospace;
+  color: var(--accent-strong);
+}
+.sec-empty {
+  padding: 18px 20px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+}
+
+/* ------------------------------------------------------------ saml demos */
+
+.sec-demos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 12px;
+}
+.sec-demo {
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+/* Rejected is the *desired* outcome for three of the four demos, so a dashed
+   edge here means "the defence fired", not "something is broken". The verdict
+   line says which in words. */
+.sec-demo[data-ok="false"] {
+  border-style: dashed;
+}
+.sec-demo h3 {
+  margin: 0 0 8px;
+  color: var(--fg);
+  font:
+    600 17px var(--font-manrope),
+    sans-serif;
+}
+.sec-demo-blurb {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font:
+    400 13px/1.7 var(--font-manrope),
+    sans-serif;
+}
+.sec-demo-verdict {
+  margin: 0 0 12px;
+  color: var(--accent-strong);
+  font:
+    600 12px var(--font-dm-mono),
+    monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.sec-demo[data-ok="true"] .sec-demo-verdict {
+  color: var(--fg);
+}
+
+.sec-checks {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 9px;
+}
+.sec-checks li {
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: 4px 9px;
+  align-items: start;
+}
+.sec-check-mark {
+  width: 16px;
+  height: 16px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font:
+    600 10px var(--font-dm-mono),
+    monospace;
+  color: var(--muted);
+}
+.sec-checks li[data-status="pass"] .sec-check-mark {
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+.sec-checks li[data-status="fail"] .sec-check-mark {
+  border-color: var(--fg);
+  background: var(--fg);
+  color: var(--bg);
+}
+.sec-checks li[data-status="skipped"] .sec-check-mark {
+  border-style: dashed;
+}
+.sec-check-label {
+  color: var(--fg);
+  font:
+    500 12.5px var(--font-manrope),
+    sans-serif;
+}
+.sec-check-detail {
+  grid-column: 2;
+  color: var(--muted);
+  font:
+    400 11.5px/1.6 var(--font-dm-mono),
+    monospace;
+  overflow-wrap: anywhere;
+}
+
+/* --------------------------------------------------------------- figures */
+
+.sec-figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1px;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--line);
+  overflow: hidden;
+}
+.sec-figures > div {
+  padding: 16px 18px;
+  background: var(--surface);
+}
+.sec-figures dt {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font:
+    500 11px var(--font-dm-mono),
+    monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.sec-figures dd {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 0;
+  color: var(--fg);
+  font:
+    600 25px/1.1 var(--font-manrope),
+    sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.sec-figures dd small {
+  color: var(--muted);
+  font:
+    400 11px var(--font-dm-mono),
+    monospace;
+  overflow-wrap: anywhere;
+}

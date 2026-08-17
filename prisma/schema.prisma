@@ -980,6 +980,50 @@ model RequestMetric {
   @@index([route, bucketStart])
 }
 
+// P22 — a tamper-evident audit ledger.
+//
+// **What a hash chain buys that an append-only table does not.** A plain audit
+// table records what happened; anyone with UPDATE or DELETE on it can rewrite
+// what happened, and nothing about the table afterwards looks wrong. Chaining
+// each row's hash over the previous row's makes any edit *detectable*: change
+// one field of one row and every subsequent hash stops matching, so the ledger
+// can prove its own integrity from the genesis row forward.
+//
+// **What it explicitly does NOT buy.** It is tamper-*evident*, not
+// tamper-*proof*. An attacker with write access can recompute the whole chain
+// from the row they edited onward and the result verifies cleanly. Defeating
+// that needs the chain head published somewhere the attacker does not control —
+// a notary, another party's system, a transparency log. Nothing here does that,
+// and claiming this design "makes the audit log immutable" would be the kind of
+// security theatre this phase is supposed to be the opposite of.
+model AuditEntry {
+  /// Monotonic position in the chain. An Int rather than a cuid because the
+  /// chain is an *order*, and the order has to be readable without a join.
+  seq Int @id @default(autoincrement())
+
+  /// Who did it. A user id, "system" for automated writes, or "anonymous".
+  actor  String
+  /// What they did, as a stable dotted verb: "booking.created", "role.granted".
+  action String
+  /// What it was done to, usually "model:id". Nullable for actions with no object.
+  target String?
+
+  /// Anything else worth keeping. Never secrets — this table is readable by any
+  /// admin and the whole point is that it is never edited afterwards.
+  metadata Json
+
+  /// SHA-256 of the canonical serialisation of this row *including* prevHash.
+  hash     String
+  /// The previous row's hash. The genesis row carries 64 zeros.
+  prevHash String
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([actor, createdAt])
+  @@index([action, createdAt])
+}
+
 // P21 — the shared half of a circuit breaker's state.
 //
 // The breaker itself (lib/sre/breaker.ts) prefers Redis, which is where a

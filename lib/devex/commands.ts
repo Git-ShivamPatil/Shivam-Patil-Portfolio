@@ -126,6 +126,15 @@ export const NAVIGATION_COMMANDS: Command[] = [
       "sre red metrics prometheus latency p95 circuit breaker chaos otel tracing observability",
   },
   {
+    id: "nav-security",
+    label: "Security",
+    href: "/security",
+    kind: "navigate",
+    group: "Go to",
+    keywords:
+      "audit ledger hash chain kms encryption rotation sbom sast saml sso mtls signing supply chain",
+  },
+  {
     id: "nav-system",
     label: "System design",
     href: "/system-design",

@@ -39,6 +39,7 @@ export function LinkQr({ url, label, size = 96 }: { url: string; label: string; 
       style={{ width: size, height: size }}
       // The SVG is generated from a compile-time constant by our own renderer,
       // so there is no untrusted input on this path.
+      // sast-ignore: dangerous-html — renderQrSvg output, built from a constant URL.
       dangerouslySetInnerHTML={{ __html: svg }}
       role="img"
       aria-label={`QR code linking to ${label}`}

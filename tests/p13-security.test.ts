@@ -325,7 +325,17 @@ describe("no raw SQL escape hatches", { timeout: 30_000 }, () => {
     const offenders: string[] = [];
     for (const file of sourceFiles(process.cwd())) {
       const text = readFileSync(file, "utf8");
-      if (/\$(?:query|execute)RawUnsafe/.test(text) && !file.includes("tests")) {
+      // lib/secops/sast.ts is excluded because it is the SAST rule table, and
+      // the rule that looks for this pattern necessarily *contains* it. Two
+      // scanners in one repo will find each other: P22's scanner flagged its
+      // own rule definitions on its first run for the same reason, and both
+      // exclusions are narrow and named rather than a blanket skip.
+      const isTheRuleThatLooksForThis = file.replace(/\\/g, "/").endsWith("lib/secops/sast.ts");
+      if (
+        /\$(?:query|execute)RawUnsafe/.test(text) &&
+        !file.includes("tests") &&
+        !isTheRuleThatLooksForThis
+      ) {
         offenders.push(file.replace(process.cwd(), ""));
       }
     }

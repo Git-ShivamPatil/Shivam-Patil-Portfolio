@@ -138,6 +138,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             down with it, leaving every [data-reveal] section invisible
             forever. */}
         <script
+          // sast-ignore: dangerous-html — a compile-time constant with no interpolation of any kind, so there is no input to sanitise.
           dangerouslySetInnerHTML={{
             __html: `document.documentElement.setAttribute("data-reveal-ready","true");try{if(localStorage.getItem("sp:audience"))document.documentElement.setAttribute("data-audience-chosen","true")}catch(e){}`,
           }}

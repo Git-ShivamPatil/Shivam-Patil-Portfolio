@@ -75,6 +75,7 @@ const NAV_GROUPS: { label: string; links: DrawerLink[] }[] = [
       // Server-rendered off live reads, so prefetch stays off for the same
       // reason /stats and /services have it off.
       { href: "/reliability", label: "Reliability", prefetch: false },
+      { href: "/security", label: "Security", prefetch: false },
     ],
   },
   {
