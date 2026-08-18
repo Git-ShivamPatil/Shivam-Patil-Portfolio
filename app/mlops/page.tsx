@@ -26,6 +26,7 @@ export default async function MlOpsPage() {
       misses: [],
     },
     coverage: { unanswerable: [], missingUrls: [], answerable: [] },
+    returned: {},
   });
 
   const evaluated = report.queries.length > 0;

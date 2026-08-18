@@ -4,6 +4,7 @@ import { tokenize } from "./embed";
 import { experience, education } from "../../app/experience";
 import { achievements } from "../../app/achievements";
 import { certifications } from "../../app/certifications";
+import { contactEmail, hasPhone } from "../site-contact";
 
 /**
  * P16 — turning the site into passages worth retrieving.
@@ -161,7 +162,12 @@ export async function buildCorpus(): Promise<Chunk[]> {
   }
 
   for (const post of posts) {
-    const base = { source: "blog", sourceId: post.id, url: `/blog/${post.slug}`, title: post.title };
+    const base = {
+      source: "blog",
+      sourceId: post.id,
+      url: `/blog/${post.slug}`,
+      title: post.title,
+    };
     // Blog content is authored as blank-line-separated paragraphs (see the blog
     // page), so paragraphs are the natural section here.
     const paragraphs = post.content.split(/\n{2,}/).filter(Boolean);
@@ -178,6 +184,15 @@ export async function buildCorpus(): Promise<Chunk[]> {
 
   // Skills are grouped into one passage per category. Indexed individually they
   // would be two-word documents that match everything weakly and nothing well.
+  //
+  // **The sentence frame is not decoration, and P25 proved it.** The passage
+  // used to be exactly `"Backend: Go, Rust, PostgreSQL."` — correct data, and
+  // it shares not one word with "what technologies does he know", which is how
+  // the question is actually asked. That query returned five project pages and
+  // never /skills at all. Every page written as prose ranked first for its own
+  // question; every chunk formatted as a record missed. Naming the thing the
+  // list *is* — technologies, tools, stack, works with — is what connects the
+  // vocabulary of the question to the vocabulary of the answer.
   const byCategory = new Map<string, string[]>();
   for (const skill of skills) {
     byCategory.set(skill.category, [...(byCategory.get(skill.category) ?? []), skill.name]);
@@ -186,7 +201,12 @@ export async function buildCorpus(): Promise<Chunk[]> {
     chunks.push(
       ...sectionsToChunks(
         { source: "skill", sourceId: category, url: "/skills", title: `${category} skills` },
-        [{ heading: category, content: `${category}: ${names.join(", ")}.` }],
+        [
+          {
+            heading: category,
+            content: `Technologies and tools Shivam Patil works with. ${category} skills in his stack: ${names.join(", ")}.`,
+          },
+        ],
       ),
     );
   }
@@ -202,8 +222,11 @@ export async function buildCorpus(): Promise<Chunk[]> {
         },
         [
           {
+            // Same lesson as the skills passage: the offering row says what the
+            // session *is* and never the words someone uses to look for it.
+            // "Can I hire him for consulting" matched nothing here.
             heading: offering.name,
-            content: `${offering.name}. ${offering.description} Runs ${offering.durationMin} minutes.`,
+            content: `Hire Shivam Patil for consulting: ${offering.name}. ${offering.description} A paid engagement, booked through this site, running ${offering.durationMin} minutes.`,
           },
         ],
       ),
@@ -238,8 +261,11 @@ function staticChunks(): Chunk[] {
         },
         [
           {
+            // "Where has Shivam worked" returned /about and never /experience,
+            // because the passage began with a job title and the question asks
+            // about employment. One clause fixes the vocabulary mismatch.
             heading: role.org,
-            content: `${role.role} at ${role.org}, ${role.period}, ${role.location}. ${role.highlights.join(" ")}`,
+            content: `Where Shivam Patil has worked. ${role.role} at ${role.org}, ${role.period}, ${role.location}. ${role.highlights.join(" ")}`,
           },
         ],
       ),
@@ -303,5 +329,129 @@ function staticChunks(): Chunk[] {
     ),
   );
 
+  for (const page of SITE_PAGES) {
+    chunks.push(
+      ...sectionsToChunks(
+        { source: "page", sourceId: `page-${page.url}`, url: page.url, title: page.title },
+        [{ heading: page.title, content: page.content }],
+      ),
+    );
+  }
+
   return chunks;
 }
+
+/**
+ * The pages that exist only as JSX, described in prose.
+ *
+ * **P25 found these missing by measuring, not by review.** The first run of the
+ * retrieval evaluation reported 42% recall, and most of the shortfall was
+ * queries whose answer lives on a page the corpus had never indexed. "How do I
+ * get in touch" is close to the most common thing anyone asks a portfolio, and
+ * it was the single question this index could not answer at all — along with
+ * anything about the labs, the résumé, or the site's own architecture.
+ *
+ * They were missed because every other source here is a *record* — a row, a
+ * post, an array of roles. These pages are hand-written components with no data
+ * behind them, so nothing enumerated them and their absence was invisible.
+ *
+ * **Written as sentences, deliberately.** The obvious shortcut is a keyword list
+ * per URL, and it would score well on exactly the queries used to write it and
+ * badly on everything else — a bag of terms matches many questions weakly and
+ * answers none, which is the reason skills are grouped by category above rather
+ * than indexed one name at a time. `/ask` returns *sentences*, so a passage has
+ * to read like something a person wrote or the answer it produces is unusable.
+ */
+const SITE_PAGES: { url: string; title: string; content: string }[] = [
+  {
+    url: "/contact",
+    title: "Contact",
+    content: `How to get in touch with Shivam Patil. Email ${contactEmail} for anything — work, questions, or a conversation about a role.${
+      hasPhone ? " There is also a phone number and WhatsApp for anything time-sensitive." : ""
+    } The contact form on this page reaches the same inbox and is the fastest route; a message written offline is queued in the browser and sent when the connection returns.`,
+  },
+  {
+    url: "/reach-out",
+    title: "Reach out",
+    content:
+      "Every channel Shivam Patil can be reached on, in one place: email, LinkedIn, GitHub, and a map of where he is based. Use this page rather than the contact form when you would rather message on a platform you already use.",
+  },
+  {
+    url: "/about",
+    title: "About",
+    content:
+      "Who Shivam Patil is: a software engineer working on backend systems, distributed infrastructure and developer tooling. This page covers his background, how he approaches building software, and what he is looking for in the work he takes on.",
+  },
+  {
+    url: "/resume",
+    title: "Résumé",
+    content:
+      "The résumé, as a PDF you can read in the browser or download. It covers work history, education, the technologies used in each role, and the outcomes each piece of work produced — the same material as the experience page, in the format a recruiter or hiring manager expects.",
+  },
+  {
+    url: "/projects",
+    title: "Projects",
+    content:
+      "The index of every project written up on this site, each with the problem it solved, the architecture behind it, and what the outcome was. Filterable by the technologies and topics involved.",
+  },
+  {
+    url: "/ask",
+    title: "Ask this site",
+    content:
+      "Ask a question about this work in plain English and get an answer drawn from the site's own content. Search here is hybrid retrieval: a vector index over embedded passages and a full-text lexical index, fused with reciprocal rank fusion so a result found by both ranks above one found by either alone. The answer is extractive — sentences are selected from the retrieved passages and scored against the question, so nothing is paraphrased and nothing can be invented.",
+  },
+  {
+    url: "/compute",
+    title: "Compute lab",
+    content:
+      "Real computation running in your browser: a numerical kernel compiled to WebAssembly, the same work spread across Web Workers with SharedArrayBuffer, and a WebGPU implementation where the hardware allows it. Each backend is benchmarked live against the others, and the benchmark argues against itself where the result is misleading.",
+  },
+  {
+    url: "/data",
+    title: "Data pipeline",
+    content:
+      "Where a page view goes after it is recorded: through the ingest, into two ledgers and two rolled-up aggregates, out to a warehouse export, and into a DuckDB instance compiled to WebAssembly running in your browser, where you can write your own SQL against it. Includes a validated lineage DAG and tumbling-window aggregation.",
+  },
+  {
+    url: "/system-design",
+    title: "System design",
+    content:
+      "How this site is actually built, and why each decision was made: the caching strategy, the write path through a command boundary with idempotency keys, the event outbox and its dead-letter queue, and the trade-offs accepted at each layer.",
+  },
+  {
+    url: "/reliability",
+    title: "Reliability",
+    content:
+      "The site's own RED metrics — rate, errors and duration — measured by the code that serves each request and aggregated in shared state so the numbers survive running on serverless functions. Also the circuit breakers guarding the GitHub and LeetCode integrations, distributed tracing, and a chaos experiment that drives the production breaker through a simulated outage in your browser.",
+  },
+  {
+    url: "/security",
+    title: "Security",
+    content:
+      "A tamper-evident audit ledger that recomputes its own hash chain on every page load, envelope encryption where rotating a key never touches the encrypted payload, a committed software bill of materials, a static analysis ruleset, and a SAML validator demonstrating the signature-wrapping attack that defeats an otherwise valid signature.",
+  },
+  {
+    url: "/edge",
+    title: "Edge and offline",
+    content:
+      "Request filtering that runs before the application does, sharing one ruleset between the live edge proxy and a deployable Cloudflare Worker. Also an offline-capable progressive web app: a cached shell, and a queue that holds a message written without signal and sends it when the connection returns.",
+  },
+  {
+    url: "/api-lab",
+    title: "API lab",
+    content:
+      "The same data served four ways: a hand-written OpenAPI 3.1 specification, a GraphQL subgraph with depth and complexity limits, protocol buffers encoded and decoded by hand on the wire, and a console that builds itself from the specification so the two cannot drift apart.",
+  },
+  {
+    url: "/mlops",
+    title: "Retrieval quality",
+    content:
+      "How well search on this site actually works, measured rather than asserted: recall, mean reciprocal rank and normalised discounted cumulative gain over a labelled set of questions, run live against the index. Also index drift detection, and what generating an answer would cost on a quantized model running on your device versus a hosted one.",
+  },
+  {
+    url: "/terminal",
+    title: "Terminal",
+    content:
+      "A working command-line interface to this site. Navigate, search, ask questions and change the theme without touching the mouse; the same command registry backs the Cmd+K palette.",
+  },
+];

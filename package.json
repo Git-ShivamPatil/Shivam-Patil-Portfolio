@@ -32,6 +32,9 @@
     "security:sbom": "tsx scripts/sbom.mts",
     "security:sbom:check": "tsx scripts/sbom.mts --check",
     "ai:index": "tsx prisma/build-index.ts",
+    "mlops:eval": "tsx scripts/eval.mts",
+    "mlops:eval:gate": "tsx scripts/eval.mts --gate",
+    "mlops:why": "tsx scripts/why.mts",
     "wasm:build": "asc assembly/kernel.ts --config asconfig.json --target release"
   },
   "lint-staged": {

@@ -106,29 +106,49 @@ export const GOLDEN_QUERIES: GoldenQuery[] = [
  *
  * **This list exists because the first live evaluation reported 42% recall and
  * seven misses, and most of them were not retrieval failures at all.** The
- * corpus indexes projects, blog posts, skills, service offerings, experience,
+ * corpus indexed projects, blog posts, skills, service offerings, experience,
  * achievements and certifications — and nothing else. `/contact`, `/ask`,
- * `/compute`, `/reach-out`, `/about` and `/resume` are not in it, so no
+ * `/compute`, `/reach-out`, `/about` and `/resume` were not in it, so no
  * retriever could ever have returned them and judging them measured coverage
  * while pretending to measure ranking.
  *
- * The judgements are deliberately NOT edited to match. A query someone would
- * really ask — "how do I get in touch" — is a legitimate thing to want answered,
- * and quietly deleting it because the corpus cannot answer it would improve the
- * score by hiding the gap. Instead the gap is reported separately, and the
- * ranking metrics are computed over the queries the index could in principle
- * satisfy.
+ * The judgements were deliberately NOT edited to match. A query someone would
+ * really ask — "how do I get in touch" — is a legitimate thing to want
+ * answered, and quietly deleting it because the corpus could not answer it
+ * would have improved the score by hiding the gap. Reporting the gap separately
+ * is what led to it being closed: `SITE_PAGES` in lib/ai/corpus.ts now describes
+ * every hand-written page in prose, so all of them are retrievable.
+ *
+ * The split is kept rather than deleted. It is what stops the next page added
+ * as JSX-without-a-record disappearing from search unnoticed, which is exactly
+ * how these fourteen went missing in the first place.
  *
  * Keep in step with `buildCorpus()` in lib/ai/corpus.ts.
  */
 export const INDEXED_PREFIXES = [
-  "/projects/",
+  "/projects",
   "/blog/",
   "/skills",
   "/services",
   "/experience",
   "/achievements",
   "/certifications",
+  // Added with SITE_PAGES — the hand-written pages that have no record behind
+  // them and were therefore enumerated by nothing.
+  "/contact",
+  "/reach-out",
+  "/about",
+  "/resume",
+  "/ask",
+  "/compute",
+  "/data",
+  "/system-design",
+  "/reliability",
+  "/security",
+  "/edge",
+  "/api-lab",
+  "/mlops",
+  "/terminal",
 ] as const;
 
 export function isIndexed(url: string): boolean {
@@ -189,6 +209,15 @@ export interface Evaluation {
   /** Scored over the queries the corpus could satisfy. */
   report: EvalReport;
   coverage: Coverage;
+  /**
+   * What each query actually returned, in order.
+   *
+   * Kept because a score without the ranking behind it cannot be debugged. When
+   * adding fourteen pages to the corpus pushed two previously-passing queries
+   * out of the top five, the metric said "worse" and only this said *what*
+   * displaced them.
+   */
+  returned: Record<string, string[]>;
 }
 
 export async function runEvaluation(k = 5): Promise<Evaluation> {
@@ -202,14 +231,29 @@ export async function runEvaluation(k = 5): Promise<Evaluation> {
 
   for (const golden of scored) {
     try {
-      const chunks = await retrieve(golden.question, { limit: k });
+      // **Retrieve deep, then reduce to pages, then take k.**
+      //
+      // The first version asked for k chunks and deduplicated those, which
+      // measured "the top k chunks, collapsed" and not "the top k pages" — a
+      // different quantity, and one that penalises exactly the pages split
+      // across many chunks. /skills is one passage per category, so eight
+      // sibling chunks each landing at rank 6–13 put the page nowhere in a
+      // five-chunk window while five unrelated single-chunk pages filled it.
+      // The metric reported a retrieval failure that was an artefact of the
+      // measurement.
+      //
+      // Four times k is enough headroom for the widest page here and still
+      // bounded, so a query cannot quietly turn into a full table scan.
+      const chunks = await retrieve(golden.question, { limit: k * 4 });
+
       // Deduplicated to page level, preserving rank. Three chunks of the right
       // page occupying the top three slots is one correct answer, not three,
       // and counting it as three would flatter precision enormously.
       const seen = new Set<string>();
       results[golden.id] = chunks
         .map((chunk) => chunk.url)
-        .filter((url) => (seen.has(url) ? false : (seen.add(url), true)));
+        .filter((url) => (seen.has(url) ? false : (seen.add(url), true)))
+        .slice(0, k);
     } catch {
       // A failed retrieval scores as a miss rather than aborting the run. The
       // report is more useful with eleven queries and a visible gap than with
@@ -218,5 +262,5 @@ export async function runEvaluation(k = 5): Promise<Evaluation> {
     }
   }
 
-  return { report: scoreAll(scored, results, k), coverage: gaps };
+  return { report: scoreAll(scored, results, k), coverage: gaps, returned: results };
 }

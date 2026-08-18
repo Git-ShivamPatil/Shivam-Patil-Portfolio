@@ -1,6 +1,6 @@
 import { Prisma } from "../generated/prisma/client";
 import { prisma } from "../prisma";
-import { embed, toVectorLiteral } from "./embed";
+import { embed, terms, toVectorLiteral } from "./embed";
 import { loadIdf } from "./indexer";
 
 /**
@@ -97,10 +97,29 @@ async function vectorSearch(query: string): Promise<Row[]> {
  * lib/search.ts uses: it understands quoted phrases and `-exclusion`, so a
  * visitor who types like they would into a search engine gets what they meant.
  * It also never throws on odd punctuation, which `to_tsquery` does.
+ *
+ * **It also ANDs every term, and that made this entire retriever dead.** P25's
+ * evaluation found it: across three unrelated queries and thirty-six results,
+ * not one was matched by text — every fused score was exactly 1/(60+rank), the
+ * signature of RRF with a single list. `websearch_to_tsquery('english', 'token
+ * bucket redis')` produces `'token' & 'bucket' & 'redi'`, so a chunk has to
+ * contain *all three* to match, and none does. Every natural-language question
+ * carries several terms, so the lexical half returned nothing for all of them.
+ * The site has been describing itself as hybrid while running on one leg.
+ *
+ * The fix is the two-pass below, and the ordering matters. The strict pass runs
+ * first so quoted phrases and exclusions keep working exactly as documented;
+ * the OR pass runs only when the strict one found nothing, which costs a second
+ * round trip precisely when we were otherwise about to return an empty list.
+ *
+ * OR-with-ranking is the correct primitive for a *candidate generator* anyway —
+ * it is what BM25 does, and it is why `ts_rank` exists. Precision comes from
+ * the ranking and from fusion, not from refusing to look at a document that is
+ * missing one word of the question.
  */
 async function textSearch(query: string): Promise<Row[]> {
   try {
-    return await prisma.$queryRaw<Row[]>(Prisma.sql`
+    const strict = await prisma.$queryRaw<Row[]>(Prisma.sql`
       SELECT id, source, url, title, heading, content
       FROM "KnowledgeChunk"
       WHERE to_tsvector('english', title || ' ' || content)
@@ -108,6 +127,28 @@ async function textSearch(query: string): Promise<Row[]> {
       ORDER BY ts_rank(
         to_tsvector('english', title || ' ' || content),
         websearch_to_tsquery('english', ${query})
+      ) DESC
+      LIMIT ${CANDIDATES}
+    `);
+
+    if (strict.length > 0) return strict;
+
+    // Content words only — `terms()` already strips stopwords and punctuation,
+    // which is what keeps this safe to hand to `to_tsquery`. Anything it emits
+    // is alphanumeric, so there is no operator a visitor could inject.
+    const lexemes = terms(query);
+    if (lexemes.length === 0) return [];
+
+    const disjunction = lexemes.join(" | ");
+
+    return await prisma.$queryRaw<Row[]>(Prisma.sql`
+      SELECT id, source, url, title, heading, content
+      FROM "KnowledgeChunk"
+      WHERE to_tsvector('english', title || ' ' || content)
+            @@ to_tsquery('english', ${disjunction})
+      ORDER BY ts_rank(
+        to_tsvector('english', title || ' ' || content),
+        to_tsquery('english', ${disjunction})
       ) DESC
       LIMIT ${CANDIDATES}
     `);
@@ -120,7 +161,10 @@ async function textSearch(query: string): Promise<Row[]> {
 }
 
 /** Fuse ranked lists by reciprocal rank. */
-export function fuse(lists: { name: "vector" | "text"; rows: Row[] }[], limit: number): RetrievedChunk[] {
+export function fuse(
+  lists: { name: "vector" | "text"; rows: Row[] }[],
+  limit: number,
+): RetrievedChunk[] {
   const scores = new Map<string, { row: Row; score: number; matchedBy: ("vector" | "text")[] }>();
 
   for (const list of lists) {

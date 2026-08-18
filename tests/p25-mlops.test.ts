@@ -1,4 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 vi.mock("../lib/prisma", () => ({ prisma: {} }));
 
@@ -158,12 +160,13 @@ describe("P25 golden set", () => {
   });
 
   it("separates a coverage gap from a ranking failure", () => {
-    // The second thing the first run exposed: recall read 42% and most of the
-    // shortfall was pages the corpus never indexed. Folding a content gap into
-    // a retrieval metric makes both unreadable.
+    // The mechanism that found the gap, kept after closing it. Every judged
+    // page is now reachable, so there should be nothing unanswerable — but the
+    // split still runs, because it is what would catch the next page added as
+    // JSX with no record behind it.
     const gaps = coverage();
-    expect(gaps.unanswerable.length).toBeGreaterThan(0);
-    expect(gaps.missingUrls).toContain("/contact");
+    expect(gaps.unanswerable).toEqual([]);
+    expect(gaps.missingUrls).toEqual([]);
 
     // Nothing judged as answerable may reference an unindexed page as its only
     // target, or the split has failed to do its job.
@@ -178,11 +181,24 @@ describe("P25 golden set", () => {
   it("knows which URL prefixes the corpus can actually emit", () => {
     expect(isIndexed("/projects/anything")).toBe(true);
     expect(isIndexed("/skills")).toBe(true);
-    // Not indexed by buildCorpus — asserted so that adding them to the corpus
-    // later is a deliberate, visible change rather than a silent one.
-    expect(isIndexed("/contact")).toBe(false);
-    expect(isIndexed("/compute")).toBe(false);
-    expect(isIndexed("/ask")).toBe(false);
+    // These were the gap. They are now covered by SITE_PAGES in corpus.ts, and
+    // asserting it here means removing one from the corpus breaks a test rather
+    // than silently removing it from search.
+    expect(isIndexed("/contact")).toBe(true);
+    expect(isIndexed("/compute")).toBe(true);
+    expect(isIndexed("/ask")).toBe(true);
+    // Still genuinely absent — there is no such page.
+    expect(isIndexed("/pricing")).toBe(false);
+  });
+
+  it("indexes every page the golden set judges", () => {
+    // The invariant that closes the loop: if a judgement names a page, the
+    // corpus has to be able to return it.
+    for (const golden of GOLDEN_QUERIES) {
+      for (const url of Object.keys(golden.relevance)) {
+        expect(isIndexed(url), `${golden.id} judges ${url}, which is not indexed`).toBe(true);
+      }
+    }
   });
 
   it("includes an unanswerable query and a misspelled one", () => {
@@ -192,6 +208,44 @@ describe("P25 golden set", () => {
     // whether the vector half contributes anything at all.
     expect(GOLDEN_QUERIES.find((query) => query.id === "nonsense")?.relevance).toEqual({});
     expect(GOLDEN_QUERIES.find((query) => query.id === "typo")?.question).toMatch(/limitter/);
+  });
+});
+
+describe("P25 hybrid retrieval is actually hybrid", () => {
+  const source = readFileSync(join(process.cwd(), "lib", "ai", "retrieve.ts"), "utf8");
+
+  it("falls back to OR when the strict AND query matches nothing", () => {
+    // The bug this pins was invisible for two phases and cost roughly half the
+    // retrieval quality on this site.
+    //
+    // `websearch_to_tsquery('english', 'token bucket redis')` compiles to
+    // `'token' & 'bucket' & 'redi'` — every term required. No chunk contains
+    // every word of a natural-language question, so the lexical retriever
+    // returned an empty list for EVERY query, and RRF silently fused one list.
+    // The tell was in the scores: every result was exactly 1/(60+rank).
+    //
+    // Nothing errored, /ask kept answering, and the codebase kept describing
+    // itself as hybrid. Only measuring it found this.
+    expect(source).toContain("to_tsquery");
+    expect(source).toMatch(/strict\.length > 0/);
+    expect(source).toContain('lexemes.join(" | ")');
+  });
+
+  it("keeps the strict pass first, so quoted phrases still work", () => {
+    // websearch_to_tsquery is what supports "quoted phrases" and -exclusion.
+    // Replacing it outright would have fixed recall by removing a documented
+    // feature; running it first costs nothing when it matches.
+    const strictAt = source.indexOf("websearch_to_tsquery");
+    const orAt = source.indexOf('lexemes.join(" | ")');
+    expect(strictAt).toBeGreaterThan(-1);
+    expect(orAt).toBeGreaterThan(strictAt);
+  });
+
+  it("builds the OR query from stopword-stripped terms, not raw input", () => {
+    // `terms()` emits alphanumeric tokens only, which is what makes it safe to
+    // interpolate into to_tsquery — raw input would let a visitor inject
+    // tsquery operators and throw a syntax error out of the search path.
+    expect(source).toContain("const lexemes = terms(query)");
   });
 });
 
