@@ -2,8 +2,11 @@
 
 > **Provenance and status.** This is the **original build spec** the project was
 > commissioned from — preserved verbatim below, unedited. It was recovered on
-> 9 Aug 2026 from an untracked file (`whatisinthiswebsite.md`) in a stale clone
-> and added here so the project's origin document lives with the project.
+> 9 Aug 2026 from a file (`whatisinthiswebsite.md`) in a stale clone and added
+> here so the project's origin document lives with the project. That file was
+> itself later committed by accident, leaving the repository carrying two
+> byte-identical copies of the same spec; it has since been removed, and this is
+> the surviving one.
 >
 > **It is a historical brief, not a to-do list.** Several of its choices were
 > deliberately overruled during the build for reasons recorded in `HANDOFF.md`.
@@ -11,25 +14,40 @@
 
 ## What was built vs. what this spec asked for
 
-| Spec called for                                                    | Actually built                                                  | Why                                                                                                                                              |
-| ------------------------------------------------------------------ | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Redis (sessions, rate limiting, hot reads)                         | **Not used.** In-memory token bucket (`lib/rate-limit.ts`)      | No free managed Redis; buckets are per-instance by accepted trade-off. Anything needing strict enforcement uses auth + idempotency keys instead. |
-| Better Auth                                                        | **Auth.js v5 (NextAuth)**                                       | The spec itself allowed this swap.                                                                                                               |
-| WebSockets (chat, notifications, presence)                         | **SSE + POST + DB poll**                                        | Vercel serverless cannot host a socket server.                                                                                                   |
-| Phase 6 — AI layer: pgvector, RAG chatbot, resume analyzer, WebLLM | **Not built**                                                   | Out of scope; every LLM API is metered.                                                                                                          |
-| Stripe                                                             | Adapter exists but **inert**; Razorpay is the intended provider | User decision.                                                                                                                                   |
-| Docker / Docker Compose                                            | **Not present**                                                 | Deploy is Vercel-native; no container step earns its keep.                                                                                       |
-| Playwright E2E, Lighthouse CI, axe-core gates                      | **Vitest only** (185 tests, 12 files)                           | Not yet built. Genuine remaining gap.                                                                                                            |
-| Sentry                                                             | **Not present**                                                 | `@vercel/analytics` + the first-party P10 analytics stack instead.                                                                               |
-| shadcn/ui                                                          | **Not used** — hand-written components + Tailwind v4            | Charts are hand-written SVG in server components so no charting library ships.                                                                   |
-| Codeforces integration                                             | **GitHub + LeetCode only**                                      | Codeforces never added.                                                                                                                          |
-| Cloudflare R2 storage                                              | **Built, not configured**                                       | Code complete; awaiting credentials.                                                                                                             |
-| PWA/offline, i18n, changelog, API docs page                        | **Not built**                                                   | Phase 9 polish, never started.                                                                                                                   |
-| Mapbox (implied by "location map")                                 | **OpenStreetMap**                                               | Mapbox is metered; free-tier-only is a hard user directive.                                                                                      |
+**This table was rewritten on 18 Aug 2026 because six of its fourteen rows had
+become false.** It was written at P10 and never revised, while the build ran on
+to P25 — so it was still reporting the AI layer, Docker, Playwright, Lighthouse,
+axe, Sentry and the whole PWA/offline stack as absent, all of which exist and
+several of which are the newest work in the repository. A divergence table's
+only job is telling a reviewer which spec items are real, and this one was
+pointing them away from the built work. Each corrected row names the files, so
+the claim can be checked rather than trusted.
 
-Phases 1–5 and 7 shipped, and were extended well past this spec: P8 growth
-(referral links, QR, click analytics), P9 content-addressed storage, and P10
-first-party cookieless analytics — none of which appear below.
+| Spec called for                                                    | Actually built                                                        | Why                                                                                                                                             |
+| ------------------------------------------------------------------ | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Redis (sessions, rate limiting, hot reads)                         | **Upstash-capable, in-memory today** (`lib/rate-limit.ts`)            | No key configured, so it degrades to a per-instance token bucket rather than failing closed. Strict enforcement uses auth + idempotency keys.   |
+| Better Auth                                                        | **Auth.js v5 (NextAuth)**                                             | The spec itself allowed this swap.                                                                                                              |
+| WebSockets (chat, notifications, presence)                         | **SSE + POST + DB poll**                                              | Vercel serverless cannot host a socket server.                                                                                                  |
+| Phase 6 — AI layer: pgvector, RAG chatbot, resume analyzer, WebLLM | **Built** (`lib/ai/*`, `/ask`, `components/ai/*`)                     | Retrieval is hybrid pgvector + Postgres FTS; answers are extractive with sources, and generation is opt-in via WebLLM in the visitor's browser. |
+| Stripe                                                             | Adapter exists but **inert**; Razorpay is the intended provider       | User decision.                                                                                                                                  |
+| Docker / Docker Compose                                            | **Both exist, neither is the deploy path** (`Dockerfile`)             | Kept as proof nothing here depends on Vercel. The production deploy is still Vercel-native.                                                     |
+| Playwright E2E, Lighthouse CI, axe-core gates                      | **All three run in CI** (`e2e/`, `lighthouserc.json`, `ci.yml`)       | Four Playwright specs, `@axe-core/playwright`, and a `lighthouse` CI job. Unit suite is 26 files / 574 cases, not the 12 / 185 recorded here.   |
+| Sentry                                                             | **Built** (`lib/observability/sentry.ts`, via `instrumentation.ts`)   | Alongside `@vercel/analytics` and the first-party P10 analytics stack.                                                                          |
+| shadcn/ui                                                          | **Not used** — hand-written components + Tailwind v4                  | Charts are hand-written SVG in server components so no charting library ships.                                                                  |
+| Codeforces integration                                             | **GitHub + LeetCode only**                                            | Codeforces never added.                                                                                                                         |
+| Cloudflare R2 storage                                              | **Built, not configured**                                             | Code complete; awaiting credentials.                                                                                                            |
+| PWA / offline                                                      | **Built** (`public/sw.js`, `app/manifest.ts`, `app/offline/page.tsx`) | P23. Service worker, offline shell, and a Background Sync outbox.                                                                               |
+| API docs page                                                      | **Built** (`/api-lab`, `app/api/openapi/route.ts`)                    | P24. OpenAPI 3.1, a GraphQL subgraph, and a sandbox generated from the spec.                                                                    |
+| i18n, changelog                                                    | **Not built**                                                         | Genuine remaining gap. Nothing on the site is translated and there is no changelog page.                                                        |
+| Mapbox (implied by "location map")                                 | **OpenStreetMap**                                                     | Mapbox is metered; free-tier-only is a hard user directive.                                                                                     |
+
+Phases 1–5 and 7 shipped, and the build ran well past this spec: P8 growth
+(referral links, QR, click analytics), P9 content-addressed storage, P10
+first-party cookieless analytics, and P11–P25 — real-time chat, security
+hardening, distributed-systems primitives, in-browser compute, data
+engineering, SRE, secops, PWA, the API surface and retrieval evaluation. None of
+it appears below. `HANDOFF.md` is the only document kept current; when this
+table and that file disagree, that file is right.
 
 ---
 

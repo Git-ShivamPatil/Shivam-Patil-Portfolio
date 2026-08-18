@@ -97,19 +97,64 @@ and the bytes never cross one.
 
 ## Pages
 
-- `/` — Home and selected work
-- `/about`, `/skills`, `/experience`, `/certifications`, `/achievements`, `/resume` — background and credentials
-- `/projects/[slug]` — Six detailed project case studies
-- `/contact`, `/reach-out` — ways to get in touch, plus an OpenStreetMap location panel
+Grouped the way the site's own navigation groups them — both are generated from
+`lib/site-routes.ts`, so this list and the site cannot drift apart. **They had**:
+this section previously omitted seventeen public routes, all of P19–P25, which is
+most of the engineering the site exists to show.
+
+**Start here**
+
+- `/` — the short version, and a map of everything else
+- `/about` — background, and how I work
+- `/resume` — the one-page résumé, embedded, with a PDF download
+- `/contact` — email, phone, and an OpenStreetMap location panel
+
+**My work**
+
+- `/projects`, `/projects/[slug]` — six case studies, each with architecture and trade-offs
+- `/experience` — roles and the systems shipped in each
+- `/skills` — grouped skills plus a server-rendered graph of which project evidences which
+- `/achievements`, `/certifications` — credentials, each with a verifiable source
 - `/stats` — live GitHub and LeetCode figures, cached with a stale-on-error fallback
+
+**See it running** — every page here is live, not a screenshot
+
+- `/system-design` — the real architecture, hand-drawn SVG, plus a Raft election you can break
+- `/ask` — hybrid pgvector + full-text retrieval, extractive cited answers, optional in-browser LLM
+- `/terminal` — a real shell over the site's content
+- `/compute` — the same kernel in JS, WASM, a SharedArrayBuffer worker pool and WebGPU
+- `/data` — lineage DAG, windowed aggregation, and DuckDB-WASM SQL in the page
+- `/api-lab` — OpenAPI 3.1, a GraphQL subgraph, protobuf, and a sandbox built from the spec
+- `/reliability` — SLOs, error budgets, and a circuit breaker you can trip
+- `/security` — response headers, CI static analysis, and a live CycloneDX SBOM
+- `/mlops` — the site's own retrieval measured: recall, MRR, nDCG over a labelled set
+- `/edge` — the WAF, a Cloudflare Worker sharing its ruleset, and a Background Sync outbox
+
+**Writing**
+
+- `/blog`, `/blog/[slug]` — write-ups on systems and AI
+
+**Work with me**
+
+- `/reach-out` — a short message form
 - `/services`, `/booking/success`, `/invoice/[token]` — paid bookings and invoices
+
+**Audience shortcuts**
+
+- `/for/recruiter`, `/for/human`, `/for/ai`, `/for/theelderbrother` — four ways in, offered inline on the homepage
+
+**Utility, auth and admin**
+
+- `/search` — site search (deliberately `noindex`)
+- `/offline` — the cached shell the service worker serves when the network is gone
 - `/newsletter/confirmed` — double opt-in confirmation landing page
 - `/login`, `/register`, `/forgot-password`, `/reset-password/[token]` — authentication
 - `/account` — signed-in user settings (profile, password, linked providers)
-- `/admin` — admin-only user list and role management
+- `/admin` — user list and role management
 - `/admin/links` — trackable short links, QR generator, click and conversion analytics
 - `/admin/media` — image library with browser-side AVIF/WebP compression
 - `/admin/analytics` — traffic, geo, devices, scroll reach, click heatmaps, download counters
+- `/admin/projects`, `/admin/blogs`, `/admin/skills`, `/admin/bookings`, `/admin/inbox`, `/admin/chat`, `/admin/live` — content and operations
 - `/r/[code]` — short-link redirect; tags the destination so conversions attribute back
 - `/d/[slug]` — counted download redirect; the résumé's real download number
 - `/api/qr?data=…` — dynamic QR code as SVG

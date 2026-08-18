@@ -1,13 +1,14 @@
 import Link from "next/link";
-import type { Metadata } from "next";
+import { pageMetadata } from "../../lib/seo/metadata";
 import { prisma } from "../../lib/prisma";
 import { readOrFallback } from "../../lib/db-read";
 
-export const metadata: Metadata = {
-  title: "Blog — Shivam Patil",
-  description: "Notes on distributed systems, AI products, and building things that hold up.",
-  alternates: { canonical: "/blog" },
-};
+export const metadata = pageMetadata({
+  title: "Blog",
+  description:
+    "Write-ups by Shivam Patil on distributed systems, backend engineering and AI products — the decisions, the trade-offs, and what actually broke.",
+  path: "/blog",
+});
 
 // See app/page.tsx - fallback-backed content must not be frozen static.
 export const revalidate = 300;

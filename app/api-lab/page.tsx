@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "../../lib/seo/metadata";
 import { ApiSandbox } from "../../components/api/sandbox";
 import { FLAG_DEFAULTS, evaluate } from "../../lib/api/flags";
 import { MAX_DEPTH, MAX_FIELDS, renderSdl } from "../../lib/api/graphql";
@@ -7,12 +7,12 @@ import { protoSource, encodeMessage, STATS_RESPONSE } from "../../lib/api/protob
 import { DOCUMENTED_PATHS } from "../../lib/api/openapi";
 import "./api-lab.css";
 
-export const metadata: Metadata = {
-  title: "API — Shivam Patil",
+export const metadata = pageMetadata({
+  title: "API Lab: REST, GraphQL & RPC",
   description:
-    "Four protocols over the same data: an OpenAPI 3.1 document, a GraphQL subgraph with depth limits, protobuf on the wire, and a sandbox built from the specification itself.",
-  alternates: { canonical: "/api-lab" },
-};
+    "Four protocols over the same data: an OpenAPI 3.1 document, a depth-limited GraphQL subgraph, protobuf on the wire, and a sandbox built from the spec itself.",
+  path: "/api-lab",
+});
 
 export const revalidate = 3600;
 

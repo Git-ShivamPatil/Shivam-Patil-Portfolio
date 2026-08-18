@@ -1,13 +1,15 @@
 import Link from "next/link";
-import type { Metadata } from "next";
+import { pageMetadata } from "../../lib/seo/metadata";
 import { ArrowUpRight } from "../../components/icons";
 import { AboutPhoto } from "../../components/about-photo";
 import { BrandWatermark } from "../../components/brand-watermark";
 
-export const metadata: Metadata = {
-  title: "About — Shivam Patil",
-  alternates: { canonical: "/about" },
-};
+export const metadata = pageMetadata({
+  title: "About",
+  description:
+    "Software engineer in Mumbai building distributed systems and AI products. Where I came from, how I work, and the three principles I keep returning to.",
+  path: "/about",
+});
 
 export default function AboutPage() {
   return (

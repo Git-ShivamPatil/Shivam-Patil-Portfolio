@@ -1,10 +1,12 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "../../lib/seo/metadata";
 import { certifications } from "../certifications";
 
-export const metadata: Metadata = {
-  title: "Certifications — Shivam Patil",
-  alternates: { canonical: "/certifications" },
-};
+export const metadata = pageMetadata({
+  title: "Certifications",
+  description:
+    "Courses and exams completed by Shivam Patil, each with a link you can use to verify it independently rather than take on trust.",
+  path: "/certifications",
+});
 
 export default function CertificationsPage() {
   return (

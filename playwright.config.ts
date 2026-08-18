@@ -69,29 +69,27 @@ export default defineConfig({
     // errors under `pnpm typecheck`.
     contextOptions: { reducedMotion: "no-preference" },
 
-    /**
-     * The audience chooser is pre-answered for the whole suite.
+    /*
+     * The `sp:audience` seed that used to live here is gone with the thing it
+     * worked around.
      *
-     * EntryGate covers the viewport until a visitor picks a path, so with an
-     * empty profile it intercepts every click, takes focus, and locks body
-     * scroll — on every route, in every spec. Left unseeded it failed twelve
-     * specs at once in CI (header links, drawer links, the skip-link focus
-     * assertion, the chat launcher and all four retrieval tests) while passing
-     * locally, purely because a developer's browser had already answered it
-     * once by hand. A suite whose result depends on leftover local state is
-     * worse than one that fails honestly.
+     * EntryGate covered the viewport until a visitor picked a path, so with an
+     * empty profile it intercepted every click, took focus and locked body
+     * scroll on every route in every spec — twelve specs failed at once in CI
+     * for that reason, while passing locally only because a developer's browser
+     * had already answered it by hand. Seeding the key was the honest fix for
+     * that, and it worked.
      *
-     * Seeding it here rather than in a beforeEach means it is set before the
-     * first navigation of every test, which is the only point early enough:
-     * the value is read by an inline script in <head> before first paint.
+     * The overlay itself has since been replaced by an inline section on the
+     * homepage (components/entry/audience-picker.tsx), so there is no longer
+     * anything covering the viewport and nothing to pre-answer. Keeping the
+     * seed would mean every spec still writing a localStorage key that no code
+     * on the site reads — a workaround outliving its problem, and the kind of
+     * thing that later gets mistaken for a requirement.
      *
-     * The gate itself is not left untested — e2e/entry-gate.spec.ts opts back
-     * out with an empty storageState and asserts the whole flow.
+     * e2e/audience-picker.spec.ts asserts the replacement, including that
+     * nothing covers the page on arrival.
      */
-    storageState: {
-      cookies: [],
-      origins: [{ origin: baseURL, localStorage: [{ name: "sp:audience", value: "human" }] }],
-    },
   },
 
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],

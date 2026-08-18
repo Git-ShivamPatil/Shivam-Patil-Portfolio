@@ -1,12 +1,12 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "../../lib/seo/metadata";
 import { ComputeLab } from "../../components/lowlevel/compute-lab";
 
-export const metadata: Metadata = {
-  title: "Compute — Shivam Patil",
+export const metadata = pageMetadata({
+  title: "Compute Lab: WebAssembly, SIMD & WebGPU",
   description:
     "The same Mandelbrot kernel in JavaScript, WebAssembly, a SharedArrayBuffer worker pool and a WebGPU compute shader, measured against each other with a checksum.",
-  alternates: { canonical: "/compute" },
-};
+  path: "/compute",
+});
 
 export default function ComputePage() {
   return (

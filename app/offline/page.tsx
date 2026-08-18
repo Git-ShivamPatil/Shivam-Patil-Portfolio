@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Offline — Shivam Patil",
+  title: "Offline",
   description: "You are offline. This page was cached ahead of time.",
   // Never index the fallback. A crawler that reaches it would file it as the
   // content of whatever URL it was serving in place of.

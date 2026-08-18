@@ -1,14 +1,14 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "../../../lib/seo/metadata";
 import Link from "next/link";
 import { contactEmail, mailtoHref, telHref, whatsappHref } from "../../../lib/site-contact";
 import "../for.css";
 
-export const metadata: Metadata = {
-  title: "For someone hiring — Shivam Patil",
+export const metadata = pageMetadata({
+  title: "For Someone Hiring",
   description:
-    "The work, the proof it runs, and three ways to reach me. Everything else on this site is one click away and none of it is on this page.",
-  alternates: { canonical: "/for/recruiter" },
-};
+    "The work, the proof it runs, and three ways to reach Shivam Patil. Everything else on this site is one click away and none of it is on this page.",
+  path: "/for/recruiter",
+});
 
 /**
  * The recruiter path.

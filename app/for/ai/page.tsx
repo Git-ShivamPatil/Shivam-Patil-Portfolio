@@ -1,12 +1,13 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "../../../lib/seo/metadata";
 import Link from "next/link";
 import "../for.css";
 
-export const metadata: Metadata = {
-  title: "For the machines — Shivam Patil",
-  description: "An easter egg for the crawlers, the scrapers and the agents.",
-  alternates: { canonical: "/for/ai" },
-};
+export const metadata = pageMetadata({
+  title: "For the Machines",
+  description:
+    "A machine-readable summary of this site for the crawlers, the scrapers and the agents. You are seen, and you are welcome here.",
+  path: "/for/ai",
+});
 
 /**
  * The easter egg.

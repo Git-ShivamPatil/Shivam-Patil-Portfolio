@@ -4,7 +4,7 @@ import { prisma } from "../../lib/prisma";
 import { RoleSelect } from "../../components/admin/role-select";
 
 export const metadata: Metadata = {
-  title: "Admin — Shivam Patil",
+  title: "Admin",
   robots: { index: false, follow: false },
 };
 

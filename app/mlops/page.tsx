@@ -1,15 +1,15 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "../../lib/seo/metadata";
 import { ModelCosts } from "../../components/mlops/model-costs";
 import { readOrFallback } from "../../lib/db-read";
 import { GOLDEN_QUERIES, runEvaluation } from "../../lib/mlops/goldens";
 import "./mlops.css";
 
-export const metadata: Metadata = {
-  title: "Retrieval quality — Shivam Patil",
+export const metadata = pageMetadata({
+  title: "Retrieval Quality: MLOps in Practice",
   description:
-    "The site's own retrieval, measured: recall, MRR and nDCG over a labelled query set, run live. Plus index drift, and what an answer would cost on-device versus hosted.",
-  alternates: { canonical: "/mlops" },
-};
+    "This site's own search, measured: recall, MRR and nDCG over a labelled query set, run live — plus index drift and what an answer costs on-device versus hosted.",
+  path: "/mlops",
+});
 
 // The evaluation runs twelve retrievals against the live index, so this is a
 // real read and the numbers are current by construction.

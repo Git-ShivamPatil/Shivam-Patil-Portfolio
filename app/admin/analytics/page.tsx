@@ -8,7 +8,7 @@ import { HeatmapViewer } from "../../../components/admin/heatmap-viewer";
 import { RETENTION_DAYS } from "../../../lib/analytics/constants";
 
 export const metadata: Metadata = {
-  title: "Admin · Analytics — Shivam Patil",
+  title: "Admin · Analytics",
   robots: { index: false, follow: false },
 };
 

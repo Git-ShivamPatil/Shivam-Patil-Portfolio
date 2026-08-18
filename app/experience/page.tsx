@@ -1,10 +1,12 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "../../lib/seo/metadata";
 import { education, experience } from "../experience";
 
-export const metadata: Metadata = {
-  title: "Experience — Shivam Patil",
-  alternates: { canonical: "/experience" },
-};
+export const metadata = pageMetadata({
+  title: "Experience & Work History",
+  description:
+    "Shivam Patil's roles as a Software Development Engineer, the systems shipped in each, and the education that led into them.",
+  path: "/experience",
+});
 
 export default function ExperiencePage() {
   return (

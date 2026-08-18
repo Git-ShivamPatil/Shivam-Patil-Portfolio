@@ -1,11 +1,13 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "../../lib/seo/metadata";
 import { achievements } from "../achievements";
 import { AnimatedMetric } from "../../components/animated-metric";
 
-export const metadata: Metadata = {
-  title: "Achievements — Shivam Patil",
-  alternates: { canonical: "/achievements" },
-};
+export const metadata = pageMetadata({
+  title: "Awards & Achievements",
+  description:
+    "Competition placements, rankings and recognition earned by Shivam Patil, each with the source you can check it against.",
+  path: "/achievements",
+});
 
 export default function AchievementsPage() {
   return (

@@ -5,7 +5,7 @@ import { prisma } from "../../../lib/prisma";
 import { formatMoney } from "../../../lib/money";
 
 export const metadata: Metadata = {
-  title: "Admin · Bookings — Shivam Patil",
+  title: "Admin · Bookings",
   robots: { index: false, follow: false },
 };
 

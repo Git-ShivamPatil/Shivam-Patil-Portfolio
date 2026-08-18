@@ -1,11 +1,13 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "../../lib/seo/metadata";
 import { ArrowUpRight } from "../../components/icons";
 import { downloadHref } from "../../lib/analytics/downloads";
 
-export const metadata: Metadata = {
-  title: "Résumé — Shivam Patil",
-  alternates: { canonical: "/resume" },
-};
+export const metadata = pageMetadata({
+  title: "Résumé",
+  description:
+    "The one-page résumé of Shivam Patil, Software Development Engineer: C++, Rust, Go, Python, distributed systems and AI. Read it here or download the PDF.",
+  path: "/resume",
+});
 
 /**
  * The inline preview points at the file directly. It must NOT go through the

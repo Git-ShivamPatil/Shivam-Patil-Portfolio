@@ -3,7 +3,7 @@ import { requireAdmin } from "../../../../lib/auth-guards";
 import { BlogForm } from "../../../../components/admin/blog-form";
 
 export const metadata: Metadata = {
-  title: "Admin · New post — Shivam Patil",
+  title: "Admin · New post",
   robots: { index: false, follow: false },
 };
 

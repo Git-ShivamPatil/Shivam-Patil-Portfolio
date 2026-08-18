@@ -1,16 +1,16 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "../../lib/seo/metadata";
 import { AskConsole } from "../../components/ai/ask-console";
 import { JdMatch } from "../../components/ai/jd-match";
 import { readOrFallback } from "../../lib/db-read";
 import { prisma } from "../../lib/prisma";
 import "./ask.css";
 
-export const metadata: Metadata = {
-  title: "Ask — Shivam Patil",
+export const metadata = pageMetadata({
+  title: "Ask This Site Anything",
   description:
-    "Retrieval-augmented search over this portfolio: hybrid pgvector and full-text retrieval, extractive answers with sources, and an optional language model that runs in your own browser.",
-  alternates: { canonical: "/ask" },
-};
+    "Retrieval-augmented search over this portfolio: hybrid vector and full-text retrieval, extractive answers with sources, and an optional model that runs in your browser.",
+  path: "/ask",
+});
 
 // The page shell is static; the index status below is a cheap read that should
 // not freeze into the build. Same pairing every other content page uses: a

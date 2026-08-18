@@ -1,17 +1,17 @@
 import { Suspense } from "react";
-import type { Metadata } from "next";
+import { pageMetadata } from "../../lib/seo/metadata";
 import { GitHubPanel } from "../../components/stats/github-panel";
 import { LeetCodePanel } from "../../components/stats/leetcode-panel";
 import { PanelSkeleton } from "../../components/stats/panel-skeleton";
 import { ActivityPanel } from "../../components/devex/activity-panel";
 import "./stats.css";
 
-export const metadata: Metadata = {
-  title: "Live stats — Shivam Patil",
+export const metadata = pageMetadata({
+  title: "Live Coding Activity",
   description:
-    "Live GitHub and LeetCode activity, pulled from their public APIs and cached with a stale-on-error fallback.",
-  alternates: { canonical: "/stats" },
-};
+    "Shivam Patil's GitHub and LeetCode activity, pulled live from their public APIs and cached with a stale-on-error fallback so the page never lies.",
+  path: "/stats",
+});
 
 // Both panels read through a TTL cache in Postgres, so rendering is cheap —
 // but it is still I/O, and it must not be baked into a static build. It also

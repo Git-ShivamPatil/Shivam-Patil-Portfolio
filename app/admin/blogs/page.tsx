@@ -5,7 +5,7 @@ import { prisma } from "../../../lib/prisma";
 import { DeleteButton } from "../../../components/admin/delete-button";
 
 export const metadata: Metadata = {
-  title: "Admin · Blogs — Shivam Patil",
+  title: "Admin · Blogs",
   robots: { index: false, follow: false },
 };
 

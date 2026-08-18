@@ -4,6 +4,7 @@ import { ThemeToggle } from "./theme-toggle";
 import { NavDrawer } from "./nav/nav-drawer";
 import { SearchIcon, PhoneIcon, MailIcon } from "./icons";
 import { mailtoHref, telHref } from "../lib/site-contact";
+import { primaryRoutes } from "../lib/site-routes";
 
 export function Header() {
   const phoneHref = telHref();
@@ -34,18 +35,28 @@ export function Header() {
           />
           <span>Shivam Patil</span>
         </Link>
-        {/* The top bar carries four things and nothing else: System design,
-            Search, the theme toggle and Contact. The other seven links, the
-            auth avatar and the "Let's talk" pill moved into the drawer, along
-            with the prefetch rationale that used to live here — see the comment
-            on NAV_GROUPS in components/nav/nav-drawer.tsx.
+        {/* The four routes a first-time visitor is most likely to want, read
+            from the shared registry rather than written out here.
 
-            /search keeps prefetch={false} for the reason it always had: it is a
-            `ƒ` dynamic route, so a prefetch is a server render plus a Neon
-            query, measured at 384ms of waste on a page nobody had asked for.
-            /system-design and /contact are static, so theirs stays on. */}
+            It carried exactly ONE link before this — "System design" — with
+            everything else behind the hamburger. That is a defensible bar for a
+            site whose visitors already know their way around, and the wrong one
+            for a portfolio: the two questions a stranger arrives with are "what
+            has he built" and "what does he know", and neither had a link on
+            screen. `primaryRoutes()` answers both, plus About and a way to make
+            contact.
+
+            Their prefetch flags come from the registry too, so the rule stays
+            in one place: ON for the static and ISR routes, which come off the
+            CDN, OFF for the server-rendered ones where a prefetch is a real
+            render plus Neon queries nobody asked for. /search keeps
+            prefetch={false} below for that reason — 384ms measured. */}
         <nav className="header-nav" aria-label="Main navigation">
-          <Link href="/system-design">System design</Link>
+          {primaryRoutes().map((route) => (
+            <Link key={route.href} href={route.href} prefetch={route.prefetch}>
+              {route.label}
+            </Link>
+          ))}
         </nav>
         {/* The two direct channels sit at the end of the bar, as icons.
 

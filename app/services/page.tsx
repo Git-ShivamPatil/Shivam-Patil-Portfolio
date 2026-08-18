@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "../../lib/seo/metadata";
 import { prisma } from "../../lib/prisma";
 import { formatMoney } from "../../lib/money";
 import { availableProviders } from "../../lib/payments";
@@ -6,12 +6,12 @@ import { BookingForm, type OfferingOption } from "../../components/booking/booki
 import { CalEmbed } from "../../components/booking/cal-embed";
 import "./services.css";
 
-export const metadata: Metadata = {
-  title: "Work with me — Shivam Patil",
+export const metadata = pageMetadata({
+  title: "Work With Me: Consulting Sessions",
   description:
-    "Book a paid consultation, architecture review, or system deep-dive with Shivam Patil.",
-  alternates: { canonical: "/services" },
-};
+    "Paid, focused sessions with Shivam Patil on throughput ceilings, failure modes and the architecture underneath them. Book a slot directly.",
+  path: "/services",
+});
 
 export const dynamic = "force-dynamic";
 

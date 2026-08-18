@@ -1,9 +1,13 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { pageMetadata } from "../../../lib/seo/metadata";
+import { JsonLd } from "../../../components/seo/json-ld";
+import { projectJsonLd, breadcrumbJsonLd } from "../../../lib/seo/structured-data";
 import { notFound } from "next/navigation";
 import { ArrowUpRight } from "../../../components/icons";
 import { CopyButton } from "../../../components/copy-button";
 import { ImageGallery } from "../../../components/image-gallery";
+import { Disclosure, DisclosureGroup } from "../../../components/ui/disclosure";
 import { getProjectBySlug, getProjects } from "../../projects";
 
 // See the note in app/blog/[slug]/page.tsx - getProjects() already falls back
@@ -23,13 +27,23 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const project = await getProjectBySlug(slug);
-  if (!project) return { title: "Project — Shivam Patil" };
-  return {
-    title: `${project.title} — Shivam Patil`,
-    description: project.summary,
-    alternates: { canonical: `/projects/${project.slug}` },
-    openGraph: { title: `${project.title} — Shivam Patil`, description: project.summary },
-  };
+  if (!project) return { title: "Project" };
+  return pageMetadata({
+    title: project.title,
+    // The summary is written as prose for the page, so it is not guaranteed to
+    // land in the 70-160 band a description wants. Padding it with the category
+    // and the stack is not filler: those are the words someone would actually
+    // search for, and they are already true of this project.
+    description:
+      project.summary.length >= 70
+        ? project.summary.slice(0, 158)
+        : `${project.summary} ${project.category} project built with ${project.stack.slice(0, 4).join(", ")}.`.slice(
+            0,
+            158,
+          ),
+    path: `/projects/${project.slug}`,
+    type: "article",
+  });
 }
 
 export default async function ProjectPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -45,6 +59,18 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
 
   return (
     <>
+      {/* CreativeWork rather than SoftwareApplication — see the note on
+          projectJsonLd. The breadcrumb is what replaces the bare URL in a
+          search result with "Home › Projects › <this project>". */}
+      <JsonLd
+        data={[
+          projectJsonLd(project),
+          breadcrumbJsonLd([
+            { name: "Projects", href: "/projects" },
+            { name: project.title, href: `/projects/${project.slug}` },
+          ]),
+        ]}
+      />
       <section className={`project-hero project-${project.accent}`}>
         <div className="shell project-hero-inner">
           <Link href="/projects" className="back-link">
@@ -91,17 +117,27 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           <h2>
             Built with <em>intention.</em>
           </h2>
-          <div className="implementation-list">
+          {/* Collapsed, with the first one open.
+              A case study runs five or six of these, each a titled paragraph,
+              and stacked open they are the longest block on the page — sitting
+              between the problem statement and the architecture diagram, which
+              are the two things a reader came for. Collapsed, the section
+              becomes a contents list of what was built, and the first entry is
+              open so it is obvious the rest expand.
+              The numbering moves into the `hint` slot: it was decoration in a
+              grid, and as a hint it stays visible on the collapsed row. */}
+          <DisclosureGroup label="What is implemented">
             {project.implemented.map(([title, description], index) => (
-              <article key={title}>
-                <span>0{index + 1}</span>
-                <div>
-                  <h3>{title}</h3>
-                  <p>{description}</p>
-                </div>
-              </article>
+              <Disclosure
+                key={title}
+                summary={title}
+                hint={`0${index + 1}`}
+                defaultOpen={index === 0}
+              >
+                <p>{description}</p>
+              </Disclosure>
             ))}
-          </div>
+          </DisclosureGroup>
         </div>
       </section>
 

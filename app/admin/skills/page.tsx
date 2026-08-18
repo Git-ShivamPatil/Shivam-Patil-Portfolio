@@ -4,7 +4,7 @@ import { prisma } from "../../../lib/prisma";
 import { SkillManager } from "../../../components/admin/skill-manager";
 
 export const metadata: Metadata = {
-  title: "Admin · Skills — Shivam Patil",
+  title: "Admin · Skills",
   robots: { index: false, follow: false },
 };
 

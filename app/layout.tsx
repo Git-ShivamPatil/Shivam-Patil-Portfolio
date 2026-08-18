@@ -15,8 +15,8 @@ import { SplitText } from "../components/providers/split-text";
 // progress, back-to-top, chat launcher, toaster — moved behind an idle gate.
 // See the file for what stayed behind and why.
 import { DeferredLayer } from "../components/providers/deferred-layer";
-import { EntryGate } from "../components/entry/entry-gate";
 import { Analytics } from "@vercel/analytics/next";
+import { person, siteUrl } from "../lib/seo/site";
 
 /**
  * Fonts are vendored into the repo and loaded with `next/font/local`.
@@ -87,29 +87,55 @@ const dmMono = localFont({
 
 const fontVariables = `${manrope.variable} ${playfair.variable} ${dmMono.variable}`;
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://shivamsfolio.com";
-const title = "Shivam Patil — Software Engineer";
-const description =
-  "Portfolio of Shivam Patil, a software engineer building reliable distributed systems and AI products.";
-
+/**
+ * Site-wide metadata defaults.
+ *
+ * **`title` is a template now, and that is the change that made the rest of the
+ * SEO pass possible.** It used to be a plain string, so every page that wanted
+ * its own title had to write the suffix out by hand — "About — Shivam Patil",
+ * "Skills — Shivam Patil", thirty times. Three consequences followed from that,
+ * and all three were live:
+ *
+ * - A page that set only `title: "Compute"` would have rendered without the
+ *   name at all, so nobody dared, so every page carried the duplication.
+ * - The duplication drifted. "API — Shivam Patil" titled a page called "API
+ *   lab"; "Retrieval quality — Shivam Patil" titled /mlops.
+ * - `alternates`, `openGraph` and `robots` were NOT inherited in practice
+ *   either, because a page that declares `openGraph` replaces the parent's
+ *   whole object rather than merging into it — and no page below the root
+ *   declared one. Every link to any page but the homepage unfurled with the
+ *   homepage's title and description.
+ *
+ * With `template` here, a page passes "About" and gets "About — Shivam Patil".
+ * `default` is what the homepage and any page without its own title fall back
+ * to. lib/seo/metadata.ts builds the rest of the tags from the same two
+ * strings, so the openGraph/twitter pair can no longer be silently omitted.
+ *
+ * The description here is the fallback only; every public route now sets its
+ * own. A single site-wide description means thirty pages competing in search
+ * results with identical copy, which is the one thing a description must not be.
+ */
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title,
-  description,
+  title: {
+    default: `${person.name} — ${person.jobTitle}`,
+    template: `%s — ${person.name}`,
+  },
+  description:
+    "Shivam Patil is a software engineer building high-throughput backend platforms, distributed systems and AI products in C++, Rust, Go and Python.",
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
     url: "/",
-    siteName: "Shivam Patil",
-    title,
-    description,
+    siteName: person.name,
+    locale: "en_US",
   },
-  twitter: {
-    card: "summary_large_image",
-    title,
-    description,
-  },
+  twitter: { card: "summary_large_image" },
   robots: { index: true, follow: true },
+  // Tells Google it may show the full description and a large image preview
+  // rather than truncating to its own default. Absent, the preview length is
+  // the crawler's guess.
+  other: { "max-image-preview": "large" },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -119,28 +145,20 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* Marks the document as JS-capable before the below-the-fold content
             paints, which is what arms the [data-reveal] start state. Without
             this the reveal styles would apply even when JS never runs, and
-            content would stay permanently invisible. */}
-        {/* The audience stamp rides along with the reveal stamp because both
-            must land before first paint and a second inline script is a second
-            parser pause for no gain.
+            content would stay permanently invisible.
 
-            Nothing in the product writes `sp:audience` — the chooser asks on
-            every load and does not persist — so this read returns null for a
-            real visitor and the stamp never lands. It exists for the E2E suite,
-            which seeds the key through `storageState` to pre-answer a modal
-            that would otherwise cover the viewport in all fifty-plus specs.
-            Doing it here rather than in the component is what makes the bypass
-            reliable: it lands before first paint, ahead of any React effect.
-
-            The try/catch is not defensive dressing — localStorage *throws* on
-            access in Safari's private mode rather than returning null, and an
-            uncaught throw here would abort the script and take the reveal stamp
-            down with it, leaving every [data-reveal] section invisible
-            forever. */}
+            This used to carry a second statement: a localStorage read that
+            stamped `data-audience-chosen` to suppress the entry-gate overlay
+            before first paint. Both the overlay and the key it read are gone —
+            the four audience paths are an inline section on the homepage now
+            (components/entry/audience-picker.tsx) — so the read had nothing
+            left to suppress. What remains is one attribute write, which is
+            also why the try/catch went with it: `setAttribute` does not throw,
+            and only the localStorage access ever could. */}
         <script
           // sast-ignore: dangerous-html — a compile-time constant with no interpolation of any kind, so there is no input to sanitise.
           dangerouslySetInnerHTML={{
-            __html: `document.documentElement.setAttribute("data-reveal-ready","true");try{if(localStorage.getItem("sp:audience"))document.documentElement.setAttribute("data-audience-chosen","true")}catch(e){}`,
+            __html: `document.documentElement.setAttribute("data-reveal-ready","true")`,
           }}
         />
         <a href="#main-content" className="skip-link">
@@ -169,12 +187,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <PageTransition>{children}</PageTransition>
             </main>
             <Footer />
-            {/* Rendered after <main>, not before it. The overlay is
-                position:fixed so paint order is decided by z-index rather than
-                by document order, and keeping the real content first means a
-                crawler — and a reader with JavaScript off, for whom the chooser
-                never appears at all — meets the page rather than the gate. */}
-            <EntryGate />
             <DeferredLayer />
             {/* Rendered only on Vercel, because its script is served by Vercel's
                 edge at /_vercel/insights/script.js and exists nowhere else. Off

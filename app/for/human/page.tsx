@@ -1,15 +1,15 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "../../../lib/seo/metadata";
 import { LinkQr } from "../../../components/entry/link-qr";
 import { InviteCard } from "../../../components/entry/invite-card";
 import { referralCategories, referralsIn, socials, type Referral } from "../../referrals";
 import "../for.css";
 
-export const metadata: Metadata = {
-  title: "For another human being — Shivam Patil",
+export const metadata = pageMetadata({
+  title: "For Another Human Being",
   description:
-    "Referral links worth using, the places I actually post, and an invite. Scan or tap — every link has its own QR.",
-  alternates: { canonical: "/for/human" },
-};
+    "Referral links worth using, the places Shivam Patil actually posts, and an invite. Scan or tap — every link carries its own QR code.",
+  path: "/for/human",
+});
 
 /**
  * The casual path.

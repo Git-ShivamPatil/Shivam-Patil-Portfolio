@@ -1,14 +1,14 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "../../lib/seo/metadata";
 import { PwaStatus } from "../../components/edge/pwa-status";
 import { WebUsbLab } from "../../components/edge/webusb-lab";
 import "./edge.css";
 
-export const metadata: Metadata = {
-  title: "Edge & offline — Shivam Patil",
+export const metadata = pageMetadata({
+  title: "Edge, Offline & Progressive Web App",
   description:
-    "The WAF that runs on every API request, a Cloudflare Worker sharing its ruleset, an offline outbox backed by Background Sync, and a WebUSB lab that mostly refuses to run.",
-  alternates: { canonical: "/edge" },
-};
+    "The WAF that runs on every API request, a Cloudflare Worker sharing its ruleset, an offline outbox backed by Background Sync, and a WebUSB lab that mostly refuses.",
+  path: "/edge",
+});
 
 // Static. Everything dynamic on this page is measured in the visitor's own
 // browser by the two client components, which is the only place those answers

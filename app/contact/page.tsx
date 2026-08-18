@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { Metadata } from "next";
+import { pageMetadata } from "../../lib/seo/metadata";
 import { ArrowUpRight } from "../../components/icons";
 import { ContactForm } from "../../components/contact-form";
 import { BrandWatermark } from "../../components/brand-watermark";
@@ -13,10 +13,12 @@ const services: [string, string][] = [
   ["AI product systems", "RAG, agent orchestration, evaluation harnesses, and governed delivery."],
 ];
 
-export const metadata: Metadata = {
-  title: "Contact — Shivam Patil",
-  alternates: { canonical: "/contact" },
-};
+export const metadata = pageMetadata({
+  title: "Contact",
+  description:
+    "Email, phone and the fastest way to reach a software engineer in Mumbai working on distributed systems, backend platforms and AI products.",
+  path: "/contact",
+});
 
 export default function ContactPage() {
   return (

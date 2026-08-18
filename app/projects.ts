@@ -96,17 +96,12 @@ export async function getProjectBySlug(slug: string): Promise<Project | undefine
   );
 }
 
-/** All distinct tags across published projects, for the homepage filter UI. */
-export async function getProjectTags(): Promise<string[]> {
-  return readOrFallback(
-    "getProjectTags",
-    async () => {
-      const rows = await prisma.project.findMany({
-        where: { published: true },
-        select: { tags: true },
-      });
-      return Array.from(new Set(rows.flatMap((row) => row.tags))).sort();
-    },
-    [],
-  );
-}
+/* `getProjectTags()` was removed here, for the same reason as
+ * `getSkillNames()` in app/skills.ts — see the note there.
+ *
+ * Its comment claimed it served "the homepage filter UI". The homepage has no
+ * filter; app/page.tsx imports only `getProjects`. The filter that does exist,
+ * components/project-filter.tsx, is used solely by /projects and derives its
+ * own category list from the `projects` prop it is already given, so it never
+ * needed a second query either.
+ */

@@ -17,9 +17,13 @@ import { isRedisConfigured, pipeline } from "../security/redis";
  * the work cannot be in that state: if the lease is visible, the database is
  * up, and if the database is down nobody holds anything.
  *
- * Redlock is implemented alongside it (redlock.ts) and is used when Redis is
- * configured *and* the caller opts in — for a section that does not touch
- * Postgres, it is the faster choice.
+ * Redlock is implemented further down in THIS file (`acquireRedlock` and
+ * friends) rather than in a separate module. This line used to point at a
+ * `redlock.ts` that has never existed — `ls lib/distsys/` is command.ts,
+ * idempotency.ts, lock.ts, outbox.ts, raft.ts — which would send a reader
+ * looking for a file instead of scrolling. It would be used when Redis is
+ * configured *and* a caller opts in; per the note on those functions, nothing
+ * currently does.
  *
  * **Fencing tokens, not just mutual exclusion.** Every acquisition mints a
  * random token, and release requires presenting it. Without that, a holder
@@ -107,25 +111,22 @@ export async function releaseLease(lease: Lease): Promise<boolean> {
   }
 }
 
-/**
- * Extend a lease we still hold.
+/* `renewLease()` was removed here.
  *
- * Needed by any job that can legitimately outrun its TTL. The alternative —
- * taking a very long lease up front — means a crashed holder blocks the work
- * for that whole period.
+ * Its comment said it was "needed by any job that can legitimately outrun its
+ * TTL". No such job exists: `withLease` below is the only entry point anything
+ * uses, it acquires-runs-releases without ever renewing, and its three callers
+ * are all cron handlers that skip on contention and let the next run pick the
+ * work up. A grep for the name across every tracked file returned only the
+ * definition.
+ *
+ * This is deliberately narrower than the Redis functions further down, which
+ * are also uncalled and which stay: those are defended by a reason that holds
+ * ("the right tool for a critical section that does not touch Postgres —
+ * nothing in this project currently is"), and they are a complete, coherent
+ * alternative implementation. `renewLease` was on the Postgres path that IS in
+ * active use, and still had no caller, which is a different thing.
  */
-export async function renewLease(lease: Lease, ttlMs = DEFAULT_TTL_MS): Promise<Lease | null> {
-  const expiresAt = new Date(Date.now() + ttlMs);
-  try {
-    const result = await prisma.lease.updateMany({
-      where: { name: lease.name, token: lease.token },
-      data: { expiresAt },
-    });
-    return result.count > 0 ? { ...lease, expiresAt } : null;
-  } catch {
-    return null;
-  }
-}
 
 export interface WithLockResult<T> {
   ran: boolean;

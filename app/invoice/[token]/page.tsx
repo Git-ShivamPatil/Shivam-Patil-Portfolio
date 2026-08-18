@@ -6,7 +6,7 @@ import { PrintButton } from "../../../components/booking/print-button";
 import "../invoice.css";
 
 export const metadata: Metadata = {
-  title: "Invoice — Shivam Patil",
+  title: "Invoice",
   // Invoices carry a customer's name and email; they must never be indexed.
   robots: { index: false, follow: false, nocache: true },
 };

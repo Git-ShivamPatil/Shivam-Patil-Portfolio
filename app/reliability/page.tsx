@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "../../lib/seo/metadata";
 import { ChaosLab } from "../../components/sre/chaos-lab";
 import { readOrFallback } from "../../lib/db-read";
 import { breakerReports } from "../../lib/sre/breaker-store";
@@ -6,14 +6,15 @@ import { breakerHistory, redReport, redSeries } from "../../lib/sre/report";
 import { isOtlpConfigured, recentTraces } from "../../lib/sre/trace";
 import { LATENCY_BUCKETS_MS } from "../../lib/sre/red";
 import { smoothPath } from "../../lib/chart-path";
+import { Disclosure, DisclosureGroup } from "../../components/ui/disclosure";
 import "./reliability.css";
 
-export const metadata: Metadata = {
-  title: "Reliability — Shivam Patil",
+export const metadata = pageMetadata({
+  title: "Reliability & Chaos Engineering",
   description:
-    "The site's own RED metrics, the circuit breakers in front of its integrations, and a chaos experiment that drives the real breaker through an outage in your browser.",
-  alternates: { canonical: "/reliability" },
-};
+    "SLOs, error budgets and a circuit breaker you can trip yourself. Break the service on purpose and watch how it degrades and recovers.",
+  path: "/reliability",
+});
 
 // Every number here is a live read and most of them change by the minute, so
 // there is nothing to prerender. `force-dynamic` rather than a short revalidate:
@@ -358,28 +359,31 @@ export default async function ReliabilityPage() {
           <h2>
             What is real, and <em>what is not.</em>
           </h2>
+          <p>
+            Four claims about this page, including the two that are limitations. Open any of them.
+          </p>
         </div>
-        <div className="ask-how-grid">
-          <article>
-            <h3>The breaker is real</h3>
+        {/* Unnamed, so these open independently: the point of the section is
+            that a reader can compare what is real against what is simulated,
+            which needs both visible at once. */}
+        <DisclosureGroup label="What on this page is real">
+          <Disclosure summary="The breaker is real" hint="In production">
             <p>
               It guards both integration fetchers in production. When it opens, the stats panels
               render last-good data through the existing stale-payload path rather than an error
               state — and they do it immediately instead of spending eight seconds rediscovering
               that the upstream is down.
             </p>
-          </article>
-          <article>
-            <h3>The metrics are real</h3>
+          </Disclosure>
+          <Disclosure summary="The metrics are real" hint="Prometheus">
             <p>
               Every row is written by the code serving the request, and <code>/api/metrics</code>{" "}
               exposes them as a Prometheus counter and histogram. The counter resets when the
               retention sweep prunes, which is a counter reset — <code>rate()</code> is built to
               detect exactly that, so the type is honest.
             </p>
-          </article>
-          <article>
-            <h3>The chaos is simulated, deliberately</h3>
+          </Disclosure>
+          <Disclosure summary="The chaos is simulated, deliberately" hint="In your tab">
             <p>
               Faults are injected into a dependency that exists only in your tab. There is a
               server-side arm that injects into the real integration path, and it stays off unless{" "}
@@ -387,17 +391,16 @@ export default async function ReliabilityPage() {
               whether the fallback renders, not for production, where the answer would cost a
               visitor their page.
             </p>
-          </article>
-          <article>
-            <h3>The trace buffer is per-instance</h3>
+          </Disclosure>
+          <Disclosure summary="The trace buffer is per-instance" hint="A real limit">
             <p>
               Without a collector, spans live in the memory of one serverless instance and the list
               above shows whichever instance answered. That is the same limitation that made
               in-process counters unusable, and it is not solved here — it is solved by configuring{" "}
               <code>OTEL_EXPORTER_OTLP_ENDPOINT</code>, which is a URL, not a code change.
             </p>
-          </article>
-        </div>
+          </Disclosure>
+        </DisclosureGroup>
       </section>
     </div>
   );

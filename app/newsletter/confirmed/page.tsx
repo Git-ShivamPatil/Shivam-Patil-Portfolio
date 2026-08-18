@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { ArrowUpRight } from "../../../components/icons";
 
 export const metadata: Metadata = {
-  title: "Newsletter — Shivam Patil",
+  title: "Newsletter",
   robots: { index: false, follow: false },
 };
 

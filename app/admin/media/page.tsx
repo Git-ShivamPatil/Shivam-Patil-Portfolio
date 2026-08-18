@@ -6,7 +6,7 @@ import { isStorageConfigured } from "../../../lib/storage/s3";
 import { MediaLibrary } from "../../../components/admin/media-library";
 
 export const metadata: Metadata = {
-  title: "Admin · Media — Shivam Patil",
+  title: "Admin · Media",
   robots: { index: false, follow: false },
 };
 

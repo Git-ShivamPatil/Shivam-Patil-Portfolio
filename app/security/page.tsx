@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "../../lib/seo/metadata";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { readOrFallback } from "../../lib/db-read";
@@ -7,14 +7,15 @@ import { availableKeyVersions, isKmsConfigured } from "../../lib/secops/kms";
 import { samlDemos } from "../../lib/secops/demo";
 import { RULES } from "../../lib/secops/sast";
 import { CLOCK_SKEW_MS } from "../../lib/secops/signing";
+import { Disclosure, DisclosureGroup } from "../../components/ui/disclosure";
 import "./security.css";
 
-export const metadata: Metadata = {
-  title: "Security — Shivam Patil",
+export const metadata = pageMetadata({
+  title: "Security Posture & SBOM",
   description:
-    "A tamper-evident audit ledger that verifies itself on load, envelope encryption with key rotation, a committed SBOM, and a SAML validator demonstrating the signature-wrapping attack that defeats a valid signature.",
-  alternates: { canonical: "/security" },
-};
+    "The headers on every response, the static analysis that runs in CI, and a live CycloneDX inventory of every production dependency this site ships.",
+  path: "/security",
+});
 
 // The ledger verification is a live read and the whole point is that it is
 // current. A cached "chain intact" is worthless.
@@ -214,9 +215,8 @@ export default async function SecurityPage() {
           </p>
         </div>
 
-        <div className="ask-how-grid">
-          <article>
-            <h3>Rotation never decrypts anything</h3>
+        <DisclosureGroup label="Envelope encryption and key rotation">
+          <Disclosure summary="Rotation never decrypts anything" hint="No plaintext">
             <p>
               Rotating unwraps the ~60-byte data key under the old master and rewraps it under the
               new one. The payload is byte-identical afterwards, and the plaintext never exists in
@@ -224,34 +224,38 @@ export default async function SecurityPage() {
               Encrypting directly under a master key would mean decrypting and re-encrypting every
               row instead.
             </p>
-          </article>
-          <article>
-            <h3>Old key versions must stay</h3>
+          </Disclosure>
+          <Disclosure summary="Old key versions must stay" hint="Outage risk">
             <p>
               Every envelope names the version that wrapped it, and all configured versions are
               loaded. Deleting the previous key at rotation time is the single most common way a
               rotation causes an outage: every envelope not yet swept becomes undecryptable, and
               nothing warns you until a read fails.
             </p>
-          </article>
-          <article>
-            <h3>Bound to its record</h3>
+          </Disclosure>
+          <Disclosure summary="Bound to its record" hint="AAD">
             <p>
               The record&rsquo;s identity goes in as additional authenticated data, so a ciphertext
               moved from one row to another stops decrypting. Without it, an attacker with write
               access swaps two users&rsquo; encrypted fields and both decrypt perfectly —
               confidentiality was never the property that would have caught that.
             </p>
-          </article>
-          <article>
-            <h3>Status here</h3>
+          </Disclosure>
+          {/* Open by default: it is the only card whose content is about THIS
+              deployment rather than about the technique, so it is the one a
+              reader should not have to go looking for. */}
+          <Disclosure
+            summary="Status on this deployment"
+            hint={isKmsConfigured() ? "Configured" : "Inert"}
+            defaultOpen
+          >
             <p>
               {isKmsConfigured()
                 ? `Configured, with key version${keyVersions.length === 1 ? "" : "s"} ${keyVersions.join(", ")} loadable and new envelopes wrapped under v${keyVersions[keyVersions.length - 1]}.`
                 : "No master key is configured on this deployment, so the module is inert rather than half-working. A key of the wrong length is refused outright rather than padded — a silently truncated key would 'work' at a fraction of the intended strength."}
             </p>
-          </article>
-        </div>
+          </Disclosure>
+        </DisclosureGroup>
       </section>
 
       <section className="mt-14" data-reveal>
@@ -377,10 +381,18 @@ export default async function SecurityPage() {
           <h2>
             mTLS, <em>and what runs here instead.</em>
           </h2>
+          <p>
+            Four questions, four answers — including the one where this approach is genuinely worse.
+            Open whichever you care about.
+          </p>
         </div>
-        <div className="ask-how-grid">
-          <article>
-            <h3>Why not the real thing</h3>
+        {/* `name="mtls"` makes these mutually exclusive: the four are a single
+            argument read in order, not four independent notes, so holding two
+            open at once helps nobody. The envelope-encryption group above is
+            deliberately NOT named, because there a reader comparing two failure
+            modes should be able to see both. */}
+        <DisclosureGroup label="Mutual TLS and the alternative running here">
+          <Disclosure summary="Why not the real thing" hint="mTLS" name="mtls">
             <p>
               Mutual TLS authenticates the <em>connection</em>: the client presents a certificate
               during the handshake and every byte after it is attributable before the application
@@ -388,26 +400,23 @@ export default async function SecurityPage() {
               edge and never surfaces a client certificate to the function. The blueprint&rsquo;s
               Envoy gateway is where this belongs, and there is no gateway here.
             </p>
-          </article>
-          <article>
-            <h3>What replaces it</h3>
+          </Disclosure>
+          <Disclosure summary="What replaces it" hint="Ed25519" name="mtls">
             <p>
               Ed25519 request signing. A detached signature over method, path, body hash, timestamp
               and nonce, verified before any work is done. The private key never crosses the wire,
               and unlike an HMAC the verifying side holds nothing capable of producing a signature —
               so compromising this server does not let anyone impersonate a client elsewhere.
             </p>
-          </article>
-          <article>
-            <h3>Where it is better</h3>
+          </Disclosure>
+          <Disclosure summary="Where it is better" hint="Binds the body" name="mtls">
             <p>
               It binds the request body, which mTLS does not. mTLS authenticates the channel, so
               anything an authenticated client sends down it is trusted; a signature means a
               compromised proxy cannot alter a request it is permitted to forward.
             </p>
-          </article>
-          <article>
-            <h3>Where it is worse</h3>
+          </Disclosure>
+          <Disclosure summary="Where it is worse" hint="Named, not hidden" name="mtls">
             <p>
               It cannot reject an unauthenticated peer before the body is read, which is a real
               denial-of-service difference, and it pays a verification per request rather than per
@@ -415,8 +424,8 @@ export default async function SecurityPage() {
               cache that is per-instance — genuinely a hole on serverless, and named as one in the
               source rather than left to be assumed closed.
             </p>
-          </article>
-        </div>
+          </Disclosure>
+        </DisclosureGroup>
       </section>
     </div>
   );

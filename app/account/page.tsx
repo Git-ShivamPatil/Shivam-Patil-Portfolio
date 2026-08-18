@@ -5,7 +5,7 @@ import { ProfileForm } from "../../components/account/profile-form";
 import { ChangePasswordForm } from "../../components/account/change-password-form";
 
 export const metadata: Metadata = {
-  title: "Account — Shivam Patil",
+  title: "Account",
   robots: { index: false, follow: false },
 };
 

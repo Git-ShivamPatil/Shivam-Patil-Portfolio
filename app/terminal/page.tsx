@@ -1,14 +1,14 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "../../lib/seo/metadata";
 import Link from "next/link";
 import { Terminal } from "../../components/devex/terminal";
 import { TERMINAL_COMMANDS } from "../../lib/devex/commands";
 
-export const metadata: Metadata = {
-  title: "Terminal — Shivam Patil",
+export const metadata = pageMetadata({
+  title: "Terminal: Browse This Site by Command",
   description:
-    "A working shell for this site: navigate, switch themes, and query the retrieval index from a prompt.",
-  alternates: { canonical: "/terminal" },
-};
+    "A real terminal in the page. Type help, whoami or projects and read this portfolio the way an engineer would rather than by scrolling.",
+  path: "/terminal",
+});
 
 export default function TerminalPage() {
   return (

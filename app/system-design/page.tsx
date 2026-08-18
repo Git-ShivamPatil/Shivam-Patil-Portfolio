@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "../../lib/seo/metadata";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 
@@ -8,14 +8,17 @@ import Link from "next/link";
 const RaftVisualizer = dynamic(() =>
   import("../../components/distsys/raft-visualizer").then((m) => m.RaftVisualizer),
 );
+import { Disclosure, DisclosureGroup } from "../../components/ui/disclosure";
+import { JsonLd } from "../../components/seo/json-ld";
+import { faqJsonLd, breadcrumbJsonLd } from "../../lib/seo/structured-data";
 import "./system-design.css";
 
-export const metadata: Metadata = {
-  title: "System design — Shivam Patil",
+export const metadata = pageMetadata({
+  title: "How This Site Works: System Design",
   description:
-    "How this site is actually built: the request path, the data model, the twenty build phases, and the trade-offs behind each decision.",
-  alternates: { canonical: "/system-design" },
-};
+    "The real architecture behind this site: the request path, the data model, the decisions worth defending, and a Raft leader election running live in the page.",
+  path: "/system-design",
+});
 
 /**
  * The system-design page.
@@ -348,6 +351,16 @@ const DIVERGENCE = [
 export default function SystemDesignPage() {
   return (
     <>
+      {/* The seven decisions are already question-and-answer shaped, and every
+          one of them is rendered on the page — which is the condition Google
+          attaches to FAQPage markup. Nothing here is written for the crawler
+          alone; it is the same DECISIONS array the section below renders. */}
+      <JsonLd
+        data={[
+          breadcrumbJsonLd([{ name: "How this site works", href: "/system-design" }]),
+          faqJsonLd(DECISIONS.map((d) => ({ question: d.title, answer: d.body }))),
+        ]}
+      />
       <section className="page-hero shell">
         <p className="eyebrow">
           <span className="live-dot" />
@@ -425,16 +438,23 @@ export default function SystemDesignPage() {
           <h2>
             Decisions worth <em>defending.</em>
           </h2>
-          <p>The interesting part of a system is usually what it does not do.</p>
+          <p>
+            The interesting part of a system is usually what it does not do. Open any one of these
+            to read the argument.
+          </p>
         </div>
-        <div className="sd-decisions" data-stagger>
+        {/* Seven paragraphs of dense reasoning used to sit open on the page at
+            once, between two SVG diagrams and a live Raft simulator. Collapsed,
+            the section reads as seven questions a visitor can pick from — and
+            the answers are still in the HTML, open or closed, because
+            <details> keeps its content in the DOM. See components/ui/disclosure.tsx. */}
+        <DisclosureGroup label="Architecture decisions">
           {DECISIONS.map((d) => (
-            <article key={d.title} className="sd-decision">
-              <h3>{d.title}</h3>
+            <Disclosure key={d.title} summary={d.title} tone="accent">
               <p>{d.body}</p>
-            </article>
+            </Disclosure>
           ))}
-        </div>
+        </DisclosureGroup>
       </section>
 
       <section className="sd-section shell" data-reveal>

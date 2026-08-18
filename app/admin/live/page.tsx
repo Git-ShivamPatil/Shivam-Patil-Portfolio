@@ -4,7 +4,7 @@ import { LiveDashboard } from "../../../components/admin/live-dashboard";
 import { PRESENCE_TTL_MS } from "../../../lib/realtime/constants";
 
 export const metadata: Metadata = {
-  title: "Admin · Live — Shivam Patil",
+  title: "Admin · Live",
   robots: { index: false, follow: false },
 };
 

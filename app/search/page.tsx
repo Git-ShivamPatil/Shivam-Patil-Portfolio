@@ -4,7 +4,7 @@ import { search } from "../../lib/search";
 import { readOrFallback } from "../../lib/db-read";
 
 export const metadata: Metadata = {
-  title: "Search — Shivam Patil",
+  title: "Search",
   robots: { index: false, follow: true },
 };
 

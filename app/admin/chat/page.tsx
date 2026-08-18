@@ -4,7 +4,7 @@ import { prisma } from "../../../lib/prisma";
 import { ChatConsole, type ConversationSummary } from "../../../components/admin/chat-console";
 
 export const metadata: Metadata = {
-  title: "Admin · Chat — Shivam Patil",
+  title: "Admin · Chat",
   robots: { index: false, follow: false },
 };
 

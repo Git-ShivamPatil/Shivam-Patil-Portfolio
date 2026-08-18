@@ -1,16 +1,16 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "../../lib/seo/metadata";
 import { OlapConsole } from "../../components/dataeng/olap-console";
 import { LineageGraph } from "../../components/dataeng/lineage-graph";
 import { WINDOW_DAYS, recentEventTimes, tumblingWindows } from "../../lib/dataeng/pipeline";
 import { readOrFallback } from "../../lib/db-read";
 import "../../components/dataeng/dataeng.css";
 
-export const metadata: Metadata = {
-  title: "Data — Shivam Patil",
+export const metadata = pageMetadata({
+  title: "Data Pipeline & In-Browser SQL",
   description:
     "The analytics pipeline end to end: a validated lineage DAG, tumbling-window aggregation, and a warehouse export you can query with real SQL in your own browser.",
-  alternates: { canonical: "/data" },
-};
+  path: "/data",
+});
 
 // The window chart is a live read; the rest of the page is static. Ten minutes
 // is short enough that the windows mean something and long enough that opening
@@ -69,12 +69,15 @@ export default async function DataPage() {
             most common way a &ldquo;real-time&rdquo; chart lies. The blueprint names Flink; there
             is no stream processor here and there cannot be one, because a Flink job is a
             long-running process with checkpointed state and this runs on functions that live for
-            seconds. The semantics are the same and the difference is real: this recomputes from
-            the ledger on read, so it is correct and gets slower as the ledger grows, where a true
+            seconds. The semantics are the same and the difference is real: this recomputes from the
+            ledger on read, so it is correct and gets slower as the ledger grows, where a true
             streaming engine holds state between events and answers in constant time.
           </p>
         </div>
-        <ol className="windows" aria-label={`Interactions per five-minute window, ${busiest} at peak`}>
+        <ol
+          className="windows"
+          aria-label={`Interactions per five-minute window, ${busiest} at peak`}
+        >
           {windows.map((point) => (
             <li
               key={point.start}

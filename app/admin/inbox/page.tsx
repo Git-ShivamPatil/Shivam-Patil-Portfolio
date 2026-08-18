@@ -5,7 +5,7 @@ import { MessageStatusSelect } from "../../../components/admin/message-status-se
 import { DeleteButton } from "../../../components/admin/delete-button";
 
 export const metadata: Metadata = {
-  title: "Admin · Inbox — Shivam Patil",
+  title: "Admin · Inbox",
   robots: { index: false, follow: false },
 };
 

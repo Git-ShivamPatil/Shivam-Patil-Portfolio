@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { AsyncLocalStorage } from "node:async_hooks";
 
 /**
@@ -161,11 +162,61 @@ export function recentTraces(limit = 12): { traceId: string; spans: Span[]; star
     .slice(0, limit);
 }
 
+/**
+ * Spans completed on this instance that have not yet been shipped to a
+ * collector. Empty, and never written to, when no collector is configured.
+ *
+ * Separate from `finished` because the two have opposite lifetimes: `finished`
+ * is a rolling window kept deliberately so /reliability has something to show,
+ * and this is a queue that must be emptied exactly once.
+ */
+const globalForPending = globalThis as unknown as { sreSpansPending?: Span[] };
+const pendingExport: Span[] = (globalForPending.sreSpansPending ??= []);
+
+/**
+ * Ship whatever is queued, and clear the queue first.
+ *
+ * The splice happens before the await so a second flush racing this one cannot
+ * send the same spans twice. Losing a batch to a collector outage is the
+ * accepted failure mode; double-counting latency is not.
+ */
+async function flushPending(): Promise<void> {
+  if (pendingExport.length === 0) return;
+  const batch = pendingExport.splice(0, pendingExport.length);
+  await exportSpans(batch);
+}
+
 function retire(span: Span) {
   finished.push(span);
   // Trim from the front rather than letting a long-lived instance grow without
   // bound. splice once rather than shift-per-push: shift is O(n) each time.
   if (finished.length > RING_SIZE * 2) finished.splice(0, finished.length - RING_SIZE);
+
+  // Hand the span to the exporter, if there is one.
+  //
+  // **This wiring was missing, and its absence made a claim on /reliability
+  // false.** `exportSpans` below has always been a complete OTLP/HTTP exporter,
+  // and the page told visitors that setting OTEL_EXPORTER_OTLP_ENDPOINT was "a
+  // URL, not a code change" and that with a collector configured "spans are
+  // exported off-box and the list below is only a local echo". Nothing called
+  // it. A grep for `exportSpans` across the repository returned exactly one
+  // hit: its own definition. Setting the variable changed which sentence
+  // rendered and nothing else.
+  //
+  // The scheduling mirrors lib/sre/red.ts, which solved the same problem for
+  // metrics: register inside `after()` so the export runs once the response has
+  // been sent — an exporter that adds latency to the request it is measuring
+  // has corrupted the measurement — and fall back to an inline flush when
+  // `after()` throws, which it does outside a request scope (a unit test
+  // calling an instrumented function directly). There is no visitor waiting in
+  // that case, so inline is correct there rather than a compromise.
+  if (!isOtlpConfigured()) return;
+  pendingExport.push(span);
+  try {
+    after(() => flushPending());
+  } catch {
+    void flushPending();
+  }
 }
 
 /**

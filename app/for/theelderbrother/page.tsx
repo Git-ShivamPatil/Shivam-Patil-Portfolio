@@ -1,14 +1,14 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "../../../lib/seo/metadata";
 import Link from "next/link";
 import { mailtoHref } from "../../../lib/site-contact";
 import "../for.css";
 
-export const metadata: Metadata = {
-  title: "theelderbrother — Shivam Patil",
+export const metadata = pageMetadata({
+  title: "theelderbrother",
   description:
     "A platform where older men tell younger men how life actually works, so they can choose their days deliberately instead of finding out late.",
-  alternates: { canonical: "/for/theelderbrother" },
-};
+  path: "/for/theelderbrother",
+});
 
 /**
  * The manifesto for an app that does not exist yet.

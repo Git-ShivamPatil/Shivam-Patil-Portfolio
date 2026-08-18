@@ -1,13 +1,15 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "../../lib/seo/metadata";
 import { ArrowUpRight } from "../../components/icons";
 import { CopyButton } from "../../components/copy-button";
 import { LocationMap } from "../../components/location-map";
 import { downloadHref } from "../../lib/analytics/downloads";
 
-export const metadata: Metadata = {
-  title: "Reach out — Shivam Patil",
-  alternates: { canonical: "/reach-out" },
-};
+export const metadata = pageMetadata({
+  title: "Reach Out",
+  description:
+    "Send Shivam Patil a message about a software engineering role, a system worth solving, or a collaboration. It reaches him directly, not a queue.",
+  path: "/reach-out",
+});
 
 interface ContactChannel {
   label: string;

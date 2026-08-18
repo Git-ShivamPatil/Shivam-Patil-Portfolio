@@ -1,0 +1,122 @@
+/* Styling for components/ui/disclosure.tsx.
+
+   Loaded by the component rather than by globals.css, which is the pattern the
+   rest of this project already uses (nav.css, entry-gate.css, terminal.css):
+   the stylesheet arrives with the routes that render the component and stays
+   off the ones that do not. */
+
+.disclosure-group {
+  display: grid;
+  gap: 10px;
+}
+
+.disclosure {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface, var(--bg));
+  overflow: hidden;
+  /* `interpolate-size` lets the body animate from 0 to its intrinsic height
+     without anyone hardcoding a max-height that content later outgrows.
+     Unsupported browsers simply snap open, which is the correct fallback. */
+  transition: border-color 0.2s ease;
+}
+
+.disclosure:hover {
+  border-color: var(--muted);
+}
+
+.disclosure[open] {
+  border-color: var(--muted);
+}
+
+.disclosure-summary {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  cursor: pointer;
+  font-weight: 600;
+  /* The default triangle is replaced by .disclosure-chevron below. `list-style`
+     is the standards way; ::-webkit-details-marker is still needed for Safari
+     versions that predate it. */
+  list-style: none;
+  /* 44px min so the tap target clears the mobile accessibility floor even when
+     the label is a single short word. */
+  min-height: 44px;
+}
+
+.disclosure-summary::-webkit-details-marker {
+  display: none;
+}
+
+.disclosure-summary:focus-visible {
+  outline: 2px solid var(--fg);
+  outline-offset: -2px;
+}
+
+.disclosure-summary-text {
+  flex: 1;
+  min-width: 0;
+  /* Long summaries wrap rather than pushing the chevron off the row. */
+  overflow-wrap: break-word;
+}
+
+.disclosure-hint {
+  flex-shrink: 0;
+  font-family: var(--font-dm-mono), ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* A chevron drawn from two borders rather than an inline SVG: it costs no
+   request, no component, and it rotates with one transform. */
+.disclosure-chevron {
+  flex-shrink: 0;
+  width: 9px;
+  height: 9px;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(45deg) translate(-2px, -2px);
+  transition: transform 0.2s ease;
+}
+
+.disclosure[open] > .disclosure-summary .disclosure-chevron {
+  transform: rotate(-135deg) translate(-2px, -2px);
+}
+
+.disclosure-body {
+  padding: 0 18px 18px;
+  color: var(--prose-soft, var(--muted));
+  line-height: 1.65;
+}
+
+.disclosure-body > * + * {
+  margin-top: 12px;
+}
+
+.disclosure-body ul,
+.disclosure-body ol {
+  display: grid;
+  gap: 8px;
+  padding-left: 20px;
+}
+
+.disclosure-body li {
+  list-style: disc;
+}
+
+/* The accent tone is used where a group of disclosures IS the page section
+   rather than a footnote to it — /system-design's decision list, for example. */
+.disclosure[data-tone="accent"] {
+  background: var(--warm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .disclosure,
+  .disclosure-chevron {
+    transition: none;
+  }
+}

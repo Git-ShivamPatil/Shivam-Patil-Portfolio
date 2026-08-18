@@ -6,7 +6,7 @@ import { ArrowUpRight } from "../../../components/icons";
 import "../../services/services.css";
 
 export const metadata: Metadata = {
-  title: "Booking received — Shivam Patil",
+  title: "Booking received",
   robots: { index: false, follow: false },
 };
 

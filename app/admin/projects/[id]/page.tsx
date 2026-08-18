@@ -5,7 +5,7 @@ import { prisma } from "../../../../lib/prisma";
 import { ProjectForm, type ProjectFormInitial } from "../../../../components/admin/project-form";
 
 export const metadata: Metadata = {
-  title: "Admin · Edit project — Shivam Patil",
+  title: "Admin · Edit project",
   robots: { index: false, follow: false },
 };
 

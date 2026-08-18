@@ -30,17 +30,17 @@ export async function getSkillCategories(): Promise<SkillCategory[]> {
   );
 }
 
-/** Flat name list — used by the homepage's animated skill marquee. */
-export async function getSkillNames(): Promise<string[]> {
-  return readOrFallback(
-    "getSkillNames",
-    async () => {
-      const rows = await prisma.skill.findMany({
-        select: { name: true },
-        orderBy: { order: "asc" },
-      });
-      return rows.map((row) => row.name);
-    },
-    [],
-  );
-}
+/* `getSkillNames()` was removed here.
+ *
+ * It was a live `prisma.skill.findMany` behind readOrFallback, and its doc
+ * comment said it fed "the homepage's animated skill marquee". That marquee is
+ * gone — app/globals.css records `.capabilities`, `.skill-marquee` and
+ * `@keyframes skill-marquee-scroll` leaving with the rest of the homepage's
+ * duplicated sections — so the function had had no caller since. A grep for
+ * the name across every tracked file returned the definition and its own
+ * readOrFallback label, nothing else.
+ *
+ * Worth noting why it mattered more than an unused export usually does: the
+ * comment named a consumer that no longer existed, so the next reader would
+ * have concluded the homepage still renders a skill marquee.
+ */

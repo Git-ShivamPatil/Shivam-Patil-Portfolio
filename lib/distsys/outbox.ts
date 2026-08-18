@@ -24,10 +24,7 @@ import { withLease } from "./lock";
  */
 
 export type OutboxTopic =
-  | "contact.received"
-  | "booking.confirmed"
-  | "newsletter.confirmed"
-  | "index.rebuild";
+  "contact.received" | "booking.confirmed" | "newsletter.confirmed" | "index.rebuild";
 
 export const MAX_ATTEMPTS = 6;
 
@@ -85,7 +82,9 @@ export type Handler = (payload: unknown) => Promise<void>;
  * correct on its own — but it keeps a slow run from stacking up behind itself
  * when the cron fires again.
  */
-async function claim(limit: number): Promise<{ id: string; topic: string; payload: unknown; attempts: number }[]> {
+async function claim(
+  limit: number,
+): Promise<{ id: string; topic: string; payload: unknown; attempts: number }[]> {
   return prisma.$queryRaw`
     WITH due AS (
       SELECT "id" FROM "OutboxEvent"
@@ -184,6 +183,25 @@ export async function outboxDepth(): Promise<Record<string, number>> {
  *
  * A DLQ nobody can drain from is a bin. Attempts reset to zero because the
  * operator is asserting that whatever broke has been fixed.
+ *
+ * **There is currently no caller, and therefore no operator surface.** A grep
+ * for `replayDead` across every tracked file returns only this definition:
+ * app/api/cron/outbox/route.ts imports `drainOutbox`, `outboxDepth` and
+ * `Handler` and nothing else, and there is no admin route for the outbox. So an
+ * event that exhausts MAX_ATTEMPTS lands in DEAD and stays there, and the
+ * comment above describes an intent rather than a capability.
+ *
+ * It is kept rather than deleted because the function is correct and is the
+ * hard half of the job — what is missing is a button. Until that exists, a
+ * DEAD event is replayed by hand:
+ *
+ *   UPDATE "OutboxEvent"
+ *      SET status = 'PENDING', attempts = 0, "nextAttemptAt" = now(), "lastError" = NULL
+ *    WHERE id = '<id>';
+ *
+ * Stated plainly here so the next reader does not go looking for the admin page
+ * that would call this. Deleting it instead would mean re-deriving the reset
+ * semantics later, which is the part worth keeping.
  */
 export async function replayDead(id: string) {
   return prisma.outboxEvent.update({

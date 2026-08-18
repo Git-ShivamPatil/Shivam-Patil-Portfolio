@@ -180,12 +180,19 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
+/* Two lines per link now: the plain-language label, and a sentence saying what
+   the page is. That is what turns twenty nouns into something a stranger can
+   choose from — see the note above the route list in nav-drawer.tsx.
+
+   `align-items: start` rather than `center`, because the rows are no longer
+   one line tall and centring a two-line block against a 44px floor leaves the
+   label floating. */
 .nav-drawer-link {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: grid;
+  gap: 1px;
+  align-items: start;
   min-height: 44px;
-  padding: 0 10px;
+  padding: 7px 10px;
   border-radius: 11px;
   color: var(--fg);
   font-size: 15px;
@@ -195,6 +202,27 @@
     color 0.18s,
     background 0.18s,
     transform 0.18s;
+}
+.nav-drawer-link-label {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.nav-drawer-link-tech {
+  font-family: var(--font-dm-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.nav-drawer-link-blurb {
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: 0;
+  color: var(--prose-soft, var(--muted));
 }
 /* translateX rather than a padding shift, matching .booking-offering:hover and
    .button-text:hover span. Same 3-4px nudge, but it stays off the layout path —
@@ -211,11 +239,10 @@
   background: var(--accent-soft);
 }
 /* The ↗ on the two external links, pushed right so they line up as a column. */
-.nav-drawer-link > span {
-  margin-left: auto;
-  color: var(--muted);
-  font-size: 13px;
-}
+/* Was `.nav-drawer-link > span { margin-left: auto }`, which pushed the old
+   external-link arrow to the right edge. Both new spans are direct children,
+   so that rule would now shove the label and the blurb apart. The arrow is
+   inline inside the label instead. */
 
 /* ---------- foot ---------- */
 .nav-drawer-foot {

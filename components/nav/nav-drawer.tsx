@@ -12,6 +12,8 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { DrawerAuth } from "./drawer-auth";
+import { ROUTE_GROUPS, routesInGroup } from "../../lib/site-routes";
+import { person } from "../../lib/seo/site";
 import "./nav.css";
 
 /**
@@ -29,85 +31,34 @@ import "./nav.css";
  * footer row this drawer replaces.
  */
 
-type DrawerLink = {
-  href: string;
-  label: string;
-  /** Only ever `false`, and only on the `ƒ` routes — see NAV_GROUPS. */
-  prefetch?: false;
-  external?: true;
-};
-
 /**
- * prefetch stays ON for the static/ISR routes: those come off the CDN, so a
- * warm cache is free and navigation is instant. It is OFF for the server-
- * rendered ones, where a prefetch is a full server render plus Neon queries —
- * measured at 538ms (/services), 568ms (/stats) and 384ms (/search) of pure
- * waste. /ask carries it for the same reason: its answer path reads the index
- * status out of the database.
+ * The link set comes from lib/site-routes.ts now, not from a copy kept here.
  *
- * That matters more here than it did in the old header row. The drawer puts
- * nineteen links into the viewport in a single frame when it opens, so every
- * open would otherwise fire three server renders for pages nobody asked for.
+ * It used to be a nineteen-link literal in this file, and the drift that caused
+ * is what motivated the registry: the drawer's list, the homepage hub's list
+ * and the sitemap's list were three hand-maintained versions of the same route
+ * map, and ten indexable pages that the drawer linked were missing from the
+ * sitemap entirely.
+ *
+ * Two things carried over from that literal because they were right:
+ *
+ * - **The prefetch rule.** ON for the static and ISR routes, which come off the
+ *   CDN, so a warm cache is free. OFF for the server-rendered ones, where a
+ *   prefetch is a full server render plus Neon queries — measured at 538ms
+ *   (/services), 568ms (/stats) and 384ms (/search) of pure waste. It matters
+ *   more here than anywhere: the drawer puts every link into the viewport in
+ *   one frame, so without the flags a single open fires several server renders
+ *   for pages nobody asked for. The flags now live on the route objects.
+ *
+ * - **The grouping.** Six groups, re-labelled. "Playground" became "See it
+ *   running", "Profile" became "My work", "Talk" became "Work with me" — and
+ *   every link gained a sentence under it. A drawer of twenty bare nouns is a
+ *   list you have to already understand; the same twenty with a line each is a
+ *   directory you can read.
  */
-const NAV_GROUPS: { label: string; links: DrawerLink[] }[] = [
-  {
-    label: "Work",
-    links: [
-      { href: "/projects", label: "Projects" },
-      { href: "/services", label: "Work with me", prefetch: false },
-    ],
-  },
-  {
-    label: "Signals",
-    links: [
-      { href: "/blog", label: "Blog" },
-      { href: "/system-design", label: "System design" },
-      { href: "/stats", label: "Live stats", prefetch: false },
-      { href: "/ask", label: "Ask the site", prefetch: false },
-    ],
-  },
-  {
-    label: "Playground",
-    links: [
-      { href: "/terminal", label: "Terminal" },
-      { href: "/compute", label: "Compute lab" },
-      { href: "/data", label: "Data pipeline" },
-      // Server-rendered off live reads, so prefetch stays off for the same
-      // reason /stats and /services have it off.
-      { href: "/reliability", label: "Reliability", prefetch: false },
-      { href: "/security", label: "Security", prefetch: false },
-      // Static (revalidate 3600), so prefetch stays on like the other ISR routes.
-      { href: "/edge", label: "Edge & offline" },
-      { href: "/api-lab", label: "API lab" },
-      // Runs twelve live retrievals on render, so prefetch stays off.
-      { href: "/mlops", label: "Retrieval quality", prefetch: false },
-    ],
-  },
-  {
-    label: "Profile",
-    links: [
-      { href: "/about", label: "About" },
-      { href: "/experience", label: "Experience" },
-      { href: "/skills", label: "Skills" },
-      { href: "/achievements", label: "Achievements" },
-      { href: "/certifications", label: "Certifications" },
-      { href: "/resume", label: "Résumé" },
-    ],
-  },
-  {
-    label: "Talk",
-    links: [
-      { href: "/contact", label: "Contact" },
-      { href: "/reach-out", label: "Reach out" },
-    ],
-  },
-  {
-    label: "Elsewhere",
-    links: [
-      { href: "https://github.com/Git-ShivamPatil", label: "GitHub", external: true },
-      { href: "https://www.linkedin.com/in/shivam--patil/", label: "LinkedIn", external: true },
-    ],
-  },
+const EXTERNAL_LINKS = [
+  { href: person.github, label: "GitHub", blurb: "The source for all of this." },
+  { href: person.linkedin, label: "LinkedIn", blurb: "The professional version." },
 ];
 
 /* The client-only gate for the portal, as an external store rather than a
@@ -234,37 +185,56 @@ export function NavDrawer() {
         </div>
 
         <nav className="nav-drawer-nav" aria-label="All sections">
-          {NAV_GROUPS.map((group) => (
-            <section className="nav-drawer-group" key={group.label}>
-              <p className="nav-drawer-group-label">{group.label}</p>
-              {group.links.map((link) =>
-                link.external ? (
-                  <a
-                    key={link.href}
-                    className="nav-drawer-link"
-                    href={link.href}
-                    target="_blank"
-                    rel="noreferrer"
-                    onClick={close}
-                  >
-                    {link.label}
-                    <span aria-hidden="true">↗</span>
-                  </a>
-                ) : (
+          {ROUTE_GROUPS.filter((group) => group.id !== "elsewhere").map((group) => {
+            const routes = routesInGroup(group.id);
+            if (routes.length === 0) return null;
+            return (
+              <section className="nav-drawer-group" key={group.id}>
+                <p className="nav-drawer-group-label">{group.label}</p>
+                {routes.map((route) => (
                   <Link
-                    key={link.href}
+                    key={route.href}
                     className="nav-drawer-link"
-                    href={link.href}
-                    prefetch={link.prefetch}
-                    aria-current={pathname === link.href ? "page" : undefined}
+                    href={route.href}
+                    prefetch={route.prefetch}
+                    aria-current={pathname === route.href ? "page" : undefined}
                     onClick={close}
                   >
-                    {link.label}
+                    <span className="nav-drawer-link-label">
+                      {route.label}
+                      {/* The discipline name, kept as secondary text rather than
+                          dropped. A recruiter scanning for "SRE" or "MLOps"
+                          should still hit it, and those terms are real search
+                          signal — but they lead with the plain words now. */}
+                      {route.technicalLabel ? (
+                        <span className="nav-drawer-link-tech">{route.technicalLabel}</span>
+                      ) : null}
+                    </span>
+                    <span className="nav-drawer-link-blurb">{route.blurb}</span>
                   </Link>
-                ),
-              )}
-            </section>
-          ))}
+                ))}
+              </section>
+            );
+          })}
+
+          <section className="nav-drawer-group">
+            <p className="nav-drawer-group-label">Elsewhere</p>
+            {EXTERNAL_LINKS.map((link) => (
+              <a
+                key={link.href}
+                className="nav-drawer-link"
+                href={link.href}
+                target="_blank"
+                rel="noreferrer noopener"
+                onClick={close}
+              >
+                <span className="nav-drawer-link-label">
+                  {link.label} <span aria-hidden="true">↗</span>
+                </span>
+                <span className="nav-drawer-link-blurb">{link.blurb}</span>
+              </a>
+            ))}
+          </section>
         </nav>
 
         <div className="nav-drawer-foot">

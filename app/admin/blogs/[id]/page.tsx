@@ -5,7 +5,7 @@ import { prisma } from "../../../../lib/prisma";
 import { BlogForm } from "../../../../components/admin/blog-form";
 
 export const metadata: Metadata = {
-  title: "Admin · Edit post — Shivam Patil",
+  title: "Admin · Edit post",
   robots: { index: false, follow: false },
 };
 

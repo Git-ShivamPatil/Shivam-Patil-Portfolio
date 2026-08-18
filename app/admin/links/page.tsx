@@ -7,7 +7,7 @@ import { getGrowthAnalytics } from "../../../lib/growth/links";
 import { GrowthCharts } from "../../../components/admin/growth-charts";
 
 export const metadata: Metadata = {
-  title: "Admin · Growth — Shivam Patil",
+  title: "Admin · Growth",
   robots: { index: false, follow: false },
 };
 

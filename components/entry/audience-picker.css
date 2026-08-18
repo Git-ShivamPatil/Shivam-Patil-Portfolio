@@ -1,0 +1,86 @@
+/* =========================================================================
+   AUDIENCE PICKER — the four entry paths, inline on the homepage.
+
+   Adapted from entry-gate.css, which styled the same four choices as a
+   full-viewport overlay. Everything that existed to make an overlay behave —
+   `position: fixed`, `inset: 0`, `z-index: 200`, the backdrop blur, the scrim,
+   the `:root[data-audience-chosen]` hide rule — is gone, because there is no
+   overlay any more. What survived is the card treatment, which was the good
+   part: see the note at the top of audience-picker.tsx for why the overlay
+   itself did not.
+   ========================================================================= */
+
+.audience-picker {
+  padding-bottom: 24px;
+}
+
+/* Four cards, laid out by available width rather than by a fixed column count.
+   `auto-fit` with a 240px floor gives four across on a desktop, two on a
+   tablet and one on a phone, with no breakpoint doing the deciding — and the
+   labels are sentences, not words, so a cramped multi-column layout wraps them
+   into ragged unequal blocks that read worse than a list. */
+.audience-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.audience-picker-card {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "label arrow"
+    "blurb arrow";
+  align-items: center;
+  gap: 3px 12px;
+  /* Comfortably past the 44px touch floor. */
+  min-height: 92px;
+  padding: 18px 20px;
+  border: 1px solid var(--surface-line, var(--line));
+  border-radius: calc(var(--radius) * 0.7);
+  background: var(--surface, var(--bg));
+  color: var(--fg);
+  text-decoration: none;
+  transition:
+    border-color 0.2s,
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+.audience-picker-card:hover,
+.audience-picker-card:focus-visible {
+  border-color: var(--fg);
+  transform: translateY(-2px);
+  box-shadow: var(--elev-1);
+}
+
+.audience-picker-label {
+  grid-area: label;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.audience-picker-blurb {
+  grid-area: blurb;
+  color: var(--prose-soft, var(--muted));
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.audience-picker-arrow {
+  grid-area: arrow;
+  font-size: 18px;
+  color: var(--muted);
+  transition: transform 0.2s;
+}
+.audience-picker-card:hover .audience-picker-arrow {
+  transform: translateX(4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .audience-picker-card,
+  .audience-picker-arrow {
+    transition: none;
+  }
+  .audience-picker-card:hover {
+    transform: none;
+  }
+}

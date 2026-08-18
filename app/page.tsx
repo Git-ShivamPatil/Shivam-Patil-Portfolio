@@ -1,118 +1,84 @@
 import Link from "next/link";
 import { ArrowUpRight } from "../components/icons";
 import { AnimatedMetric } from "../components/animated-metric";
+import { AudiencePicker } from "../components/entry/audience-picker";
+import { JsonLd } from "../components/seo/json-ld";
 import { getProjects } from "./projects";
-import { jsonForScript } from "../lib/security/escape";
-
-const personJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "Person",
-  name: "Shivam Patil",
-  jobTitle: "Software Development Engineer",
-  url: "https://shivamsfolio.com",
-  sameAs: ["https://www.linkedin.com/in/shivam--patil/", "https://github.com/Git-ShivamPatil"],
-  worksFor: {
-    "@type": "Organization",
-    name: "Tata Consultancy Services",
-  },
-};
+import { pageMetadata } from "../lib/seo/metadata";
+import { personJsonLd, webSiteJsonLd, itemListJsonLd } from "../lib/seo/structured-data";
+import { ROUTE_GROUPS, routesInGroup, SITE_ROUTES } from "../lib/site-routes";
 
 /**
- * The hub grid.
+ * The homepage had **no `metadata` export at all**, so it inherited the root
+ * layout's. That cost it three things:
  *
- * This replaced three sections that each duplicated a page that already
- * existed and did the job better: the project list (now /projects, which owns
- * the filter), the about statement (whose three principles were
- * character-for-character the ones on /about), and the skills marquee (a flat
- * name list, where /skills groups the same data and adds the server-rendered
- * graph). The homepage was carrying weaker copies of half the site, which is
- * why most visitors never left it.
- *
- * Every href here is a route that exists and is rendered by its own page —
- * nothing in this grid is an anchor into this page.
- *
- * `prefetch: false` marks the same routes the nav marks — /services, /stats
- * and /ask (plus /search, which is not in this grid). The first two are
- * server-rendered per request, so a prefetch on hover is a real render nobody
- * asked for; the measured cost of leaving it on is recorded in the nav's own
- * prefetch comment.
+ * - **No canonical.** The page competed in search with its own `?ref=` and
+ *   `?utm_` variants — and P10's referral system generates exactly those, so
+ *   this was not hypothetical.
+ * - **A description that described the site, not the page**, and that the same
+ *   thirty other routes were also using.
+ * - **No mention of a single language.** "C++", "Rust" and "Golang" appeared
+ *   nowhere in the rendered homepage, in the title, or in the description.
  */
-const HUB: { href: string; label: string; copy: string; note: string; prefetch?: false }[] = [
-  {
-    href: "/projects",
-    label: "Projects",
-    copy: "End-to-end builds, each with the architecture behind it, the trade-offs it forced, and the commands to run it.",
-    note: "Case studies",
-  },
-  {
-    href: "/system-design",
-    label: "System design",
-    copy: "How this site actually works: the request path, the data model, and the decisions worth defending.",
-    note: "Raft election, running live",
-  },
-  {
-    href: "/stats",
-    label: "Live stats",
-    copy: "GitHub and LeetCode pulled from their public APIs, cached with a stale-on-error fallback.",
-    note: "Updates itself",
-    prefetch: false,
-  },
-  {
-    href: "/about",
-    label: "About",
-    copy: "Where I came from, what I work on now, and the three principles I keep coming back to.",
-    note: "The longer version",
-  },
-  {
-    href: "/skills",
-    label: "Skills",
-    copy: "The tools I reach for, grouped — plus a graph of which project actually evidences which skill.",
-    note: "Laid out on the server",
-  },
-  {
-    href: "/services",
-    label: "Work with me",
-    copy: "Paid, focused sessions on throughput ceilings, failure modes, and the architecture underneath them.",
-    note: "Book a slot",
-    prefetch: false,
-  },
-  {
-    href: "/blog",
-    label: "Blog",
-    copy: "Write-ups on distributed systems, AI products, and the reasoning behind the decisions.",
-    note: "Notes from the build",
-  },
-  {
-    href: "/ask",
-    label: "Ask",
-    copy: "Hybrid retrieval over everything published here, answered by quoting the site back to you, with sources.",
-    note: "Optional model runs on your machine",
-    prefetch: false,
-  },
-];
+export const metadata = pageMetadata({
+  // **This title carries the name itself, and it has to.** `title.template` in
+  // the root layout appends " — Shivam Patil" to child segments, but Next.js
+  // does not apply a template to the segment that defines it — and app/page.tsx
+  // is that segment. Verified in the build output: every other route rendered
+  // "… — Shivam Patil" while the homepage rendered its bare string.
+  //
+  // So the one page that most needs the name in its title is the one page the
+  // template cannot give it to. Written out in full here, name first, because
+  // the homepage is what ranks for the name.
+  title: "Shivam Patil — Software Engineer | C++, Rust, Go & AI Systems",
+  description:
+    "Shivam Patil builds high-throughput backend platforms and distributed systems in C++, Rust, Go and Python — with six case studies, live demos, and the reasoning behind each decision.",
+  path: "/",
+});
 
-// The project list moved to /projects, but the hero caption still counts it,
-// and that count is read from the database behind a fallback. A build that
-// cannot reach the database prerenders `01 / 00`, so the page must be able to
-// re-render rather than being frozen as static output — the same window
-// /projects carries for the same reason.
+/**
+ * The hub grid, now generated from the route registry.
+ *
+ * It used to be a hand-written array of eight cards. That array was one of three
+ * copies of the site's route map — the drawer had nineteen links, the sitemap
+ * had seventeen paths, and this had eight — and the three had drifted far enough
+ * apart that ten indexable pages appeared in the drawer and in neither of the
+ * others. Reading from `lib/site-routes.ts` means the homepage map, the drawer,
+ * the footer directory and the sitemap cannot disagree again.
+ *
+ * The other change is that it is **grouped** rather than flat. Eight unlabelled
+ * peers asked the visitor to work out which of them they wanted; five headed
+ * groups tell them. "See it running" in particular needed the heading, because
+ * the ten pages under it — a terminal, a WASM benchmark, an in-browser database,
+ * a chaos lab — have nothing in common except that they are all live and all
+ * clickable, which is precisely what the heading now says.
+ */
 export const revalidate = 300;
 
 export default async function Home() {
-  // The count is all the homepage takes from the database now. It goes through
-  // getProjects() rather than a bare count query because that is the read with
-  // the fallback on it; a database blip degrades the caption, not the page.
   const projects = await getProjects();
+
   return (
     <>
-      {/* P13: serialised through jsonForScript rather than JSON.stringify. A
-          JSON string containing "</script" ends the element as far as the HTML
-          parser is concerned, whatever the JSON says. The input here is static
-          today — but that is a property of today's data, not of the code. */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: jsonForScript(personJsonLd) }}
+      {/* Person and WebSite are emitted here rather than in the root layout on
+          purpose: the homepage is the canonical URL for both `@id`s, and every
+          other page's JSON-LD refers back to them by id rather than restating
+          them. See lib/seo/structured-data.ts. */}
+      <JsonLd
+        data={[
+          personJsonLd(),
+          webSiteJsonLd(),
+          itemListJsonLd(
+            "Sections of shivamsfolio.com",
+            SITE_ROUTES.filter((route) => route.href !== "/").map((route) => ({
+              name: route.label,
+              href: route.href,
+              description: route.blurb,
+            })),
+          ),
+        ]}
       />
+
       <section className="hero shell">
         <div className="hero-copy reveal">
           <p className="eyebrow">
@@ -129,9 +95,21 @@ export default async function Home() {
           <h1 data-split>
             Build systems that <em>hold up.</em>
           </h1>
+          {/* The languages are named here, in prose, and that is a deliberate
+              SEO change rather than keyword stuffing.
+
+              Before this, the strings "C++", "Rust" and "Golang" appeared in
+              exactly one place in the entire rendered site: the skill chips on
+              /skills, which come out of the database. The homepage — the page
+              every other one links back to, and the one that ranks for the
+              name — did not contain them at all. A search engine cannot
+              associate a person with a language the person's own front page
+              never mentions. */}
           <p className="hero-intro">
-            I&apos;m Shivam Patil — a software engineer focused on high-throughput backend
-            platforms, distributed systems, and thoughtful AI products.
+            I&apos;m Shivam Patil — a software engineer working in <strong>C++</strong>,{" "}
+            <strong>Rust</strong>, <strong>Go</strong> and <strong>Python</strong> on
+            high-throughput backend platforms, distributed systems, and AI products that have to
+            survive real traffic.
           </p>
           <div className="hero-actions">
             <Link href="/projects" className="button button-solid" data-magnetic>
@@ -207,28 +185,56 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* The map.
+
+          Rendered as five headed groups rather than one flat grid of eight. The
+          headings are the whole point: a visitor who wants to know what was
+          built and a visitor who wants to poke at something live are looking for
+          different things, and an ungrouped card wall made them read all eight
+          to find out which was which. */}
       <section className="section shell" data-reveal>
         <div className="section-heading">
           <p className="eyebrow">The map</p>
           <h2>
-            Everything else, <em>one click away.</em>
+            Everything here, <em>sorted.</em>
           </h2>
           <p>
-            Each card is a page in its own right. This one points at them rather than absorbing
-            them.
+            Every card is a real page with one job. Nothing on this list is a section of this page.
           </p>
         </div>
-        <div className="hub-grid" data-stagger>
-          {HUB.map((item) => (
-            <Link key={item.href} href={item.href} className="hub-card" prefetch={item.prefetch}>
-              <span className="hub-card-label">{item.label}</span>
-              <span className="hub-card-copy">{item.copy}</span>
-              <span className="hub-card-note">{item.note}</span>
-              <ArrowUpRight />
-            </Link>
-          ))}
-        </div>
+
+        {ROUTE_GROUPS.filter((group) => group.id !== "elsewhere").map((group) => {
+          const routes = routesInGroup(group.id).filter((route) => route.href !== "/");
+          if (routes.length === 0) return null;
+          return (
+            <div className="hub-section" key={group.id}>
+              <div className="hub-section-head">
+                <h3>{group.label}</h3>
+                <p>{group.blurb}</p>
+              </div>
+              <div className="hub-grid" data-stagger>
+                {routes.map((route) => (
+                  <Link
+                    key={route.href}
+                    href={route.href}
+                    className="hub-card"
+                    prefetch={route.prefetch}
+                  >
+                    <span className="hub-card-label">{route.label}</span>
+                    <span className="hub-card-copy">{route.blurb}</span>
+                    {route.technicalLabel ? (
+                      <span className="hub-card-note">{route.technicalLabel}</span>
+                    ) : null}
+                    <ArrowUpRight />
+                  </Link>
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </section>
+
+      <AudiencePicker />
 
       <section className="contact-banner shell" data-reveal>
         <div className="contact-banner-grid">

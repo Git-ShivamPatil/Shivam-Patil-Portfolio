@@ -283,27 +283,19 @@
   opacity: 1;
 }
 
-/* ---- decisions ---- */
-.sd-decisions {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 14px;
+/* ---- decisions ----
+
+   `.sd-decisions` / `.sd-decision` styled seven always-open cards in an
+   auto-fit grid. The section is a <Disclosure> list now, which brings its own
+   styling from components/ui/disclosure.css, so only the two things this page
+   wants differently are left: a single column (the summaries are sentences, and
+   two columns of collapsible rows makes the reading order ambiguous) and the
+   page's slightly smaller body type. */
+.sd-section .disclosure-group {
+  gap: 8px;
 }
-.sd-decision {
-  padding: 20px;
-  border: 1px solid var(--surface-line);
-  border-radius: var(--radius);
-  background: var(--surface);
-}
-.sd-decision h3 {
-  margin: 0 0 8px;
-  font-size: 16px;
-  letter-spacing: -0.03em;
-  color: var(--fg);
-}
-.sd-decision p {
+.sd-section .disclosure-body p {
   margin: 0;
-  color: var(--prose-soft);
   font-size: 13.5px;
   line-height: 1.65;
 }

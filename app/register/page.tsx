@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { RegisterForm } from "../../components/auth/register-form";
 
 export const metadata: Metadata = {
-  title: "Register — Shivam Patil",
+  title: "Register",
   robots: { index: false, follow: false },
 };
 

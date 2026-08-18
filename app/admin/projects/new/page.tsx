@@ -3,7 +3,7 @@ import { requireAdmin } from "../../../../lib/auth-guards";
 import { ProjectForm } from "../../../../components/admin/project-form";
 
 export const metadata: Metadata = {
-  title: "Admin · New project — Shivam Patil",
+  title: "Admin · New project",
   robots: { index: false, follow: false },
 };
 
