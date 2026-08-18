@@ -2231,20 +2231,118 @@ rule table matches its own patterns, P13's raw-SQL test matches the rule table,
 and the scanner matches its own test corpus. Two scanners in one repo always
 find each other.
 
-## 42. Resuming this work
+## 42. P23 — Edge and offline (`6795439`)
 
-Both `prisma db push` runs went to the **production** Neon database. Additive
-only — `RequestMetric`, `BreakerTransition`, `AuditEntry`. Nothing was altered
-or dropped.
+`/edge`, `/offline`. New: `lib/edge/waf.ts`, `lib/pwa/outbox.ts`,
+`edge/worker.ts` + `wrangler.toml`, `app/manifest.ts`,
+`components/{edge,pwa}/*`, `tests/p23-edge.test.ts` (27 tests). `public/sw.js`
+substantially rewritten.
 
-State at the time of writing: **P21 and P22 are committed, verified in a
-browser, and green** (lint, typecheck, 470 unit tests, SAST, build). P23–P25 are
-not started. The next phase is P23_EdgeMobile.
+- **One ruleset, two edges.** `lib/edge/waf.ts` has no platform imports at all,
+  so `proxy.ts` runs it live and `edge/worker.ts` (Cloudflare, **written, not
+  deployed** — needs the DNS move) calls the same `evaluate()`.
+- **Probe paths are listed one by one in the proxy matcher.** A catch-all would
+  drag every prerendered page through the proxy and cost the site its static
+  generation. Paths missing from the matcher still 404 naturally; what the
+  matcher adds is a _logged_ block.
+- **PWA.** There was no manifest at all, so the site had never been installable.
+  Now: manifest with shortcuts, offline shell, IndexedDB outbox, and SW
+  registration on every load rather than only for push opt-ins.
+- **The service worker rule:** documents are NEVER served from cache while the
+  network is reachable. Only content-hashed assets are cached. Do not "improve"
+  this into a stale-while-revalidate for HTML.
 
-Local gate for these phases, in order:
+Four things found by running it, not reading it:
+
+1. **Background Sync exists and refuses.** `reg.sync` is present in Chromium and
+   `register()` throws `Background Sync is disabled`. The first version detected
+   the API, trusted it, caught the throw and gave up — so the queue drained
+   _never_. The attempt is now the detection, with a message fallback.
+2. **Cache-first served stale dev code.** Turbopack dev chunk names identify the
+   module, not its contents. Asset caching is off on localhost.
+3. **A literal `../` never reaches the WAF** — the WHATWG URL parser resolves dot
+   segments during parsing. Only the percent-encoded form survives. A test
+   asserts the fact so nobody "fixes" a rule that cannot match.
+4. The status panel reported "Not registered" on the visit that registered it.
+
+## 43. P24 — API infrastructure (`93d671d`)
+
+`/api-lab`, `/api/graphql`, `/api/rpc`, `/api/openapi`. New: `lib/api/*`,
+`components/api/sandbox.tsx`, `tests/p24-api.test.ts` (37 tests).
+
+- **protobuf by hand** — varints, zigzag, length-delimited fields, and the
+  unknown-field skip that makes the format forward-compatible. Tests assert
+  **wire bytes**, not round trips: a codec that is self-consistently wrong
+  passes every round trip. Verified against the live endpoint byte for byte.
+- **Not gRPC**, and it says so in three places. Content type is
+  `application/proto`, framing is Connect's.
+- **GraphQL**: parser + executor for a documented subset. Mutations,
+  subscriptions, fragments, variables and directives are refused **by name**.
+  Depth ≤ 6 and fields ≤ 60, checked before any resolver runs.
+- **OpenAPI 3.1, written by hand** — the reasoning is in `lib/api/openapi.ts`. A
+  test walks the filesystem to assert every documented path still has a route.
+- **Feature flags** evaluate as a pure function; rollout buckets are hashed and
+  salted with the flag key so two flags at 10% pick different people.
+- The sandbox reads `/api/openapi` at runtime and builds itself from it.
+
+## 44. P25 — MLOps (`d3c0dec`)
+
+`/mlops`. New: `lib/mlops/{eval,drift,tokens,goldens}.ts`,
+`components/mlops/model-costs.tsx`, `tests/p25-mlops.test.ts` (35 tests).
+
+P16 had retrieval and no way to measure it. This is the measurement.
+
+**The first live run is the most important thing in this section.** It returned
+42% recall and seven "misses", and that number was wrong twice over:
+
+- **Six of seven judged pages the corpus does not index.** `buildCorpus` covers
+  projects, blog, skills, services, experience, achievements, certifications —
+  **not** `/contact`, `/ask`, `/compute`, `/about`, `/resume`. Those queries
+  measured coverage while reporting a retrieval number.
+- The seventh was the deliberately-unanswerable query, whose MRR is 0 by
+  definition. `scoreAll` counted it as a failure; fixed.
+
+**The judgements were deliberately not edited to match.** Coverage and ranking
+are reported separately because the fixes differ: one is retrieval, the other is
+four lines in `buildCorpus`. Ranking now reads **56% recall over the answerable
+set, with three genuine misses** — `experience`, `skills`, `hire` — all judging
+pages that _are_ indexed. **That is real, open, and the obvious next task.**
+
+Also found: a **hydration mismatch on every `/mlops` load** (`toLocaleString()`
+with no locale — Node said `128,000`, the browser said `1,28,000`), and
+`pnpm sbom` **does not emit a reproducible dependency graph** (same totals,
+edges attached to different parents run to run). The graph is now dropped from
+the committed artifact; P22's own check had passed twice by luck.
+
+## 45. Resuming this work
+
+All three `prisma db push` runs went to the **production** Neon database.
+Additive only — `RequestMetric`, `BreakerTransition`, `AuditEntry`. Nothing
+altered or dropped.
+
+**P21–P25 are all committed, verified in a browser, and green**: lint,
+typecheck, **569 unit tests**, SAST (0 findings across 339 files), SBOM check,
+production build.
 
 ```
 pnpm lint && pnpm typecheck && pnpm test && pnpm security:sast && pnpm security:sbom:check && pnpm build
 ```
 
-E2E still needs `--workers=1` (§33) and still does not cover P17–P25.
+**Nothing has been pushed to origin.** Five phases sit on local `main` ahead of
+the remote. Pushing deploys to production, and that was left as a deliberate
+decision for a human rather than taken while nobody was watching.
+
+Outstanding, highest value first:
+
+1. **Retrieval misses three answerable queries** (§44). `/experience`,
+   `/skills` and `/services` are indexed and do not rank. `/mlops` names them
+   on every load.
+2. **The corpus does not index eight pages** that visitors ask about — see the
+   coverage panel on `/mlops`.
+3. **E2E covers none of P17–P25.** Unchanged and now much larger.
+4. §37 items 1–3 (DNS/Resend, OAuth apps, Razorpay/R2/Cal.com) and item 4 (the
+   booking retry) are all still open.
+5. `app/reliability/page.tsx` uses bare `toLocaleString()`. Harmless — it is a
+   server component, so there is no hydration to mismatch — but it is the same
+   latent trap P25 hit, and would become a bug the day that page gains
+   `"use client"`.
