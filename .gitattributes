@@ -2,3 +2,9 @@
 # settings — a hook file checked out with CRLF fails under Git Bash's `sh`
 # with "$'\r': command not found".
 .husky/* text eol=lf
+
+# P22 — the SBOM is a generated artifact compared byte-for-byte by
+# `pnpm security:sbom:check`. Without this it is committed as LF and checked
+# out as CRLF on Windows, so the staleness check fails on a developer machine
+# while passing in CI, for a dependency tree that has not moved.
+public/sbom.json text eol=lf

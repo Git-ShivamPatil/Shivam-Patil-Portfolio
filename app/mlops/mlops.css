@@ -1,0 +1,268 @@
+/* =========================================================================
+   P25 — RETRIEVAL QUALITY: EVAL TABLE, COST SLIDERS, JUDGEMENT SET
+   Route-scoped. Theme tokens only.
+   ========================================================================= */
+
+.ml-figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1px;
+  margin: 0 0 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--line);
+  overflow: hidden;
+}
+.ml-figures > div {
+  padding: 16px 18px;
+  background: var(--surface);
+}
+.ml-figures dt {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font:
+    500 11px var(--font-dm-mono),
+    monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.ml-figures dd {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 0;
+  color: var(--fg);
+  font:
+    600 25px/1.1 var(--font-manrope),
+    sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.ml-figures dd small {
+  color: var(--muted);
+  font:
+    400 11px var(--font-dm-mono),
+    monospace;
+  overflow-wrap: anywhere;
+}
+/* A miss is marked by weight and a wavy rule, never by hue — the palette has
+   two colours and neither of them is red. */
+.ml-figures > div[data-bad] dd {
+  color: var(--accent-strong);
+  text-decoration: underline;
+  text-decoration-style: wavy;
+  text-underline-offset: 5px;
+}
+
+.ml-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.ml-table {
+  width: 100%;
+  border-collapse: collapse;
+  font:
+    400 12.5px var(--font-dm-mono),
+    monospace;
+}
+.ml-table th,
+.ml-table td {
+  padding: 11px 14px;
+  text-align: right;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--line);
+  color: var(--fg);
+}
+.ml-table thead th {
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.ml-table tbody th {
+  text-align: left;
+  font-weight: 400;
+  white-space: normal;
+  min-width: 240px;
+}
+.ml-table tbody tr:last-child th,
+.ml-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.ml-table td[data-bad] {
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+
+.ml-note,
+.ml-empty {
+  margin: 16px 0 0;
+  color: var(--muted);
+  font:
+    400 13.5px/1.75 var(--font-manrope),
+    sans-serif;
+}
+.ml-note strong {
+  color: var(--fg);
+  font-weight: 600;
+}
+.ml-note code,
+.ml-empty code {
+  font:
+    400 12.5px var(--font-dm-mono),
+    monospace;
+  color: var(--accent-strong);
+}
+.ml-empty {
+  padding: 18px 20px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+}
+
+.ml-finding {
+  margin-top: 18px;
+  padding: 20px 22px;
+  border: 1px dashed var(--accent);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.ml-finding h3 {
+  margin: 0 0 10px;
+  color: var(--fg);
+  font:
+    600 16px var(--font-manrope),
+    sans-serif;
+}
+.ml-finding p {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font:
+    400 13.5px/1.75 var(--font-manrope),
+    sans-serif;
+}
+.ml-finding p:last-child {
+  margin-bottom: 0;
+}
+.ml-finding strong {
+  color: var(--fg);
+  font-weight: 600;
+}
+.ml-finding code {
+  font:
+    400 12.5px var(--font-dm-mono),
+    monospace;
+  color: var(--accent-strong);
+}
+.ml-gap code {
+  display: inline-block;
+  margin: 3px 5px 0 0;
+  padding: 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+.ml-source {
+  margin-top: 16px;
+}
+.ml-source summary {
+  color: var(--muted);
+  font:
+    500 12px var(--font-dm-mono),
+    monospace;
+  cursor: pointer;
+}
+.ml-source summary:hover {
+  color: var(--fg);
+}
+.ml-goldens {
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 12px;
+}
+.ml-goldens li {
+  display: grid;
+  gap: 5px;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.ml-goldens code {
+  color: var(--accent-strong);
+  font:
+    500 12.5px var(--font-dm-mono),
+    monospace;
+}
+.ml-goldens span {
+  color: var(--muted);
+  font:
+    400 12.5px/1.7 var(--font-manrope),
+    sans-serif;
+}
+
+/* ---------------------------------------------------------------- costs */
+
+.ml-costs {
+  display: grid;
+  gap: 14px;
+}
+.ml-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 18px;
+}
+.ml-controls label {
+  display: grid;
+  gap: 8px;
+}
+.ml-controls span {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--muted);
+  font:
+    500 11.5px var(--font-dm-mono),
+    monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.ml-controls em {
+  color: var(--fg);
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+}
+.ml-controls input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.ml-notes {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+.ml-notes li {
+  display: grid;
+  gap: 4px;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.ml-notes strong {
+  color: var(--fg);
+  font:
+    600 13px var(--font-manrope),
+    sans-serif;
+}
+.ml-notes span {
+  color: var(--muted);
+  font:
+    400 12.5px/1.7 var(--font-manrope),
+    sans-serif;
+}

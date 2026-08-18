@@ -153,6 +153,15 @@ export const NAVIGATION_COMMANDS: Command[] = [
       "openapi swagger rest graphql subgraph federation sdl grpc protobuf proto rpc feature flags sandbox console",
   },
   {
+    id: "nav-mlops",
+    label: "Retrieval quality",
+    href: "/mlops",
+    kind: "navigate",
+    group: "Go to",
+    keywords:
+      "mlops eval recall mrr ndcg retrieval rag drift psi tokens cost quantized llm webllm embedding",
+  },
+  {
     id: "nav-system",
     label: "System design",
     href: "/system-design",

@@ -150,12 +150,25 @@ function normalise(sbom: Sbom): string {
     sbom.components.sort((a, b) => refOf(a).localeCompare(refOf(b)));
   }
 
-  if (sbom.dependencies) {
-    for (const edge of sbom.dependencies) {
-      edge.dependsOn?.sort((a, b) => a.localeCompare(b));
-    }
-    sbom.dependencies.sort((a, b) => (a.ref ?? "").localeCompare(b.ref ?? ""));
-  }
+  // **The dependency graph is dropped, and it took a flaky check to find out
+  // why.** `pnpm sbom` does not emit a reproducible graph: run it twice on an
+  // unchanged lockfile and the edge counts match exactly — 340 nodes, 339
+  // edges, 236 leaves — while individual edges move between parents. In two
+  // consecutive runs here, `call-bind-apply-helpers@1.0.2` was attached to a
+  // different node each time.
+  //
+  // Sorting cannot fix that. Sorting normalises *order*; this is a difference
+  // in *assignment*, and the first version of this file sorted both the edge
+  // list and each `dependsOn` array and still produced a different document
+  // every run. The P22 commit passed its own check twice by luck.
+  //
+  // So the artifact carries what is stable — the component list, which is what
+  // every vulnerability scanner keys on via `purl` — and omits what is not.
+  // CycloneDX makes `dependencies` optional precisely because not every
+  // ecosystem can produce it reliably. A committed graph that changes on every
+  // CI run would make the staleness gate fire constantly, and a gate that
+  // cries wolf is a gate somebody deletes.
+  delete sbom.dependencies;
 
   const identity = (sbom.components ?? []).map(refOf).join("\n");
   const digest = createHash("sha256").update(identity).digest("hex");
@@ -169,6 +182,23 @@ function normalise(sbom: Sbom): string {
 const serialised = normalise(generate());
 const count = JSON.parse(serialised).components?.length ?? 0;
 
+/**
+ * Compare ignoring line endings.
+ *
+ * The committed blob is LF; git checks it out as CRLF on Windows. So a
+ * byte-for-byte comparison passes in CI and fails on every developer machine
+ * here, reporting a stale SBOM when nothing about the dependency tree has
+ * changed. That is the same "scanner that cries wolf" failure the SAST rules
+ * were tuned to avoid — a check nobody can pass locally is a check that gets
+ * removed from the workflow.
+ *
+ * `.gitattributes` pins the file to LF as well, so the working tree stops
+ * disagreeing in the first place. This normalisation is the belt to that
+ * braces: it makes the check correct even in a checkout configured differently.
+ */
+const sameContent = (left: string, right: string) =>
+  left.replace(/\r\n/g, "\n") === right.replace(/\r\n/g, "\n");
+
 if (process.argv.includes("--check")) {
   let existing = "";
   try {
@@ -177,9 +207,21 @@ if (process.argv.includes("--check")) {
     console.error("public/sbom.json does not exist. Run `pnpm security:sbom`.");
     process.exit(1);
   }
-  if (existing !== serialised) {
+  if (!sameContent(existing, serialised)) {
+    // Name the first difference. "It is stale" without saying what moved sends
+    // the reader to regenerate and eyeball a 15,000-line diff, and the answer
+    // is almost always one added or removed package.
+    const before = existing.replace(/\r\n/g, "\n").split("\n");
+    const after = serialised.split("\n");
+    const at = before.findIndex((line, index) => line !== after[index]);
+
     console.error(
       "public/sbom.json is stale — dependencies changed without the SBOM being regenerated.\n" +
+        (at === -1
+          ? `  Line counts differ: ${before.length} committed, ${after.length} generated.\n`
+          : `  First difference at line ${at + 1}:\n` +
+            `    committed: ${before[at] ?? "(end of file)"}\n` +
+            `    generated: ${after[at] ?? "(end of file)"}\n`) +
         "Run `pnpm security:sbom` and commit the result.",
     );
     process.exit(1);

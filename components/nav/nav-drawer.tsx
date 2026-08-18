@@ -79,6 +79,8 @@ const NAV_GROUPS: { label: string; links: DrawerLink[] }[] = [
       // Static (revalidate 3600), so prefetch stays on like the other ISR routes.
       { href: "/edge", label: "Edge & offline" },
       { href: "/api-lab", label: "API lab" },
+      // Runs twelve live retrievals on render, so prefetch stays off.
+      { href: "/mlops", label: "Retrieval quality", prefetch: false },
     ],
   },
   {
