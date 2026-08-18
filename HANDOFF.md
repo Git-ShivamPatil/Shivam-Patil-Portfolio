@@ -2328,9 +2328,19 @@ production build.
 pnpm lint && pnpm typecheck && pnpm test && pnpm security:sast && pnpm security:sbom:check && pnpm build
 ```
 
-**Nothing has been pushed to origin.** Five phases sit on local `main` ahead of
-the remote. Pushing deploys to production, and that was left as a deliberate
-decision for a human rather than taken while nobody was watching.
+**Deployed.** Pushed to `origin/main` on 18 Aug; Vercel built in 49s and all
+five pages plus `/offline`, `/manifest.webmanifest`, `/sbom.json` and
+`/api/openapi` answer 200 on production. GraphQL returns real project data and
+refuses mutations by name; the protobuf frame round-trips.
+
+**One thing production revealed that local could not.** The WAF's probe-path
+rule is **shadowed by Vercel's own managed firewall** and never executes:
+`/xmlrpc.php` returns 403 with `X-Vercel-Mitigated: deny`, not the 404 the rule
+would produce. The rule is kept — `edge/worker.ts` and any self-hosted
+deployment have no such firewall in front of them — but `/edge` and
+`lib/edge/waf.ts` now say so rather than claiming a behaviour the live site does
+not exhibit. Everything else in the filter (traversal, scanner agents,
+oversized headers on the dynamic surface) still runs.
 
 Outstanding, highest value first:
 

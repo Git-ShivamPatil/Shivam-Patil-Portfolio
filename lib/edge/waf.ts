@@ -44,6 +44,14 @@ const ALLOW: Verdict = { action: "allow", rule: "none", status: 200 };
  * **404 rather than 403.** A 403 confirms something is filtering; a 404 is what
  * the scanner would get anyway from a site that simply does not have the file.
  * Telling an attacker which of their requests tripped a rule is free help.
+ *
+ * **In production this rule is shadowed and never runs.** Verified against the
+ * live site after deploying: `/xmlrpc.php` and `/wp-login.php` come back 403
+ * with `X-Vercel-Mitigated: deny`, which is Vercel's own managed firewall
+ * blocking at its edge before any application code is invoked. The rule is kept
+ * because it is not Vercel-specific — `edge/worker.ts` and any self-hosted
+ * deployment from the Dockerfile have no such firewall in front of them — but
+ * nothing on this deployment observes its 404.
  */
 const PROBE_PATHS =
   /^\/(?:wp-admin|wp-login|wp-content|wp-includes|xmlrpc\.php|\.env|\.git\/|\.aws\/|phpmyadmin|administrator\/|typo3\/|vendor\/phpunit|cgi-bin\/|\.svn\/|config\.json|credentials|id_rsa)/i;

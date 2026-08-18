@@ -102,13 +102,21 @@ export default function EdgePage() {
 
         <div className="ask-how-grid">
           <article>
-            <h3>What is live</h3>
+            <h3>What is live — and what shadows it</h3>
             <p>
               The filter runs in <code>proxy.ts</code> on every request to <code>/api</code>,{" "}
-              <code>/admin</code> and <code>/account</code>, plus a hand-listed set of probe paths —{" "}
-              <code>/wp-admin</code>, <code>/xmlrpc.php</code>, <code>/.env</code> and their
-              relatives. Probes get a 404, not a 403: a 403 confirms something is filtering, and a
-              404 is what a site that simply lacks the file would return anyway.
+              <code>/admin</code> and <code>/account</code>, plus a hand-listed set of probe paths.
+              It answers a probe with a 404 rather than a 403, on the reasoning that a 403 confirms
+              something is filtering while a 404 is what a site lacking the file returns anyway.
+            </p>
+            <p>
+              <strong>
+                On production you will get a 403, because this code never runs for those paths.
+              </strong>{" "}
+              Vercel&rsquo;s own managed firewall mitigates them at the edge first —{" "}
+              <code>X-Vercel-Mitigated: deny</code> — so the probe rule here is shadowed entirely.
+              Verified after deploying, not assumed. It still does the work the platform does not:
+              traversal, scanner user-agents and oversized headers on the dynamic surface.
             </p>
           </article>
           <article>
