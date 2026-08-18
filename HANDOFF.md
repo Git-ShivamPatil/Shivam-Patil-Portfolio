@@ -2342,17 +2342,72 @@ deployment have no such firewall in front of them — but `/edge` and
 not exhibit. Everything else in the filter (traversal, scanner agents,
 oversized headers on the dynamic surface) still runs.
 
-Outstanding, highest value first:
+## 46. Retrieval was half-broken since P16, and the evaluation found it (`32f3f68`)
 
-1. **Retrieval misses three answerable queries** (§44). `/experience`,
-   `/skills` and `/services` are indexed and do not rank. `/mlops` names them
-   on every load.
-2. **The corpus does not index eight pages** that visitors ask about — see the
-   coverage panel on `/mlops`.
-3. **E2E covers none of P17–P25.** Unchanged and now much larger.
-4. §37 items 1–3 (DNS/Resend, OAuth apps, Razorpay/R2/Cal.com) and item 4 (the
+Three faults, one of them serious enough that it had been costing this site
+roughly half its search quality for two phases.
+
+**The lexical retriever had never matched anything, for any query, ever.**
+`websearch_to_tsquery('english', 'token bucket redis')` compiles to
+`'token' & 'bucket' & 'redi'` — **every term required**. No chunk contains every
+word of a natural-language question, so `textSearch` returned `[]` for
+everything and RRF fused a single list. Nothing errored; `/ask` kept answering;
+the codebase kept calling itself hybrid.
+
+The tell was arithmetic: every fused score was exactly `1/(60+rank)` and every
+result was tagged `[vector]`. Fixed with a two-pass — strict `websearch`
+first (so quoted phrases and `-exclusion` still work), OR over stopword-stripped
+terms only when strict finds nothing.
+
+**Every page written as prose ranked first for its own question; every chunk
+derived from a record missed.** `/skills` was `"Backend: Go, Rust"` against
+"what technologies does he know"; `/services` never contained "hire" or
+"consulting"; `/experience` opened with a job title where the question asks
+about employment. One sentence of framing each. **If you add a data-derived
+source, give it a sentence that names what it is.**
+
+**Fourteen pages had never been indexed.** They exist only as JSX, so nothing
+enumerated them. `SITE_PAGES` in `lib/ai/corpus.ts` now describes each in prose.
+**A new page written as a component will not be searchable until it is added
+there** — `isIndexed()` in `lib/mlops/goldens.ts` is the guard, and a test
+asserts every judged URL is covered.
+
+One fault was in the measurement: the evaluation retrieved k _chunks_ and then
+deduplicated to pages, which penalises pages split across many chunks. Now
+retrieves deep and reduces to pages.
+
+```
+recall  42% → 76%     MRR 0.24 → 0.74     nDCG 0.46 → 0.77     misses 7 → 0
+```
+
+Verified live: `/contact`, `/skills`, `/services` and the rate-limiter project
+each rank first for their own question on production.
+
+New tooling — a score with no ranking behind it cannot be debugged:
+
+```
+pnpm mlops:eval             report
+pnpm mlops:eval --explain   what displaced the right answer
+pnpm mlops:eval:gate        non-zero below a deliberately loose floor
+pnpm mlops:why "<q>" [/url] terms, matching retriever, shared vocabulary
+```
+
+**Re-run `pnpm ai:index` after any content change**, then `pnpm mlops:eval`.
+The index is a full rebuild by design (IDF is a property of the whole corpus).
+
+## 47. Outstanding
+
+1. **E2E covers none of P17–P25.** Unchanged, and now much larger.
+2. §37 items 1–3 (DNS/Resend, OAuth apps, Razorpay/R2/Cal.com) and item 4 (the
    booking retry) are all still open.
-5. `app/reliability/page.tsx` uses bare `toLocaleString()`. Harmless — it is a
+3. **The golden set is twelve queries.** Enough to catch an outright break —
+   it caught three — and nowhere near enough to separate two good rankings. The
+   gate floor is loose for that reason. Growing it means writing judgements by
+   hand.
+4. `app/reliability/page.tsx` uses bare `toLocaleString()`. Harmless — it is a
    server component, so there is no hydration to mismatch — but it is the same
-   latent trap P25 hit, and would become a bug the day that page gains
-   `"use client"`.
+   latent trap P25 hit, and becomes a bug the day that page gains `"use client"`.
+5. The embedding is a hashed bag of terms with no subword information, so a
+   misspelling hashes to an unrelated bucket. The typo query now passes on the
+   lexical half alone. Character n-grams would fix it properly and would change
+   every vector.
