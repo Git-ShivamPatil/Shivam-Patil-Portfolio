@@ -2411,3 +2411,133 @@ The index is a full rebuild by design (IDF is a property of the whole corpus).
    misspelling hashes to an unrelated bucket. The typo query now passes on the
    lexical half alone. Character n-grams would fix it properly and would change
    every vector.
+
+## 48. P26 — findability: one route registry, real metadata, no gate at the door
+
+The brief was four things: make it smaller, organise it so anyone can find
+anything, make it interactive, and make it rank. Three of the four turned out to
+have one root cause.
+
+### The route map existed three times, and had drifted
+
+The drawer listed nineteen links, the homepage hub listed eight, `app/sitemap.ts`
+listed seventeen paths. Diffing the sitemap against the `page.tsx` files on disk
+found **ten public, indexable routes missing from it entirely**: `/api-lab`,
+`/compute`, `/data`, `/edge`, `/mlops`, `/reliability`, `/security`, `/services`,
+`/stats`, `/terminal`. The same ten were reachable only from a client-rendered
+drawer, so the sitemap was realistically their only discovery path.
+
+`lib/site-routes.ts` is the single source now. The sitemap, drawer, header,
+footer directory and homepage map are views onto it. **Adding a route means
+adding it there and nowhere else** — that is the rule this section exists to
+protect.
+
+Every entry carries plain-language wording plus a `technicalLabel`. "MLOps" and
+"Compute lab" are inside-the-industry names; they lead with "How good are the
+answers?" and "Run code in your browser", with the discipline name as secondary
+text so it still reads as signal.
+
+### Metadata: the template, and the one page it cannot reach
+
+`title` was a plain string, so thirty pages hand-wrote "— Shivam Patil" and it
+had drifted ("API — Shivam Patil" titled a page called "API lab"). Worse, **no
+page below the root declared `openGraph`** — and a page that declares one
+replaces the parent's object rather than merging — so every link to any page but
+the homepage unfurled with the homepage's title and description.
+
+`lib/seo/metadata.ts` builds the whole tag set from a title and a description.
+The root layout owns `title.template`.
+
+**`title.template` does not apply to the segment that defines it.** `app/page.tsx`
+is that segment, so the homepage — the page that most needs the name — is the one
+page the template cannot give it to. Its title spells the name out. Verified in
+build output, where every other route rendered the suffix and the homepage did
+not. If a future edit "tidies" that duplication away, the homepage loses its name.
+
+### The languages were nowhere
+
+"C++", "Rust" and "Golang" appeared in the entire rendered site only in the
+database-backed skill chips on `/skills` — and `/skills` had **no `revalidate`**,
+so it was `○ (Static)`, frozen at build time. CI builds with no database on
+purpose, so a build that prerendered an empty list and served it until the next
+deploy is a state this project already produces. That would take every one of
+those terms off the site. `/skills` revalidates hourly now, and the homepage
+names the languages in prose.
+
+Structured data went from one five-field `Person` to Person + `knowsAbout`,
+WebSite + SearchAction, BreadcrumbList, ItemList, BlogPosting, CreativeWork and
+an FAQPage — the last built from the `DECISIONS` array `/system-design` already
+renders, which is the condition Google attaches to that type.
+
+### The gate is gone
+
+`EntryGate` covered every page on every load with a four-way "Who's reading?",
+not persisted, one option labelled "theelderbrother". The four destinations are
+good pages; requiring a stranger to choose between them before seeing any of the
+site was the defect. `components/entry/audience-picker.tsx` offers the same four
+inline on the homepage: real anchors, a server component, no scroll lock, no
+focus trap. `playwright.config.ts` lost its `sp:audience` seed — a workaround
+that outlived its problem — and `e2e/entry-gate.spec.ts` became
+`e2e/audience-picker.spec.ts`.
+
+The footer is a directory again, reversing the P12-era removal. The reasoning is
+in the file: with the drawer as the only route source, the whole site sat behind
+a hydration boundary and a click. The homepage went from roughly a dozen internal
+links to 84.
+
+### Two claims the site was making that were false
+
+- **`exportSpans` had no call site anywhere in the repo**, while `/reliability`
+  told visitors that setting `OTEL_EXPORTER_OTLP_ENDPOINT` was "a URL, not a code
+  change" and that spans were then "exported off-box". Setting it changed which
+  sentence rendered and nothing else. Now wired from `retire()` through
+  `after()`, mirroring how `lib/sre/red.ts` already flushes metrics.
+- **BUILD-SPEC.md's divergence table was wrong on six of fourteen rows**, still
+  reporting the AI layer, Docker, Playwright, Lighthouse, axe, Sentry and the PWA
+  stack as absent. README.md's page list omitted seventeen routes. Both rewritten
+  against the tree.
+
+### Interaction
+
+`components/ui/disclosure.tsx` is `<details>`-based on purpose: a server
+component, no JavaScript, and content that stays in the DOM open or closed so a
+crawler reads it either way. Applied to `/system-design` (7 decisions),
+`/security` (2 sections), `/reliability`, and every case study's implementation
+list. `/skills` gained a live search + category chips, filtering with `hidden`
+rather than rebuilding the list — same crawler reason.
+
+### Removed, each verified by grep first
+
+`getSkillNames()` and `getProjectTags()` (live Prisma queries whose comments
+named a homepage marquee and filter that no longer exist), `renewLease()` (no
+caller; the module header also pointed at a `redlock.ts` that has never existed),
+and `whatisinthiswebsite.md` (byte-identical duplicate of BUILD-SPEC.md, the file
+BUILD-SPEC.md exists to absorb).
+
+`replayDead()` was **kept**. It has no caller and no operator surface, but the
+function is the hard half; its comment now says so plainly and gives the SQL to
+drain a DEAD event by hand.
+
+## 49. Outstanding after P26
+
+1. **The per-route CSS split was measured and not taken.** The global sheet is
+   ~96KB and loads on every route. Mapping each `/* ===== page ===== */` section
+   to the files using its classes showed only about **10KB is provably
+   single-route** (about, experience, certifications, achievements, resume,
+   gallery, project filter, search). The large blocks are shared: `.contact-form`
+   is used by the footer newsletter, `.reveal` is global, the error-page block
+   styles `.page-hero` which most routes use. 10KB of 96KB for regression risk
+   across thirty pages is a bad trade **as a manual split** — the version worth
+   doing is per-route CSS driven by the route registry, not hand-surgery.
+2. **E2E still covers none of P17–P25**, and now none of P26 either beyond
+   `e2e/audience-picker.spec.ts`. Nothing asserts the footer directory renders,
+   that the sitemap contains every registry route, or that no page title
+   double-suffixes — all three are cheap and all three broke during this pass.
+3. **`replayDead()` still has no operator surface** (§48).
+4. The four-dimension audit that drove this pass only completed one dimension —
+   dead weight. Speed, IA, interactivity and SEO were done by hand and by
+   measurement instead; a rerun may still find things.
+5. `public/wasm/kernel.wat` (30KB) ships in `public/` and is served publicly,
+   read only by `tests/p19-lowlevel.test.ts`. It belongs outside `public/`, with
+   the test path updated.
+6. §47 items are all still open.
