@@ -191,28 +191,51 @@ export function NavDrawer() {
             return (
               <section className="nav-drawer-group" key={group.id}>
                 <p className="nav-drawer-group-label">{group.label}</p>
-                {routes.map((route) => (
-                  <Link
-                    key={route.href}
-                    className="nav-drawer-link"
-                    href={route.href}
-                    prefetch={route.prefetch}
-                    aria-current={pathname === route.href ? "page" : undefined}
-                    onClick={close}
-                  >
-                    <span className="nav-drawer-link-label">
-                      {route.label}
+                {routes.map((route) => {
+                  // Stable per-route ids so the label can be the accessible
+                  // NAME and the blurb the accessible DESCRIPTION. See below.
+                  const slug = route.href.replace(/\W+/g, "-");
+                  return (
+                    <Link
+                      key={route.href}
+                      className="nav-drawer-link"
+                      href={route.href}
+                      prefetch={route.prefetch}
+                      aria-current={pathname === route.href ? "page" : undefined}
+                      // Without these two, the accessible name is every string
+                      // inside the link concatenated — "Projects Case studies
+                      // Six builds, each with the reasoning behind it." — for
+                      // all twenty-two links. A screen-reader user arrowing the
+                      // drawer would hear three lines per item before learning
+                      // what the next one is.
+                      //
+                      // Splitting them is what the two attributes are for: the
+                      // name is what the link IS, the description is detail a
+                      // reader can wait for or skip. Both point at visible text
+                      // rather than inventing a string, so nothing is announced
+                      // that is not on screen.
+                      aria-labelledby={`nav-label-${slug}`}
+                      aria-describedby={`nav-blurb-${slug}`}
+                      onClick={close}
+                    >
+                      <span className="nav-drawer-link-label" id={`nav-label-${slug}`}>
+                        {route.label}
+                      </span>
                       {/* The discipline name, kept as secondary text rather than
                           dropped. A recruiter scanning for "SRE" or "MLOps"
                           should still hit it, and those terms are real search
-                          signal — but they lead with the plain words now. */}
+                          signal — but they lead with the plain words now.
+                          Outside the labelled span, so it does not become part
+                          of the link's name. */}
                       {route.technicalLabel ? (
                         <span className="nav-drawer-link-tech">{route.technicalLabel}</span>
                       ) : null}
-                    </span>
-                    <span className="nav-drawer-link-blurb">{route.blurb}</span>
-                  </Link>
-                ))}
+                      <span className="nav-drawer-link-blurb" id={`nav-blurb-${slug}`}>
+                        {route.blurb}
+                      </span>
+                    </Link>
+                  );
+                })}
               </section>
             );
           })}

@@ -52,12 +52,85 @@ export function personJsonLd(): JsonLd {
       addressRegion: person.location.region,
       addressCountry: person.location.country,
     },
-    worksFor: { "@type": "Organization", name: person.employer },
+    worksFor: {
+      "@type": "Organization",
+      name: person.employer,
+      // A bare `name` leaves Google to guess which of the several thousand
+      // organisations with similar names this is. The URL disambiguates it
+      // against an entity that already exists in the knowledge graph, which is
+      // the whole mechanism by which employment gets attributed to a person.
+      url: "https://www.tcs.com",
+    },
     alumniOf: {
       "@type": "CollegeOrUniversity",
       name: person.alumniOf,
     },
+    /**
+     * `hasOccupation` rather than `jobTitle` alone.
+     *
+     * `jobTitle` is a string. `Occupation` is an entity, and it is the field
+     * that carries the two things a string cannot: the skill set attached to
+     * the role, and where the role is performed. Both are above `knowsAbout` in
+     * specificity — `knowsAbout` says "this person knows about Rust", an
+     * Occupation with `skills` says "this person is employed as a software
+     * engineer, and Rust is part of that job".
+     *
+     * `jobTitle` stays as well. They are not alternatives; consumers that read
+     * one frequently do not read the other.
+     */
+    hasOccupation: {
+      "@type": "Occupation",
+      name: person.role,
+      occupationalCategory: "15-1252.00 Software Developers",
+      skills: [...coreTopics].join(", "),
+      occupationLocation: {
+        "@type": "City",
+        name: person.location.city,
+      },
+    },
+    /**
+     * `sameAs` is the identity-resolution field: it is how a crawler decides
+     * that the "Shivam Patil" on this domain and the one on GitHub are one
+     * person rather than two. LinkedIn first, deliberately — it is the profile
+     * with the strongest independent corroboration of the employment claim
+     * above, and the order is a weak but real hint at which to trust.
+     */
     sameAs: [person.linkedin, person.github],
+  };
+}
+
+/**
+ * The certifications page, as a list of credentials.
+ *
+ * `EducationalOccupationalCredential` is the type Google documents for exactly
+ * this: a course or exam a person has completed. The key field is
+ * `credentialCategory`, and the key discipline is that `url` must point at
+ * something a human can actually use to verify the claim — which is why this
+ * takes the same `credentialUrl` the page renders as a link, and omits the
+ * field entirely rather than inventing one when a certificate has no public
+ * verification page.
+ */
+export function credentialsJsonLd(
+  items: { name: string; issuer: string; year?: string; credentialUrl?: string }[],
+): JsonLd {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "Certifications",
+    numberOfItems: items.length,
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      item: {
+        "@type": "EducationalOccupationalCredential",
+        name: item.name,
+        credentialCategory: "certificate",
+        recognizedBy: { "@type": "Organization", name: item.issuer },
+        ...(item.year ? { dateCreated: item.year } : {}),
+        ...(item.credentialUrl ? { url: item.credentialUrl } : {}),
+        about: { "@id": PERSON_ID },
+      },
+    })),
   };
 }
 

@@ -74,8 +74,9 @@ export default async function SkillsPage() {
           <em>under pressure.</em>
         </h1>
         <p>
-          The languages, frameworks, and infrastructure I use to take a system from a design sketch
-          to something running reliably in production.
+          <strong>C++, Rust, Go and Python</strong>, and the infrastructure around them —
+          Kubernetes, Docker, PostgreSQL, AWS. Search the list, filter it by category, or read the
+          graph below to see which project actually evidences which skill.
         </p>
       </section>
 

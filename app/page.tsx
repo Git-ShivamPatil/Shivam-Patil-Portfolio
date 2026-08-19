@@ -30,9 +30,9 @@ export const metadata = pageMetadata({
   // So the one page that most needs the name in its title is the one page the
   // template cannot give it to. Written out in full here, name first, because
   // the homepage is what ranks for the name.
-  title: "Shivam Patil — Software Engineer | C++, Rust, Go & AI Systems",
+  title: "Shivam Patil — Software Engineer | C++, Rust, Go & AI",
   description:
-    "Shivam Patil builds high-throughput backend platforms and distributed systems in C++, Rust, Go and Python — with six case studies, live demos, and the reasoning behind each decision.",
+    "Software engineer building high-throughput backend platforms and distributed systems in C++, Rust, Go and Python. Six case studies, with the reasoning.",
   path: "/",
 });
 

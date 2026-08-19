@@ -1,6 +1,8 @@
 import { pageMetadata } from "../../lib/seo/metadata";
 import { ArrowUpRight } from "../../components/icons";
 import { downloadHref } from "../../lib/analytics/downloads";
+import { JsonLd } from "../../components/seo/json-ld";
+import { breadcrumbJsonLd } from "../../lib/seo/structured-data";
 
 export const metadata = pageMetadata({
   title: "Résumé",
@@ -22,6 +24,7 @@ const RESUME_DOWNLOAD = downloadHref("resume");
 export default function ResumePage() {
   return (
     <>
+      <JsonLd data={breadcrumbJsonLd([{ name: "Résumé", href: "/resume" }])} />
       <section className="page-hero shell">
         <p className="eyebrow">Résumé</p>
         <h1>
@@ -29,7 +32,10 @@ export default function ResumePage() {
           <br />
           <em>one page.</em>
         </h1>
-        <p>Preview it below, or download the latest PDF directly.</p>
+        <p>
+          Software Development Engineer — <strong>C++, Rust, Go, Python</strong>, distributed
+          systems and applied AI, based in Mumbai. Read it below, or download the PDF.
+        </p>
       </section>
 
       <div className="resume-page-embed shell">

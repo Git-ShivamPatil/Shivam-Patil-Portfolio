@@ -53,8 +53,9 @@ export default async function ProjectsPage() {
           <em>made tangible.</em>
         </h1>
         <p>
-          End-to-end system designs — from architecture and implementation decisions to commands for
-          getting each project running.
+          Six end-to-end builds in <strong>Rust, Go, C++ and Python</strong> — a distributed rate
+          limiter, an LLM inference server, an agentic AI runtime, a secure RAG platform. Each one
+          carries its architecture, the trade-offs it forced, and the commands to run it yourself.
         </p>
       </section>
 

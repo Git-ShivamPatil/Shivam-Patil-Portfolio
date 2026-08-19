@@ -8,7 +8,7 @@ import "./ask.css";
 export const metadata = pageMetadata({
   title: "Ask This Site Anything",
   description:
-    "Retrieval-augmented search over this portfolio: hybrid vector and full-text retrieval, extractive answers with sources, and an optional model that runs in your browser.",
+    "Retrieval-augmented search over this portfolio: hybrid vector and full-text retrieval, answers quoted back with sources, and an optional in-browser model.",
   path: "/ask",
 });
 

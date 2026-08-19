@@ -73,14 +73,34 @@ export function Footer() {
             <div key={group.id} className="footer-directory-group">
               <h2 className="footer-directory-label">{group.label}</h2>
               <ul>
-                {routes.map((route) => (
-                  <li key={route.href}>
-                    <Link href={route.href} prefetch={route.prefetch}>
-                      <span className="footer-directory-link-label">{route.label}</span>
-                      <span className="footer-directory-link-blurb">{route.blurb}</span>
-                    </Link>
-                  </li>
-                ))}
+                {routes.map((route) => {
+                  // Same name/description split as the drawer: without it the
+                  // link's accessible name is the label AND the sentence under
+                  // it, so a screen-reader user hears two lines for each of
+                  // twenty-six links before reaching the next one. Both ids
+                  // point at visible text, so nothing is announced that is not
+                  // on screen. `f-` prefixed so they cannot collide with the
+                  // drawer's ids, which are built from the same hrefs and are
+                  // in the document at the same time.
+                  const slug = route.href.replace(/\W+/g, "-");
+                  return (
+                    <li key={route.href}>
+                      <Link
+                        href={route.href}
+                        prefetch={route.prefetch}
+                        aria-labelledby={`f-label-${slug}`}
+                        aria-describedby={`f-blurb-${slug}`}
+                      >
+                        <span className="footer-directory-link-label" id={`f-label-${slug}`}>
+                          {route.label}
+                        </span>
+                        <span className="footer-directory-link-blurb" id={`f-blurb-${slug}`}>
+                          {route.blurb}
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           );

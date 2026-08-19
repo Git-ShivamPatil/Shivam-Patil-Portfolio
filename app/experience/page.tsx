@@ -1,5 +1,7 @@
 import { pageMetadata } from "../../lib/seo/metadata";
 import { education, experience } from "../experience";
+import { JsonLd } from "../../components/seo/json-ld";
+import { breadcrumbJsonLd } from "../../lib/seo/structured-data";
 
 export const metadata = pageMetadata({
   title: "Experience & Work History",
@@ -11,6 +13,7 @@ export const metadata = pageMetadata({
 export default function ExperiencePage() {
   return (
     <>
+      <JsonLd data={breadcrumbJsonLd([{ name: "Experience", href: "/experience" }])} />
       <section className="page-hero shell">
         <p className="eyebrow">Experience</p>
         <h1>
@@ -18,7 +21,12 @@ export default function ExperiencePage() {
           <br />
           <em>happened.</em>
         </h1>
-        <p>A timeline of roles, and the education that led into them.</p>
+        <p>
+          <strong>Software Development Engineer at Tata Consultancy Services</strong> since January
+          2025 — 13+ production REST APIs serving 10,000+ requests a day, 33% lower response
+          latency, and the RAG evaluation work behind a live RBI chatbot. The full timeline, and the
+          degree that led into it.
+        </p>
       </section>
 
       <div className="timeline shell">

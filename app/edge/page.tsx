@@ -6,7 +6,7 @@ import "./edge.css";
 export const metadata = pageMetadata({
   title: "Edge, Offline & Progressive Web App",
   description:
-    "The WAF that runs on every API request, a Cloudflare Worker sharing its ruleset, an offline outbox backed by Background Sync, and a WebUSB lab that mostly refuses.",
+    "The WAF on every API request, a Cloudflare Worker sharing its ruleset, an offline outbox on Background Sync, and a WebUSB lab that mostly refuses to run.",
   path: "/edge",
 });
 

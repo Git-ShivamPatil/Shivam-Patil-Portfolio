@@ -3,6 +3,8 @@ import { pageMetadata } from "../../lib/seo/metadata";
 import { ArrowUpRight } from "../../components/icons";
 import { AboutPhoto } from "../../components/about-photo";
 import { BrandWatermark } from "../../components/brand-watermark";
+import { JsonLd } from "../../components/seo/json-ld";
+import { breadcrumbJsonLd, profilePageJsonLd } from "../../lib/seo/structured-data";
 
 export const metadata = pageMetadata({
   title: "About",
@@ -14,6 +16,11 @@ export const metadata = pageMetadata({
 export default function AboutPage() {
   return (
     <>
+      {/* ProfilePage is the type Google documents for "a page about one
+          person", and it is what makes /about eligible to be treated as the
+          authoritative profile rather than as one more page that mentions a
+          name. It points at the same Person `@id` the homepage declares. */}
+      <JsonLd data={[profilePageJsonLd(), breadcrumbJsonLd([{ name: "About", href: "/about" }])]} />
       <BrandWatermark placement="bottom-right" />
       <section className="about-hero shell">
         <div className="about-hero-copy" data-reveal>

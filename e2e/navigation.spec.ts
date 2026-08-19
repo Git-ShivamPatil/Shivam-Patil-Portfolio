@@ -27,17 +27,27 @@ import { test, expect, type Page } from "@playwright/test";
 /**
  * Every route reachable from the header, in the order the header lists them.
  *
- * This list was seven entries, then two. The top bar now carries System
- * design, Search, the theme toggle and a phone/email icon pair — and the two
- * icons are `tel:` and `mailto:` anchors, not routes, so there is exactly one
- * in-site link left in the header to sweep. Everything else moved into the
- * drawer.
+ * This list was seven entries, then two, then one, and is four again — the four
+ * routes lib/site-routes.ts marks `primary`. The bar also carries Search, the
+ * theme toggle and a phone/email icon pair; the last two are `tel:` and
+ * `mailto:` anchors rather than routes, so they cannot be swept.
  *
- * `.first()` at the call site is load-bearing: this label also appears inside
- * the drawer. The drawer is portalled to the end of <body>, so the header's
- * copy is always first in DOM order.
+ * **Kept in sync by hand, deliberately.** Importing `primaryRoutes()` here would
+ * make the test restate the implementation and pass no matter what either one
+ * said. Writing the labels out means a rename has to be made twice, and the
+ * second time is the one that asks whether the new wording is any good.
+ *
+ * `.first()` at the call site is load-bearing: every one of these labels also
+ * appears in the drawer and in the footer directory. The drawer is portalled to
+ * the end of <body> and the footer is below <main>, so the header's copy is
+ * always first in DOM order.
  */
-const NAV_ROUTES = [{ name: "System design", path: "/system-design" }];
+const NAV_ROUTES = [
+  { name: "About me", path: "/about" },
+  { name: "Projects", path: "/projects" },
+  { name: "What I know", path: "/skills" },
+  { name: "Send me a message", path: "/reach-out" },
+];
 
 /**
  * Routes that are now reachable ONLY by opening the drawer.
@@ -49,10 +59,10 @@ const NAV_ROUTES = [{ name: "System design", path: "/system-design" }];
  * at them anywhere in the repo before the drawer was built.
  */
 const DRAWER_ROUTES = [
-  { name: "Projects", path: "/projects" },
-  { name: "Live stats", path: "/stats" },
-  { name: "Skills", path: "/skills" },
-  { name: "Terminal", path: "/terminal" },
+  { name: "Blog", path: "/blog" },
+  { name: "My coding activity", path: "/stats" },
+  { name: "Certifications", path: "/certifications" },
+  { name: "Type commands at it", path: "/terminal" },
 ];
 
 /** Opens the drawer and waits for it to actually be interactive. */
@@ -218,7 +228,7 @@ test.describe("client-side navigation", () => {
     await openDrawer(page);
     await page
       .locator("aside#site-drawer")
-      .getByRole("link", { name: "Skills", exact: true })
+      .getByRole("link", { name: "What I know", exact: true })
       .click();
 
     await expect(page.locator("button.nav-trigger")).toHaveAttribute("aria-expanded", "false");
@@ -242,7 +252,7 @@ test.describe("client-side navigation", () => {
     await openDrawer(page);
     await page
       .locator("aside#site-drawer")
-      .getByRole("link", { name: "About", exact: true })
+      .getByRole("link", { name: "About me", exact: true })
       .click();
     await assertPageIsNotBlank(page, "/about");
 
@@ -257,15 +267,15 @@ test.describe("client-side navigation", () => {
     // A driver that arms an element once and never re-arms it passes a
     // single-pass sweep and fails a real visit.
     //
-    // Was /contact, reached from a header link that no longer exists — the bar
-    // now carries a `mailto:` icon there instead, which is not a route and
-    // cannot be swept. /system-design is the one in-site link the header still
-    // has, so this keeps testing what it was written to test: a round trip made
-    // by clicking, twice.
+    // Was /contact, then /system-design, and is /projects now — each time
+    // because the header stopped carrying the previous one. The header has four
+    // in-site links again, and /projects is the one whose target has the most
+    // `[data-reveal]` content to re-arm, which is what this test is actually
+    // about: a round trip made by clicking, twice.
     await page.goto("/");
     for (let visit = 0; visit < 2; visit++) {
-      await page.getByRole("link", { name: "System design", exact: true }).first().click();
-      await assertPageIsNotBlank(page, "/system-design");
+      await page.getByRole("link", { name: "Projects", exact: true }).first().click();
+      await assertPageIsNotBlank(page, "/projects");
       await page.getByRole("link", { name: "Shivam Patil home" }).first().click();
       await assertPageIsNotBlank(page, "/");
     }
