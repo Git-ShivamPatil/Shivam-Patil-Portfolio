@@ -2647,3 +2647,94 @@ stylesheet); they are named there so the next palette move finds them.
    that file's header silently stops being true and no test notices.
 4. The audit workflow that drove P26 completed one of five dimensions; speed,
    IA, interactivity and SEO were done by hand. A rerun may still find things.
+
+## 52. P26c — the SBOM check could not pass anywhere but the machine that wrote the file
+
+### What was red, and for how long
+
+`build` → `SBOM is current`. Not the E2E specs, and not anything P26 introduced:
+`c0dbee7` and `32f3f68`, both from before that work, fail identically.
+
+**The consequence was larger than one red step.** `SBOM is current` runs before
+`Build`, and both `e2e` and `lighthouse` declare `needs: build`. So they reported
+**skipped**, which reads as neutral in the GitHub UI and actually means *never
+executed*. The E2E suite, the axe pass and the Lighthouse budget had not run in
+weeks. §51 recorded "E2E covers none of P17–P25" as a coverage gap; the truth was
+worse — the coverage that did exist was not running either.
+
+When triaging CI here, read "skipped" as "did not run", not as "fine".
+
+### The cause
+
+`--check` compared the generated document with the committed one byte for byte.
+That can never pass across operating systems, and the dependency tree has nothing
+to do with it.
+
+`pnpm sbom` fills `description`, `authors` and `licenses` from each package's own
+package.json, which requires the package to be **installed**. Optional
+platform-specific dependencies are only installed for the host platform.
+Measured on the committed artifact, which was generated on Windows:
+
+    components                n     description  authors  licenses
+    platform-independent      305   291          226      304
+    win32 / wasm32 variants     8     2            2        3
+    linux / darwin / musl      27     0            0        0
+
+On an Ubuntu runner the last two rows swap. CI named the first difference at
+line 1023 — `"description": "emnapi runtime"`, present locally because
+`@emnapi/runtime` is installed on Windows and absent on Linux.
+
+This is the same mistake `normalise()` already documents one paragraph earlier.
+The dependency graph was dropped for being unstable across *runs*, with the note
+that the artifact must carry what is stable and omit what is not. This was that
+failure across *platforms*, and it hid because the document still diffed cleanly
+against itself on the machine that produced it.
+
+### The fix, and why not the obvious one
+
+`--check` compares the sorted `purl` list. A purl carries namespace, name and
+version — exactly what "a dependency moved" means, exactly what a scanner keys
+on, and the only part of the document independent of where it was generated.
+
+The obvious alternative — strip `description`/`authors`/`licenses` from the
+written artifact too — was rejected because **`app/security/page.tsx` reads
+`licenses`** to build its licence breakdown. Dropping them to satisfy the gate
+would have deleted a real feature to fix a test.
+
+Failure output now names the packages added and removed instead of a line number
+into a 15,000-line file.
+
+### How it was verified
+
+Three ways, on Windows, before pushing:
+
+1. Unchanged tree → passes, byte-identical.
+2. Artifact mutated to look Linux-generated (metadata stripped from win32/wasm32
+   components, added to linux/musl ones) → passes, and says explicitly why it is
+   not byte-identical.
+3. One real package swapped for a fake → fails, naming both by purl.
+
+Plus the whole build job as CI runs it: `pnpm lint`, `typecheck`, `test` (592),
+`security:sast`, `security:sbom:check`.
+
+**Reproducing CI locally: two traps.** `npx pnpm security:sbom:check` fails with
+a wall of `npm error invalid:` lines that have nothing to do with the SBOM —
+`scripts/sbom.mts` resolves the package manager from `npm_execpath`, so under npm
+it shells out to `npm sbom` against a pnpm tree. Use `corepack pnpm` or `pnpm`.
+And `E2E_BASE_URL=https://www.shivamsfolio.com` is not a usable suite run:
+Vercel's firewall intercepts the automated browser, timing out 29 of 32 tests
+that pass locally in seconds.
+
+## 53. Outstanding after P26c
+
+1. **The committed SBOM is Windows-generated, so its licence data is for the
+   wrong platform.** /security counts licences across components, and the 27
+   linux/musl variants — the ones that actually ship on Vercel — contribute
+   none, because they are not installed on the machine that ran the generator.
+   The gate no longer cares, but the page is undercounting. Regenerating it on
+   Linux (a CI job, or a container) would fix the numbers.
+2. §49 and §51 items are otherwise unchanged: the CSS split, `replayDead` having
+   no operator surface, `kernel.wat` in `public/`, and no E2E coverage of
+   P17–P25.
+3. Now that E2E runs again, expect it to have opinions it has not been able to
+   voice in weeks. Its last real execution predates P17.

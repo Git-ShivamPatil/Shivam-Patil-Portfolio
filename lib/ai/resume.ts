@@ -86,12 +86,36 @@ export async function analyseJobDescription(rawText: string): Promise<ResumeAnal
   const text = rawText.slice(0, MAX_JD_LENGTH);
   const requirements = extractRequirements(text);
 
-  const skills = await prisma.skill.findMany({ select: { name: true } });
+  /**
+   * The vocabulary of technologies this site actually claims.
+   *
+   * Built from the skills table **and** from every published project's `stack`
+   * and `tags`, because those are three places the site makes the same kind of
+   * claim and only one of them was being read.
+   *
+   * Redis is the case that showed it. It is named in two projects' stacks and
+   * rendered on both case-study pages, but there is no Redis row in the skills
+   * table — so a job description asking for Redis had its `redi` token treated
+   * as an ordinary English word. Anything a project lists is something the site
+   * is publicly claiming to have used; a matcher that ignores it is reading
+   * less of the site than a visitor does.
+   */
+  const [skills, projects] = await Promise.all([
+    prisma.skill.findMany({ select: { name: true } }),
+    prisma.project.findMany({ where: { published: true }, select: { stack: true, tags: true } }),
+  ]);
+
   const skillIndex = new Map<string, string>();
-  for (const skill of skills) {
-    // Indexed by the skill's own tokens so "Node.js" in the corpus matches
-    // "node" in a JD, and a multi-word skill matches on its head term.
-    for (const token of tokenize(skill.name)) skillIndex.set(token, skill.name);
+  const indexClaim = (claim: string) => {
+    // Indexed by the claim's own tokens so "Node.js" in the corpus matches
+    // "node" in a JD, and a multi-word claim matches on its head term.
+    // First writer wins, so a curated skill name beats a stack entry naming the
+    // same thing less tidily.
+    for (const token of tokenize(claim)) if (!skillIndex.has(token)) skillIndex.set(token, claim);
+  };
+  for (const skill of skills) indexClaim(skill.name);
+  for (const project of projects) {
+    for (const entry of [...project.stack, ...project.tags]) indexClaim(entry);
   }
 
   const jdTokens = new Set(tokenize(text));
@@ -120,23 +144,55 @@ export async function analyseJobDescription(rawText: string): Promise<ResumeAnal
   }
 
   const corpusTerms = new Set(documentFrequency.keys());
-  for (const skill of skills) {
-    for (const token of tokenize(skill.name)) {
-      corpusTerms.add(token);
-      // A named skill is distinctive by definition, whatever its frequency.
-      documentFrequency.set(token, Math.min(documentFrequency.get(token) ?? 1, 1));
-    }
+  for (const token of skillIndex.keys()) {
+    corpusTerms.add(token);
+    // A named technology is distinctive by definition, whatever its frequency.
+    documentFrequency.set(token, Math.min(documentFrequency.get(token) ?? 1, 1));
   }
 
   /**
    * Distinctive enough that matching it means something.
    *
-   * A quarter of the corpus is the line. Below it a term identifies a subject;
-   * above it, it identifies the fact that this is a software portfolio.
+   * Two gates, and the second exists because the first was not enough.
+   *
+   * **Document frequency.** A quarter of the corpus is the line. Below it a
+   * term identifies a subject; above it, it identifies the fact that this is a
+   * software portfolio.
+   *
+   * **Naming a technology.** Document frequency separates common words from
+   * rare ones. It cannot separate a rare *technology* from a rare *English
+   * word*, and on a corpus this size that gap is wide enough to drive the
+   * original bug straight back through.
+   *
+   * "Deep knowledge of COBOL mainframe migration" came back COVERED again, and
+   * the comment above about document frequency fixing it was written after the
+   * first time it did. The measured cause: of that line's terms, the only ones
+   * the corpus contains at all are `deep` and `knowledg`. Both are rare enough
+   * to clear the frequency gate — "knowledge" is concentrated in the one RAG
+   * case study, which is precisely what makes it *look* distinctive — so
+   * retrieval ran, returned that case study because it says "knowledge" a lot,
+   * and a requirement about a language this site has never touched was reported
+   * as proven. `cobol` and `mainframe` matched nothing and contributed nothing;
+   * the two filler words did all the work.
+   *
+   * So a term must also look like it names a technology: either a token of a
+   * skill the site actually claims, or techy by shape. `skillIndex` is built
+   * from the skills table a few lines above and is exactly the right authority
+   * — `postgresql`, `redi` and `kubernet` are in it, `deep` and `knowledg` are
+   * not.
+   *
+   * This errs toward reporting a gap, and that is the correct direction for
+   * this feature. Over-reporting says "no evidence found" about something the
+   * site covers, which a reader can check in one click. Under-reporting claims
+   * experience that does not exist, on a page whose whole argument is that it
+   * shows its working.
    */
+  const namesTechnology = (term: string): boolean => skillIndex.has(term) || TECHY.test(term);
+
   const distinctive = (term: string): boolean => {
     const df = documentFrequency.get(term);
-    return df !== undefined && df <= Math.max(1, chunks.length * 0.25);
+    if (df === undefined || df > Math.max(1, chunks.length * 0.25)) return false;
+    return namesTechnology(term);
   };
 
   const missingSkills = [...jdTokens]
