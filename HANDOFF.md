@@ -2541,3 +2541,109 @@ drain a DEAD event by hand.
    read only by `tests/p19-lowlevel.test.ts`. It belongs outside `public/`, with
    the test path updated.
 6. §47 items are all still open.
+
+## 50. P26b — the CI that P26 turned red, and the SEO copy
+
+### What was actually red
+
+Five specs in `e2e/navigation.spec.ts`, all for the same reason: they named
+navigation labels that P26 renamed. `NAV_ROUTES` still expected the header's
+single "System design" link; `DRAWER_ROUTES` expected "Live stats", "Skills" and
+"Terminal", which became "My coding activity", "What I know" and "Type commands
+at it".
+
+Nothing else was red. `lint`, `typecheck`, `test`, `security:sast`,
+`security:sbom:check` and `build` all pass and did throughout — verified by
+running each locally. `lighthouse` is `continue-on-error: true` and cannot turn a
+run red.
+
+**Two traps when reproducing this.**
+
+1. `pnpm security:sbom:check` run through `npx` fails with a wall of `npm error
+   invalid:` lines. That is not a real failure: `scripts/sbom.mts` resolves the
+   package manager from `npm_execpath`, so invoking it under npm makes it shell
+   out to `npm sbom` against a pnpm-installed tree. Run it through pnpm.
+2. `E2E_BASE_URL=https://www.shivamsfolio.com pnpm test:e2e` is **not** a usable
+   reproduction. Vercel's firewall intercepts the automated browser: 29 of 32
+   tests timed out at `page.goto`, including tests that pass locally in 12s. The
+   post-deploy smoke mode documented in playwright.config.ts works for a handful
+   of hand-run checks and not for the suite.
+
+Local a11y failures on `/`, `/about` and `/system-design` were resource
+contention on the developer machine, not defects — `page.goto` timing out while
+a `next build` ran alongside. Each passes in isolation in ~12s, and axe reported
+zero violations throughout. Re-run with `--workers=1` and nothing else running
+before believing an a11y failure here.
+
+### The a11y defect the specs led to
+
+Both the drawer and the footer directory render a label, an optional discipline
+name and a sentence inside one `<a>`. The accessible name is every string in the
+link concatenated, so a screen-reader user arrowing the drawer heard "Projects
+Case studies Six builds, each with the reasoning behind it." — three lines per
+item, twenty-two items, before learning what the next one was.
+
+Fixed with `aria-labelledby` (the label span) and `aria-describedby` (the blurb
+span). Both point at visible text, so nothing is announced that is not on screen.
+**This is why `exact: true` locators work in the specs** — if either attribute is
+removed, five specs fail with an unhelpful "strict mode violation" rather than
+anything naming the real problem.
+
+### tests/p26-seo.test.ts
+
+Nineteen checks, each corresponding to a defect that existed in this tree.
+Unit tests rather than E2E on purpose: they are properties of the source, so
+they fail in the `build` job in 40ms instead of ten minutes into E2E. The two
+worth knowing about:
+
+- **`registers every public page that exists on disk`** — walks `app/` for
+  `page.tsx` and diffs against the registry. `NOT_IN_REGISTRY` is an explicit
+  allowlist rather than a wildcard, so adding a public route and forgetting
+  `lib/site-routes.ts` fails rather than being absorbed.
+- **`keeps the name in the homepage title`** — guards the non-obvious Next.js
+  rule that `title.template` does not apply to the segment defining it. The
+  homepage title looks like it duplicates the suffix; removing that duplication
+  silently strips the name from the one page that ranks for it.
+
+### The SEO copy
+
+**Every H1 stays.** They are the site's voice — "Where the work happened.",
+"Tools I reach for under pressure." — and each is a better heading than any
+keyword phrase. What changed is the sentence *under* each, which was connective
+tissue naming nothing anyone would search for. `/experience`'s lede now names the
+role, employer, dates and numbers; `/skills`, `/projects` and `/resume` name C++,
+Rust, Go and Python. Same position, same length, same voice, carrying facts.
+
+Four pages were outside the lengths Google renders (homepage title 61, homepage
+description 182, `/edge` 163, `/ask` 168) and were rewritten rather than
+truncated. All 27 public pages now sit inside 30–60 and 70–160, asserted.
+
+`hasOccupation` replaced `jobTitle`-only as the professional signal — an entity
+carrying the skill set and location, which a string cannot. `worksFor` gained a
+URL so the employer resolves against a known entity. ProfilePage on `/about`.
+
+`credentialsJsonLd` exists and **emits nothing today**, because every entry in
+`app/certifications.ts` is `pending: true`. That is the correct output: marking
+up an unearned credential is what earns a structured-data manual action, and the
+page renders those as "coming soon". The block appears when a flag flips.
+
+Per-route social cards for `/projects/[slug]` and `/blog/[slug]`. This also fixed
+a palette that had been wrong since the theme changed — the card was still
+olive-and-bone (`#111110` / `#d8fe67`) while the site is pink-and-cream, so the
+first impression looked like a different site than the link opened. Those values
+are duplicated in `lib/seo/og-image.tsx` by necessity (Edge runtime, no
+stylesheet); they are named there so the next palette move finds them.
+
+## 51. Outstanding after P26b
+
+1. §49 items 1 (the CSS split), 3 (`replayDead` has no operator surface), 5
+   (`kernel.wat` in `public/`) and 6 are unchanged.
+2. **E2E still covers none of P17–P25.** P26 now has `e2e/audience-picker.spec.ts`
+   and `tests/p26-seo.test.ts`; the interactive pages still have none.
+3. Nothing asserts the `<details>` disclosures are reachable by keyboard or that
+   their content is in the DOM when closed. Both are properties of the native
+   element rather than of our code, which is why `components/ui/disclosure.tsx`
+   uses it — but the day someone swaps in a React accordion, the SEO argument in
+   that file's header silently stops being true and no test notices.
+4. The audit workflow that drove P26 completed one of five dimensions; speed,
+   IA, interactivity and SEO were done by hand. A rerun may still find things.
