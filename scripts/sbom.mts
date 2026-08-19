@@ -199,34 +199,97 @@ const count = JSON.parse(serialised).components?.length ?? 0;
 const sameContent = (left: string, right: string) =>
   left.replace(/\r\n/g, "\n") === right.replace(/\r\n/g, "\n");
 
+/**
+ * The set of packages, as a sorted `purl` list.
+ *
+ * **This, and not the whole document, is what `--check` compares — and getting
+ * that wrong is what kept CI red for weeks while the check passed on every
+ * developer machine.**
+ *
+ * `pnpm sbom` populates `description`, `authors` and `licenses` by reading each
+ * package's own package.json, which requires the package to be **installed**.
+ * Optional platform-specific dependencies are only installed for the host
+ * platform, so those three fields are present for a different subset of
+ * components on every operating system. Measured on the committed artifact,
+ * which was generated on Windows:
+ *
+ *   components                n     description  authors  licenses
+ *   platform-independent      305   291          226      304
+ *   win32 / wasm32 variants     8     2            2        3
+ *   linux / darwin / musl      27     0            0        0
+ *
+ * On an Ubuntu runner the last two rows swap. So a full-document comparison can
+ * *never* pass on a machine with a different OS from the one that wrote the
+ * file, whatever the dependency tree is doing. CI reported the first difference
+ * at line 1023 — `"description": "emnapi runtime"`, present here because
+ * `@emnapi/runtime` is installed on this platform and absent there — and had
+ * been failing that way on every run since the artifact was last regenerated.
+ *
+ * The comment above about the dependency graph already names this class of
+ * mistake: carry what is stable, omit what is not. The graph was dropped for
+ * being unstable across *runs*; this is the same failure across *platforms*,
+ * and it went unnoticed because the artifact still diffed cleanly against
+ * itself on the machine that produced it.
+ *
+ * A purl carries namespace, name and version, which is exactly what "a
+ * dependency moved" means and exactly what a vulnerability scanner keys on. The
+ * richer metadata stays in the committed file for /security's licence
+ * breakdown; it is simply not something CI can hold any machine to.
+ */
+const packageSet = (sbom: Sbom): string[] =>
+  (sbom.components ?? [])
+    .map((component) => component.purl ?? refOf(component))
+    .sort((a, b) => a.localeCompare(b));
+
 if (process.argv.includes("--check")) {
-  let existing = "";
+  let existingRaw = "";
   try {
-    existing = readFileSync(OUTPUT, "utf8");
+    existingRaw = readFileSync(OUTPUT, "utf8");
   } catch {
     console.error("public/sbom.json does not exist. Run `pnpm security:sbom`.");
     process.exit(1);
   }
-  if (!sameContent(existing, serialised)) {
-    // Name the first difference. "It is stale" without saying what moved sends
-    // the reader to regenerate and eyeball a 15,000-line diff, and the answer
-    // is almost always one added or removed package.
-    const before = existing.replace(/\r\n/g, "\n").split("\n");
-    const after = serialised.split("\n");
-    const at = before.findIndex((line, index) => line !== after[index]);
 
-    console.error(
-      "public/sbom.json is stale — dependencies changed without the SBOM being regenerated.\n" +
-        (at === -1
-          ? `  Line counts differ: ${before.length} committed, ${after.length} generated.\n`
-          : `  First difference at line ${at + 1}:\n` +
-            `    committed: ${before[at] ?? "(end of file)"}\n` +
-            `    generated: ${after[at] ?? "(end of file)"}\n`) +
-        "Run `pnpm security:sbom` and commit the result.",
-    );
+  let committed: Sbom;
+  try {
+    committed = JSON.parse(existingRaw) as Sbom;
+  } catch {
+    console.error("public/sbom.json is not valid JSON. Run `pnpm security:sbom`.");
     process.exit(1);
   }
-  console.log(`SBOM is current: ${count} components.`);
+
+  const before = packageSet(committed);
+  const after = packageSet(JSON.parse(serialised) as Sbom);
+
+  const beforeSet = new Set(before);
+  const afterSet = new Set(after);
+  const added = after.filter((purl) => !beforeSet.has(purl));
+  const removed = before.filter((purl) => !afterSet.has(purl));
+
+  if (added.length > 0 || removed.length > 0) {
+    // Name what moved. "It is stale" without saying which package sends the
+    // reader off to regenerate and eyeball a 15,000-line diff; the answer is
+    // almost always one package, so print it outright rather than approximate
+    // it with a line number.
+    console.error(
+      "public/sbom.json is stale — the dependency set changed without the SBOM being regenerated.",
+    );
+    for (const purl of removed) console.error(`  - ${purl}`);
+    for (const purl of added) console.error(`  + ${purl}`);
+    console.error("Run `pnpm security:sbom` and commit the result.");
+    process.exit(1);
+  }
+
+  // `sameContent` still runs, but only to report — never to fail. Metadata
+  // differing from what this machine would generate is expected; saying so out
+  // loud stops the next reader concluding the check looked at nothing.
+  if (!sameContent(existingRaw, serialised)) {
+    console.log(
+      `SBOM is current: ${count} packages match. Descriptions, authors and licences differ from what this platform would generate — see packageSet above. Not a failure.`,
+    );
+  } else {
+    console.log(`SBOM is current: ${count} components, byte-identical.`);
+  }
   process.exit(0);
 }
 
