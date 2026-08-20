@@ -2837,3 +2837,47 @@ a layout shift rather than a cosmetic overhang.
 
 **CI run 32372145782 on 4f41773: build, E2E and Lighthouse all green.** First
 run in this project's history where all three pass together.
+
+
+## 55. P26e — Search Console, set up from nothing
+
+**There was no property.** `/search-console/index` redirected to `not-verified`,
+and a `site:shivamsfolio.com` query returned Google's own "Do you own
+shivamsfolio.com?" promotion. So the sitemap had never been submitted, no
+coverage report existed, and no search-performance history was being recorded —
+that last one does not backfill, so every day without it was permanently lost
+data.
+
+**What the index actually looked like before setup**, from `site:` — worth
+recording because it is the only "before" that will ever exist:
+
+- **13 of 33 sitemap URLs indexed.**
+- Indexed: `/`, `/about`, `/projects`, `/contact`, `/services`, `/experience`,
+  `/system-design`, `/reach-out`, `/edge`, `/data`, `/security`, `/stats`,
+  `/api-lab`.
+- **Not indexed**: `/skills` — the page carrying C++, Rust and Go — and **all
+  six project case studies**, the deepest content on the site. Plus `/resume`,
+  `/blog`, `/certifications`, `/achievements`, `/terminal`, `/compute`,
+  `/reliability`, `/mlops`, `/ask` and the four `/for/*` pages.
+- No technical cause: every missing page returns `index, follow` and is in the
+  sitemap. They had simply never been crawled, and the sitemap that lists them
+  was two days old and had never been submitted anywhere.
+- Google *had* re-crawled since P26: `/projects` and `/contact` were already
+  showing the new descriptions. `/experience` and `/reach-out` still showed the
+  old inherited root description, which is the duplicate-description problem
+  P26 fixed, waiting on a re-crawl.
+
+**Property type: URL prefix**, `https://www.shivamsfolio.com`, verified by HTML
+tag. Domain-property verification needs a DNS record at the registrar, which is
+outside what the repo controls; the meta tag is served by
+`app/layout.tsx`'s `verification.google` field from `GOOGLE_SITE_VERIFICATION`,
+now set in Vercel for Production and Preview.
+
+**The variable is deliberately NOT marked Sensitive.** The token is rendered
+into the public HTML of every page — that is the entire point of it — so
+flagging it as a secret would be theatre, and it would stop the value being
+readable back when someone needs to confirm what is deployed.
+
+**The Google account is `www.shivampatilshiv@gmail.com`**, which is not the
+address the site publishes as its contact (`shivampatilinfo@gmail.com`). Worth
+knowing before anyone goes looking for the property on the wrong account.
