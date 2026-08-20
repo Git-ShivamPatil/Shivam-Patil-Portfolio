@@ -2738,3 +2738,48 @@ that pass locally in seconds.
    P17–P25.
 3. Now that E2E runs again, expect it to have opinions it has not been able to
    voice in weeks. Its last real execution predates P17.
+
+### 53a. CI is green; Lighthouse reports one number over budget
+
+Run 32284798685 on `7b94fd7`: **build success, E2E success, run conclusion
+success.** All 51 E2E specs and both keyboard-access checks pass on a real
+runner, and the JD-match spec that found the COBOL regression now passes.
+
+`lighthouse` reports a failure and does **not** fail the run — it is
+`continue-on-error: true`, for the reason stated in ci.yml: variance on a shared
+runner is several points, and a build that fails on noise is one people learn to
+re-run without reading.
+
+The one assertion that fires:
+
+    ✘ cumulative-layout-shift  expected <=0.02  found 0.03225
+
+Worth taking seriously, because lighthouserc.json's own note says CLS is "0
+today, and the metric the vendored fonts' size-adjust fallback exists to
+protect". All three audited URLs (`/`, `/about`, `/system-design`) gained the
+footer directory in P26, so it is the obvious suspect.
+
+**The obvious suspect was measured and largely cleared.** Forcing the metric-
+matched fallback on each new block and comparing heights:
+
+    .footer-directory      1108px -> 1105px   (-3)
+    .hub-section            349px ->  347px   (-2)
+    .audience-picker-grid   205px ->  205px    (0)
+    .hero-intro              85px ->   85px    (0)
+
+That is `adjustFontFallback` doing exactly its job. A 3px delta on a 1108px
+block cannot produce 0.032 on its own, so font swap is not the main cause.
+
+**Not reproduced locally, and the reason is worth recording.** An unthrottled
+load of the production build measures CLS **0** with `PerformanceObserver`.
+`pnpm test:lighthouse` cannot settle it either — lhci crashes on this Windows
+machine during its own temp-directory cleanup (`syscall: 'rm'`), before printing
+any assertion. Reproducing this needs a Linux box or the CI artifact.
+
+Deliberately **not** fixed by guessing. A CSS change aimed at an unreproduced
+metric is as likely to move it the wrong way as the right one, and 0.032 is
+still well inside Google's "good" band (<0.1) — the 0.02 budget is this
+project's own stricter line, so this is a regression from excellent to good, not
+a break. Next step for whoever picks it up: download the `lhci` report artifact
+from the run and read `layout-shift-elements`, which names the shifting nodes
+outright.
