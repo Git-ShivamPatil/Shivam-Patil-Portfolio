@@ -132,6 +132,30 @@ export const metadata: Metadata = {
   },
   twitter: { card: "summary_large_image" },
   robots: { index: true, follow: true },
+  /**
+   * Search Console ownership, from an environment variable.
+   *
+   * **There is no Search Console property for this domain.** Signing in and
+   * opening Search Console lands on the "Add a website" welcome screen, and a
+   * `site:shivamsfolio.com` query returns Google's own "Do you own
+   * shivamsfolio.com?" promotion. So the sitemap has never been submitted, no
+   * coverage report exists to explain which URLs are not indexed, and no
+   * performance history is being recorded — that last one is not recoverable
+   * later, because Search Console only reports from the day a property is
+   * verified onward.
+   *
+   * Verifying needs an account action, which is the owner's to take. This field
+   * removes the only part that would otherwise need a code change and a deploy:
+   * paste the token into `GOOGLE_SITE_VERIFICATION` in the Vercel project's
+   * environment variables and redeploy, and the meta tag appears.
+   *
+   * Undefined when unset, so nothing is rendered rather than an empty tag —
+   * Google treats a `google-site-verification` with no content as a failed
+   * verification rather than an absent one.
+   */
+  verification: process.env.GOOGLE_SITE_VERIFICATION
+    ? { google: process.env.GOOGLE_SITE_VERIFICATION }
+    : undefined,
   // Tells Google it may show the full description and a large image preview
   // rather than truncating to its own default. Absent, the preview length is
   // the crawler's guess.
