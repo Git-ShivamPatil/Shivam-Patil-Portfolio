@@ -2881,3 +2881,48 @@ readable back when someone needs to confirm what is deployed.
 **The Google account is `www.shivampatilshiv@gmail.com`**, which is not the
 address the site publishes as its contact (`shivampatilinfo@gmail.com`). Worth
 knowing before anyone goes looking for the property on the wrong account.
+
+
+### 55a. Indexing requested for the seven pages that mattered
+
+All confirmed by Google's own "Indexing requested — URL was added to a priority
+crawl queue" dialog:
+
+- `/skills`
+- `/projects/distributed-rate-limiter-api-gateway`
+- `/projects/agentic-ai-orchestration-platform`
+- `/projects/high-performance-llm-inference-server`
+- `/projects/secure-banking-system`
+- `/projects/online-examination-system`
+- `/projects/secure-rag-with-rbac-guardrails-monitoring`
+
+**What the inspections revealed, which the `site:` query could not.** Every one
+of these came back "URL is not on Google", split across two distinct states:
+
+- *Discovered – currently not indexed* (`/skills`, the LLM inference server, the
+  agentic platform, the secure RAG platform) — Google knows the URL and has
+  chosen not to crawl it yet.
+- *URL is unknown to Google* (the rate limiter, the banking system, the
+  examination system) — Google had never heard of them at all.
+
+`Last crawl: N/A` on all seven. These pages had never been fetched, which is
+the strongest possible confirmation that nothing was blocking them and nothing
+had ever pointed Google at them.
+
+The Discovery panel also proves the P26 internal linking works: several list
+`Referring page: https://www.shivamsfolio.com/projects` and
+`https://www.shivamsfolio.com/`, which are links that did not exist before the
+route registry and the footer directory.
+
+**Two operational notes for next time.**
+
+1. **Verify the URL in the panel header before clicking Request Indexing.** The
+   inspection bar accepts a new URL while the panel still shows the previous
+   result, and a click in that window re-requests the OLD url. That happened
+   once here (the LLM inference server was submitted twice). Harmless — Google's
+   own dialog says "submitting a page multiple times will not change its queue
+   position or priority" — but it burns a slot from a limited daily quota.
+2. **The Search Console SPA repeatedly wedged the browser bridge**, with
+   `Page.captureScreenshot` and `executeScript` both timing out for minutes
+   after each live crawl test. Closing the tab and opening a fresh one is what
+   cleared it; waiting did not. Budget roughly two minutes per URL.
