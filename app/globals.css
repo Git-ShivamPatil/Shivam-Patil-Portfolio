@@ -675,7 +675,15 @@ h2 em {
   min-height: 720px;
   padding: 112px 0 80px;
   display: grid;
-  grid-template-columns: 1.05fr 0.95fr;
+  /* minmax(0, …) rather than a bare fr, and it is not decoration.
+     `1.05fr` means `minmax(auto, 1.05fr)`, so the track grows past its share
+     whenever its content's min-content width demands it — and SplitText turns
+     each word into a `white-space: nowrap` inline-block, which can make that
+     demand enormous. On /about that mechanism moved 82px between the columns
+     and produced the site's entire CLS. Pinning the minimum to 0 makes the
+     split purely proportional, so no heading can ever resize the column beside
+     it. See components/providers/split-text.tsx for the measurement. */
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
   align-items: center;
   gap: 56px;
 }
@@ -2803,7 +2811,8 @@ h2 em {
 /* ===== about page ===== */
 .about-hero {
   display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
+  /* The grid this was measured on — see the note on `.hero` above. */
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
   align-items: center;
   gap: 56px;
   padding: 96px 0 60px;

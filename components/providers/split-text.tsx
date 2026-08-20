@@ -123,6 +123,33 @@ function split(targets: HTMLElement[], prefersReducedMotion: boolean) {
           span.textContent = char;
           word.appendChild(span);
           index += 1;
+
+          // A hyphen or dash is a line-break opportunity in ordinary text, and
+          // the `nowrap` wrapper above destroys it. That is not cosmetic — it
+          // was the site's entire measured CLS.
+          //
+          // /about's heading ends in "systems-minded.". As a text node the
+          // browser may break it after the hyphen, so the heading's min-content
+          // width is one part-word. Wrapped in a single `white-space: nowrap`
+          // span it becomes one unbreakable 652px token, and `.about-hero` is
+          // `grid-template-columns: 1.1fr 0.9fr` — where `1.1fr` means
+          // `minmax(auto, 1.1fr)`. The left track therefore grows past its
+          // share to fit that token and steals 82px from the right one. The
+          // photo beside it is `aspect-ratio: 4/5`, so 82px narrower is 102px
+          // shorter, and everything below jumps up by 102px the moment this
+          // effect runs.
+          //
+          // Measured on production: CLS 0.0324 on /about, from a single shift
+          // naming .about-photo-frame, .about-page-story and .brand-watermark —
+          // against a 0.02 budget, and the only assertion failing in the
+          // Lighthouse job. Closing the word after the dash restores the break
+          // opportunity: the widest word drops from 652px to 424px, the columns
+          // return to 618/506, and the shift goes to zero.
+          //
+          // The dash stays at the end of the first word, which is where a
+          // browser breaks. En and em dashes are included because headings on
+          // this site use them the same way.
+          if (char === "-" || char === "–" || char === "—") closeWord();
         }
         closeWord();
 

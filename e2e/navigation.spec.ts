@@ -384,6 +384,57 @@ const WIDTHS = [
 ];
 
 test.describe("layout invariants", () => {
+  test("no split heading is wider than the heading that contains it", async ({ page }) => {
+    // The site's whole measured CLS came from this, and nothing was watching it.
+    //
+    // SplitText wraps each word of a [data-split] heading in a
+    // `white-space: nowrap` inline-block so the per-character reveal cannot
+    // break mid-word. That also destroys any break opportunity *inside* a word
+    // — and /about's heading ends in "systems-minded.", which as plain text may
+    // break after the hyphen. Wrapped, it became one unbreakable 652px token in
+    // a 618px track. `.about-hero` is `1.1fr 0.9fr`, and a bare `fr` is
+    // `minmax(auto, 1fr)`, so the left column grew to fit it and took 82px from
+    // the right. The photo there is `aspect-ratio: 4/5`, so it lost 102px of
+    // height and every section below it jumped up: CLS 0.0324 against a 0.02
+    // budget, on production.
+    //
+    // The invariant is the general form of that: a word may be as wide as the
+    // heading, never wider. Asserted on /about and / because both carry a
+    // [data-split] hero beside a sized element, which is the shape that turns
+    // an overflowing word into a layout shift rather than a cosmetic overhang.
+    for (const path of ["/about", "/"]) {
+      await page.goto(path);
+      // The split is a client effect; wait for it rather than racing it.
+      await expect(page.locator("[data-split][data-split-done='true']").first()).toBeAttached();
+
+      const offenders = await page.evaluate(() => {
+        const bad: { text: string; word: number; heading: number }[] = [];
+        for (const heading of document.querySelectorAll<HTMLElement>("[data-split]")) {
+          const limit = heading.getBoundingClientRect().width;
+          for (const word of heading.querySelectorAll<HTMLElement>(".split-word")) {
+            const width = word.getBoundingClientRect().width;
+            // A pixel of tolerance: sub-pixel rounding on a fractional track
+            // should not fail a build.
+            if (width > limit + 1) {
+              bad.push({
+                text: word.textContent ?? "",
+                word: Math.round(width),
+                heading: Math.round(limit),
+              });
+            }
+          }
+        }
+        return bad;
+      });
+
+      expect(
+        offenders,
+        `${path}: split words wider than their heading — these steal space from the grid track beside them:\n` +
+          offenders.map((o) => `  "${o.text}" ${o.word}px in ${o.heading}px`).join("\n"),
+      ).toEqual([]);
+    }
+  });
+
   test("the hero heading scales fluidly instead of stepping", async ({ page }) => {
     // The defect this catches: `h1` was clamp(52px, 7.4vw, 108px) — a 52px
     // FLOOR — and a max-width:620px block overrode it with
