@@ -2783,3 +2783,57 @@ project's own stricter line, so this is a regression from excellent to good, not
 a break. Next step for whoever picks it up: download the `lhci` report artifact
 from the run and read `layout-shift-elements`, which names the shifting nodes
 outright.
+
+
+## 54. P26d — the CLS was one hyphen
+
+Lighthouse's only failing assertion, and it turned out to be one shift on one
+page caused by one word.
+
+**Reproduced per URL** with the Lighthouse CLI against production, which is what
+made it tractable — the CI job reports a single aggregate number and names no
+page:
+
+    /               CLS 0
+    /system-design  CLS 0
+    /about          CLS 0.0323     (CI reported 0.03225)
+
+**The mechanism.** /about's heading ends in "systems-minded.". As a text node a
+browser may break that after the hyphen, so the heading's min-content width is
+one part-word. SplitText wraps every word in a `white-space: nowrap`
+inline-block — which it must, because `.split-char` is inline-block and without
+the wrapper a heading breaks between any two letters — and that turned
+"systems-minded." into one unbreakable **652px** token.
+
+`.about-hero` was `grid-template-columns: 1.1fr 0.9fr`, and **a bare `fr` is
+`minmax(auto, 1fr)`**. The left track grew past its share to fit the token and
+took 82px from the right. The photo there is `aspect-ratio: 4/5`, so 82px
+narrower is 102px shorter, and every section below jumped up by 102px when the
+effect ran. Measured by undoing the split by hand in the live DOM:
+
+    with split     columns 652.45 / 424.39     frame height 530
+    without split  columns 618.20 / 505.80     frame height 632
+
+**Two lessons worth keeping.**
+
+1. `layout-shift-elements` was empty in every Lighthouse JSON run here, so the
+   audit that exists to name the culprit named nothing. What worked was a
+   `PerformanceObserver` on `layout-shift` in a real browser at Lighthouse's own
+   1350px desktop viewport, reading `entry.sources[].node` — that produced the
+   three nodes and their exact deltas in one call.
+2. A bare `fr` track is a content-sized track in disguise. Both hero grids now
+   use `minmax(0, …)`. That is defence rather than the fix, but it is the second
+   time content has resized a column nobody expected it to touch.
+
+**The fix** closes the split word after a hyphen, en dash or em dash, leaving
+the dash on the first word where a browser breaks. Verified on production after
+deploy: CLS **0**, no shift entries, columns 618.2/505.8, frame 632, and the
+heading's widest word down from 652px to 424px.
+
+`e2e/navigation.spec.ts` carries the general invariant — a split word may be as
+wide as its heading, never wider — on /about and /, the two pages where a
+`[data-split]` hero sits beside a sized element and an overflowing word becomes
+a layout shift rather than a cosmetic overhang.
+
+**CI run 32372145782 on 4f41773: build, E2E and Lighthouse all green.** First
+run in this project's history where all three pass together.
