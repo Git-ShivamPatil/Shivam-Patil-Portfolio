@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { clientIp, consume } from "../../../lib/rate-limit";
+import { meterApi } from "../../../lib/api-guards";
 import { withRed } from "../../../lib/sre/red";
 import {
   decodeMessage,
@@ -67,9 +67,10 @@ async function handleGET() {
 }
 
 async function handlePOST(request: Request) {
-  if (!(await consume(`rpc:${clientIp(request)}`, 30, 0.5)).ok) {
-    return NextResponse.json({ error: "Too many requests." }, { status: 429 });
-  }
+  // P27 — metered. The baseline is this route's own pre-existing limit, so an
+  // anonymous caller is served exactly as before; a key multiplies it.
+  const gate = await meterApi(request, "/api/rpc", { capacity: 30, refillPerSecond: 0.5 });
+  if ("error" in gate) return gate.error;
 
   let message: Record<string, unknown>;
   try {
@@ -97,8 +98,13 @@ async function handlePOST(request: Request) {
     stale: false,
   });
 
+  // Recorded here, not at the gate: metering a request that then throws would
+  // bill a caller for an outage.
+  gate.record();
+
   return new NextResponse(frame(response) as unknown as BodyInit, {
     headers: {
+      ...gate.headers,
       "Content-Type": "application/proto",
       "Cache-Control": "no-store",
       // The decoded size, so a caller can sanity-check its own framing without
