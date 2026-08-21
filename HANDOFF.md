@@ -3108,12 +3108,45 @@ owner address, confirmed in the dashboard.
 the key as send-only on purpose. It also means the domain state cannot be
 inspected via the API with the key this project holds.
 
-**Open question, not yet answered:** Resend's docs now describe sending and
-receiving as independently verifiable, with a _partially verified_ state, and
-describe MX as the record that "allows the recipient to send bounce and
-complaint feedback" — a receiving concern. If sending verifies on TXT alone
-(SPF + DKIM), **Wix can create those and §3's blocker is stale.** This needs the
-domain detail page to settle; the domains _list_ does not show DNS requirements.
+**The MX question is now settled, and §3 was right.** The hypothesis was that
+Resend's sending/receiving split might have made MX a receiving-only concern, in
+which case Wix could do the TXT records and the blocker would be stale. The
+domain detail page disproves it. The records are grouped, and the grouping is
+the answer:
+
+| Group               | Records                                                           |
+| ------------------- | ----------------------------------------------------------------- |
+| Domain Verification | TXT `resend._domainkey` (DKIM)                                    |
+| **Enable Sending**  | **MX `send`** → `feedback-smtp.*.amazonses.com`, TXT `send` (SPF) |
+| DMARC (optional)    | TXT `_dmarc`                                                      |
+| Enable Receiving    | _separate toggle, off_                                            |
+
+**The MX sits under Enable Sending, not Enable Receiving.** Resend also now
+renders an explicit banner naming the provider: _"Wix doesn't support subdomains
+for MX records. This means you can't verify your domain for Resend if your DNS
+is managed by Wix."_ Provider is detected as Wix, region Tokyo.
+
+So Resend cannot be verified on Wix DNS. Do not re-test this hypothesis.
+
+**What that leaves, none of which needs a DNS move:**
+
+1. **Change provider to one whose domain authentication avoids subdomain MX.**
+   SendGrid with Automated Security enabled needs only **CNAME** records — it
+   delegates a subdomain to its own zone and generates the SPF and MX inside
+   that zone itself, so nothing MX-shaped is ever entered at Wix. Brevo
+   authenticates on **TXT** alone. Wix does both record types; the existing zone
+   already has a CNAME on `www`. The work is swapping `lib/mail.ts`, and
+   `lib/payments/` is the precedent for doing it as an adapter rather than a
+   rewrite.
+2. **Accept spam placement**, which is the standing decision from 10 Aug.
+
+**One thing worth checking before either.** The Wix screen showing
+`NS records are not editable` is the DNS **zone editor**, and that message is
+normal everywhere — a zone never edits its own NS records. Pointing a domain at
+external nameservers is a **registrar-level** setting on a different screen
+(Wix: Domains → the domain → Advanced / nameservers), and Wix does permit it for
+domains registered with them. Whether that screen is available here has not been
+verified, and it is the difference between "blocked" and "one setting".
 
 ## 57. Outstanding after P27
 
@@ -3122,8 +3155,10 @@ domain detail page to settle; the domains _list_ does not show DNS requirements.
    block and the metering headers, none of which have a browser test.
 2. **`/engineering-log` is not built.** HANDOFF.md remains the strongest
    artifact in this repo and is invisible to every reader of the site.
-3. §37 items 1–3 (DNS/Resend, OAuth apps, Razorpay/R2/Cal.com) are unchanged
-   except for 56i above.
+3. §37 items 1–3 (DNS/Resend, OAuth apps, Razorpay/R2/Cal.com) are unchanged.
+   **Resend on Wix is now proven impossible** (§56i) rather than assumed, so the
+   real choice is a provider swap or accepting spam placement — not "wait until
+   DNS moves".
 4. **Nothing creates an API key through the UI yet.** `/api/account/api-keys`
    works (GET/POST/DELETE, session-gated) but there is no page calling it.
 5. The Stripe fields on `ApiKey` are unused and billing is inert. That is
