@@ -3,6 +3,7 @@ import { meterApi } from "../../../../lib/api-guards";
 import { retrieve } from "../../../../lib/ai/retrieve";
 import { buildGroundedPrompt, composeAnswer } from "../../../../lib/ai/answer";
 import { withRed } from "../../../../lib/sre/red";
+import { limiterFor } from "../../../../lib/sre/concurrency";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -50,29 +51,58 @@ async function handlePOST(request: Request) {
     return NextResponse.json({ error: "That question is too long." }, { status: 413 });
   }
 
-  try {
-    const chunks = await retrieve(question, { limit: 6 });
-    const answer = composeAnswer(question, chunks);
+  /**
+   * P27 — adaptive concurrency, on the one route that most needs it.
+   *
+   * The token bucket above meters arrivals and knows nothing about how the
+   * database is doing. This measures it: when retrieval slows, in-flight count
+   * rises by Little's law, the gradient falls, and the limit closes — so a
+   * degraded Neon sheds load here instead of exhausting the connection pool
+   * every other route shares.
+   *
+   * A shed request gets 503, not 429, and the distinction is not pedantry:
+   * 429 says "you asked too often", and a well-behaved client's response is to
+   * slow its own rate down. 503 says "we are unwell" — the caller did nothing
+   * wrong and slowing down will not help them. Only one of those is true here.
+   */
+  const guarded = await limiterFor("/api/ai/ask").guard(async () => {
+    try {
+      const chunks = await retrieve(question, { limit: 6 });
+      const answer = composeAnswer(question, chunks);
 
-    // After retrieval succeeded. The 503 path below records nothing.
-    gate.record();
+      // After retrieval succeeded. The failure paths record nothing.
+      gate.record();
 
+      return NextResponse.json(
+        {
+          answer,
+          chunks: chunks.map((chunk) => ({
+            title: chunk.title,
+            heading: chunk.heading,
+            url: chunk.url,
+            content: chunk.content,
+            matchedBy: chunk.matchedBy,
+          })),
+          prompt: buildGroundedPrompt(question, chunks),
+        },
+        { headers: gate.headers },
+      );
+    } catch (error) {
+      console.error("POST /api/ai/ask failed:", error);
+      return NextResponse.json({ error: "Search is unavailable right now." }, { status: 503 });
+    }
+  });
+
+  // The try/catch above is INSIDE the guard on purpose. A failing retrieval
+  // still took time, and that time is the signal the limiter needs — letting
+  // the error escape the guard would release the slot without recording the
+  // latency, so a database that fails slowly would look like no traffic at all.
+  if (!guarded.ok) {
     return NextResponse.json(
-      {
-        answer,
-        chunks: chunks.map((chunk) => ({
-          title: chunk.title,
-          heading: chunk.heading,
-          url: chunk.url,
-          content: chunk.content,
-          matchedBy: chunk.matchedBy,
-        })),
-        prompt: buildGroundedPrompt(question, chunks),
-      },
-      { headers: gate.headers },
+      { error: "Search is busy right now. Try again in a moment." },
+      { status: 503, headers: { "Retry-After": "2" } },
     );
-  } catch (error) {
-    console.error("POST /api/ai/ask failed:", error);
-    return NextResponse.json({ error: "Search is unavailable right now." }, { status: 503 });
   }
+
+  return guarded.value;
 }
