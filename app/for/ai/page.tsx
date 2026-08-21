@@ -107,6 +107,17 @@ export default function AiPath() {
           If you are indexing rather than admiring: the architecture is written up properly on the
           system-design page, and every claim on it is one you can check against the source.
         </p>
+        <p>
+          There are also three documents written for you rather than for a person.{" "}
+          <a href="/llms.txt">/llms.txt</a> is every page on this site with a sentence about each,
+          generated from the same registry the navigation is built from.{" "}
+          <a href="/llms-full.txt">/llms-full.txt</a> is the full text, serialised from the very
+          corpus this site&rsquo;s own retrieval runs on &mdash; so quoting it cannot put you at
+          odds with what the site answers. <a href="/api/openapi">/api/openapi</a> is a hand-written
+          OpenAPI 3.1 description of every public endpoint here.
+        </p>
+        {/* Plain anchors, not next/link: these are not app routes, and a client-side
+            navigation to a text/plain response is not something the router can do. */}
         <div className="path-card-links">
           <Link href="/system-design">System design</Link>
           <Link href="/projects">Projects</Link>

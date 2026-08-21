@@ -123,7 +123,20 @@ export const metadata: Metadata = {
   },
   description:
     "Shivam Patil is a software engineer building high-throughput backend platforms, distributed systems and AI products in C++, Rust, Go and Python.",
-  alternates: { canonical: "/" },
+  alternates: {
+    canonical: "/",
+    /**
+     * Advertises /llms.txt from every page.
+     *
+     * The convention is a well-known path, and a reader that knows to look
+     * will find it without this. The link tag is for the one that does not:
+     * a `text/plain` alternate is a standard discovery hint, it costs one
+     * line in the head, and this site is a bad candidate for path-guessing
+     * alone — the navigation is a JavaScript drawer, so a fetch of `/`
+     * reveals almost nothing about what else exists here.
+     */
+    types: { "text/plain": [{ url: "/llms.txt", title: "Site contents for language models" }] },
+  },
   openGraph: {
     type: "website",
     url: "/",
