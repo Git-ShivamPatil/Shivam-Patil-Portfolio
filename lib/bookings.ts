@@ -1,5 +1,7 @@
 import { randomBytes, createHash } from "node:crypto";
 import { prisma } from "./prisma";
+import { Prisma } from "./generated/prisma/client";
+import { isUniqueConstraintOn } from "./prisma-errors";
 import { formatMoney } from "./money";
 import { sendBookingConfirmation } from "./mail";
 import { notifyOwnerOfBooking } from "./push/notify";
@@ -34,6 +36,68 @@ export function generateReference(): string {
  * (double-click, flaky network, refresh) produces the same key, so both our
  * Payment row and the provider's order dedupe instead of charging twice.
  */
+/**
+ * How many fresh references to try before giving up.
+ *
+ * Three is not a tuning knob so much as a statement about what a second failure
+ * would mean. At 40 bits the chance of one collision is ~1 in 550,000 over a
+ * realistic burst; two independent collisions in a row is not a thing that
+ * happens to a working generator, so a third failure is evidence of a *bug* —
+ * a constant suffix, a clock stuck at one month, a mocked randomBytes — and
+ * looping harder would only delay finding it.
+ */
+const REFERENCE_ATTEMPTS = 3;
+
+/**
+ * Create a booking, regenerating the reference if it collides.
+ *
+ * **This closes the oldest open defect in the repo.** `Booking.reference` is
+ * `@unique` and the route created the row with a single unretried `create()`,
+ * so a collision surfaced as a 500 to a customer at the exact moment they were
+ * trying to pay. Widening the suffix from 24 to 40 bits (see `generateReference`)
+ * made that rare; it did not make it impossible, and "rare" is the wrong
+ * property for the one code path that is holding someone's money.
+ *
+ * **Why the reference is still random rather than sequential.** A monotonic
+ * counter would remove collisions by construction and is the obvious fix, but
+ * it is the wrong one here: `app/booking/success/page.tsx` looks a booking up
+ * *by reference* and renders the customer's name, email, service and amount to
+ * whoever holds it. The reference is therefore a bearer token in practice, and
+ * `BK-2608-0000000042` would let anyone walk every booking on the site by
+ * incrementing a number. Retrying random values keeps the collision handling
+ * where it belongs — in the writer — instead of trading a 500-once-in-550,000
+ * for an enumeration hole that is open permanently.
+ *
+ * The retry is scoped to `reference` specifically via `isUniqueConstraintOn`.
+ * A P2002 on any other column is re-thrown untouched, because regenerating a
+ * reference cannot fix it and swallowing it would hide a real constraint bug.
+ */
+export async function createBookingWithReference(
+  data: Omit<Prisma.BookingUncheckedCreateInput, "reference">,
+  client: Pick<Prisma.TransactionClient, "booking"> = prisma,
+) {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < REFERENCE_ATTEMPTS; attempt += 1) {
+    try {
+      return await client.booking.create({
+        data: { ...data, reference: generateReference() },
+      });
+    } catch (error) {
+      if (!isUniqueConstraintOn(error, "reference")) throw error;
+      lastError = error;
+      // Logged at every attempt, not only the last. A collision is rare enough
+      // that seeing even one in production is worth knowing about — it is the
+      // early warning that the generator has regressed.
+      console.warn(
+        `[bookings] reference collision on attempt ${attempt + 1}/${REFERENCE_ATTEMPTS}`,
+      );
+    }
+  }
+
+  throw lastError;
+}
+
 export function checkoutIdempotencyKey(bookingId: string, provider: PaymentProvider): string {
   return createHash("sha256").update(`${bookingId}:${provider}`).digest("hex").slice(0, 48);
 }

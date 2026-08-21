@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { readReferralCookie } from "../../lib/referral";
@@ -49,6 +49,30 @@ function loadRazorpay(): Promise<boolean> {
 }
 
 /**
+ * Mint an idempotency key, or reuse the one already issued for this exact body.
+ *
+ * The server keys `/api/bookings` on this header so a retry cannot create a
+ * second booking and a second provider order. That only works if the client
+ * sends the *same* key when it means "the same booking" and a *different* one
+ * when it means a new one — sending a fresh key per attempt would defeat the
+ * mechanism entirely, and sending one fixed key forever would make every later
+ * booking a 422 conflict against the first.
+ *
+ * Keying on the serialised body gives exactly that: a double-click, a dropped
+ * connection, or a failed-then-retried submit all reuse the key, while editing
+ * any field mints a new one.
+ */
+function keyForBody(store: { key: string; body: string } | null, body: string): string {
+  if (store && store.body === body) return store.key;
+  // `randomUUID` needs a secure context, which every origin serving this form
+  // is; the fallback keeps a http:// preview from throwing rather than
+  // silently dropping replay protection.
+  return typeof crypto?.randomUUID === "function"
+    ? crypto.randomUUID()
+    : `bk-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+/**
  * Paid-booking form.
  *
  * Creates the booking server-side, then hands off to whichever provider the
@@ -68,6 +92,7 @@ export function BookingForm({
   const [slug, setSlug] = useState(offerings[0]?.slug ?? "");
   const [form, setForm] = useState({ name: "", email: "", company: "", notes: "", website: "" });
   const [busy, setBusy] = useState(false);
+  const idempotency = useRef<{ key: string; body: string } | null>(null);
 
   const selected = offerings.find((offering) => offering.slug === slug);
 
@@ -82,18 +107,23 @@ export function BookingForm({
 
     setBusy(true);
     try {
+      const body = JSON.stringify({
+        offeringSlug: slug,
+        name: form.name,
+        email: form.email,
+        company: form.company || undefined,
+        notes: form.notes || undefined,
+        website: form.website,
+        ref: readReferralCookie(),
+      });
+
+      const key = keyForBody(idempotency.current, body);
+      idempotency.current = { key, body };
+
       const response = await fetch("/api/bookings", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          offeringSlug: slug,
-          name: form.name,
-          email: form.email,
-          company: form.company || undefined,
-          notes: form.notes || undefined,
-          website: form.website,
-          ref: readReferralCookie(),
-        }),
+        headers: { "Content-Type": "application/json", "Idempotency-Key": key },
+        body,
       });
 
       const json = (await response.json()) as {
