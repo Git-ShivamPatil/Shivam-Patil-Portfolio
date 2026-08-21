@@ -22,3 +22,27 @@ export function isUniqueConstraintError(error: unknown): boolean {
 export function isNotFoundError(error: unknown): boolean {
   return hasCode(error, "P2025");
 }
+
+/**
+ * True for a unique-constraint violation on a *specific* field.
+ *
+ * The distinction matters wherever a caller retries on P2002. A blind retry
+ * assumes the only unique column that can fail is the one it is regenerating;
+ * if a second unique column collides, the retry regenerates the wrong value and
+ * loops until it gives up, turning a deterministic failure into a slow one.
+ *
+ * Prisma reports the offending columns in `meta.target`, which is a string[] on
+ * PostgreSQL but has been a bare string on other connectors and in older
+ * versions — both shapes are accepted here rather than assuming one.
+ */
+export function isUniqueConstraintOn(error: unknown, field: string): boolean {
+  if (!isUniqueConstraintError(error)) return false;
+
+  const target = (error as { meta?: { target?: unknown } }).meta?.target;
+  if (Array.isArray(target)) return target.includes(field);
+  if (typeof target === "string") return target === field || target.endsWith(`_${field}_key`);
+
+  // No target reported. Treat it as a match rather than swallowing a real
+  // collision: the caller's retry is the safer branch when we cannot tell.
+  return true;
+}

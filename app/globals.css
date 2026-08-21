@@ -3588,3 +3588,71 @@ h2 em {
     height: 36px;
   }
 }
+
+/* P27 — the related-links block.
+   Carries the internal link graph that §55a showed was missing: twenty of
+   thirty-three URLs had never been crawled because the navigation is a
+   JavaScript drawer and almost nothing linked to them from content.
+   Styled on .next-project, which sits beside it on a case study. */
+.related-pages {
+  margin-bottom: 110px;
+  padding: 50px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+.related-pages > .eyebrow {
+  margin: 0 0 24px;
+}
+.related-pages ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.related-pages li {
+  margin: 0;
+}
+.related-pages li > a {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  height: 100%;
+  padding: 20px 22px;
+  border-radius: calc(var(--radius) - 8px);
+  /* Explicit, not inherited. A pale surface inheriting --fg has produced
+     invisible dark-theme text three separate times in this file (§9). */
+  color: var(--fg);
+  background: var(--surface);
+  text-decoration: none;
+  transition: transform 0.2s;
+}
+.related-pages li > a:hover {
+  transform: translateY(-2px);
+}
+.related-pages__label {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  justify-content: space-between;
+  font-weight: 600;
+}
+.related-pages__label .arrow-icon {
+  flex: none;
+  font-size: 18px;
+  transition: transform 0.2s;
+}
+.related-pages li > a:hover .arrow-icon {
+  transform: translate(3px, -3px);
+}
+.related-pages__blurb {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+@media (max-width: 700px) {
+  .related-pages {
+    padding: 32px 24px;
+  }
+}

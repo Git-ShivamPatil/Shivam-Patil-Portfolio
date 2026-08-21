@@ -4,7 +4,7 @@ import { prisma } from "../../../../lib/prisma";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://shivamsfolio.com";
+import { siteUrl } from "../../../../lib/seo/site";
 
 async function unsubscribe(token: string | null): Promise<"ok" | "invalid" | "error"> {
   if (!token) return "invalid";

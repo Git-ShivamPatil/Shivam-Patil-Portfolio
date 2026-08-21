@@ -301,3 +301,55 @@ describe("structured data", () => {
     expect((entries[0].acceptedAnswer as Record<string, unknown>)["@type"]).toBe("Answer");
   });
 });
+
+/**
+ * The canonical origin, asserted as a property of the source tree.
+ *
+ * Seven files each carried their own `process.env.NEXT_PUBLIC_SITE_URL ?? "…"`,
+ * and the literals had already diverged: `app/api/openapi/route.ts` said
+ * `www.shivamsfolio.com`; `lib/seo/site.ts`, `app/robots.ts`, `lib/mail.ts`
+ * and three API routes said the bare apex. Production sets the variable, so
+ * nothing showed — the split only surfaced where it is unset, and then
+ * `robots.txt` advertised a sitemap on one host while the OpenAPI document
+ * advertised servers on another.
+ *
+ * A test rather than a comment because the failure mode is additive: the next
+ * route that needs an origin will inline the same expression unless something
+ * objects.
+ */
+describe("the canonical origin has exactly one definition", () => {
+  /** Every .ts/.tsx under app/ and lib/, excluding generated output. */
+  function sourceFiles(dir: string): string[] {
+    const out: string[] = [];
+    for (const entry of readdirSync(dir)) {
+      if (entry === "generated" || entry === "node_modules") continue;
+      const full = join(dir, entry);
+      if (statSync(full).isDirectory()) out.push(...sourceFiles(full));
+      else if (/\.tsx?$/.test(entry)) out.push(full);
+    }
+    return out;
+  }
+
+  it("is the www form, which is what canonical, og:url and the OAuth URIs use", () => {
+    expect(siteUrl).toBe(process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.shivamsfolio.com");
+  });
+
+  it("is not re-derived with a hard-coded host anywhere else", () => {
+    const offenders = [
+      ...sourceFiles(join(process.cwd(), "app")),
+      ...sourceFiles(join(process.cwd(), "lib")),
+    ].filter((file) => {
+      if (file.endsWith(join("lib", "seo", "site.ts"))) return false;
+      const source = readFileSync(file, "utf8");
+      // Only a hard-coded literal fallback counts. `?? new URL(request.url).origin`
+      // is the correct pattern for the /r and /d redirect handlers — it keeps a
+      // preview deployment redirecting to itself rather than to production.
+      return /NEXT_PUBLIC_SITE_URL\s*\?\?\s*["'`]/.test(source);
+    });
+
+    expect(
+      offenders.map((file) => file.replace(process.cwd(), "")),
+      "import { siteUrl } from lib/seo/site instead of re-deriving it",
+    ).toEqual([]);
+  });
+});

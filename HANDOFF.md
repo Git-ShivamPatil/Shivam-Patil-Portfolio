@@ -2560,7 +2560,7 @@ run red.
 **Two traps when reproducing this.**
 
 1. `pnpm security:sbom:check` run through `npx` fails with a wall of `npm error
-   invalid:` lines. That is not a real failure: `scripts/sbom.mts` resolves the
+invalid:` lines. That is not a real failure: `scripts/sbom.mts` resolves the
    package manager from `npm_execpath`, so invoking it under npm makes it shell
    out to `npm sbom` against a pnpm-installed tree. Run it through pnpm.
 2. `E2E_BASE_URL=https://www.shivamsfolio.com pnpm test:e2e` is **not** a usable
@@ -2609,7 +2609,7 @@ worth knowing about:
 
 **Every H1 stays.** They are the site's voice — "Where the work happened.",
 "Tools I reach for under pressure." — and each is a better heading than any
-keyword phrase. What changed is the sentence *under* each, which was connective
+keyword phrase. What changed is the sentence _under_ each, which was connective
 tissue naming nothing anyone would search for. `/experience`'s lede now names the
 role, employer, dates and numbers; `/skills`, `/projects` and `/resume` name C++,
 Rust, Go and Python. Same position, same length, same voice, carrying facts.
@@ -2657,8 +2657,8 @@ stylesheet); they are named there so the next palette move finds them.
 
 **The consequence was larger than one red step.** `SBOM is current` runs before
 `Build`, and both `e2e` and `lighthouse` declare `needs: build`. So they reported
-**skipped**, which reads as neutral in the GitHub UI and actually means *never
-executed*. The E2E suite, the axe pass and the Lighthouse budget had not run in
+**skipped**, which reads as neutral in the GitHub UI and actually means _never
+executed_. The E2E suite, the axe pass and the Lighthouse budget had not run in
 weeks. §51 recorded "E2E covers none of P17–P25" as a coverage gap; the truth was
 worse — the coverage that did exist was not running either.
 
@@ -2685,9 +2685,9 @@ line 1023 — `"description": "emnapi runtime"`, present locally because
 `@emnapi/runtime` is installed on Windows and absent on Linux.
 
 This is the same mistake `normalise()` already documents one paragraph earlier.
-The dependency graph was dropped for being unstable across *runs*, with the note
+The dependency graph was dropped for being unstable across _runs_, with the note
 that the artifact must carry what is stable and omit what is not. This was that
-failure across *platforms*, and it hid because the document still diffed cleanly
+failure across _platforms_, and it hid because the document still diffed cleanly
 against itself on the machine that produced it.
 
 ### The fix, and why not the obvious one
@@ -2784,7 +2784,6 @@ a break. Next step for whoever picks it up: download the `lhci` report artifact
 from the run and read `layout-shift-elements`, which names the shifting nodes
 outright.
 
-
 ## 54. P26d — the CLS was one hyphen
 
 Lighthouse's only failing assertion, and it turned out to be one shift on one
@@ -2838,7 +2837,6 @@ a layout shift rather than a cosmetic overhang.
 **CI run 32372145782 on 4f41773: build, E2E and Lighthouse all green.** First
 run in this project's history where all three pass together.
 
-
 ## 55. P26e — Search Console, set up from nothing
 
 **There was no property.** `/search-console/index` redirected to `not-verified`,
@@ -2862,7 +2860,7 @@ recording because it is the only "before" that will ever exist:
 - No technical cause: every missing page returns `index, follow` and is in the
   sitemap. They had simply never been crawled, and the sitemap that lists them
   was two days old and had never been submitted anywhere.
-- Google *had* re-crawled since P26: `/projects` and `/contact` were already
+- Google _had_ re-crawled since P26: `/projects` and `/contact` were already
   showing the new descriptions. `/experience` and `/reach-out` still showed the
   old inherited root description, which is the duplicate-description problem
   P26 fixed, waiting on a re-crawl.
@@ -2882,7 +2880,6 @@ readable back when someone needs to confirm what is deployed.
 address the site publishes as its contact (`shivampatilinfo@gmail.com`). Worth
 knowing before anyone goes looking for the property on the wrong account.
 
-
 ### 55a. Indexing requested for the seven pages that mattered
 
 All confirmed by Google's own "Indexing requested — URL was added to a priority
@@ -2899,10 +2896,10 @@ crawl queue" dialog:
 **What the inspections revealed, which the `site:` query could not.** Every one
 of these came back "URL is not on Google", split across two distinct states:
 
-- *Discovered – currently not indexed* (`/skills`, the LLM inference server, the
+- _Discovered – currently not indexed_ (`/skills`, the LLM inference server, the
   agentic platform, the secure RAG platform) — Google knows the URL and has
   chosen not to crawl it yet.
-- *URL is unknown to Google* (the rate limiter, the banking system, the
+- _URL is unknown to Google_ (the rate limiter, the banking system, the
   examination system) — Google had never heard of them at all.
 
 `Last crawl: N/A` on all seven. These pages had never been fetched, which is
@@ -2926,3 +2923,245 @@ route registry and the footer directory.
    `Page.captureScreenshot` and `executeScript` both timing out for minutes
    after each live crawl test. Closing the tab and opening a fresh one is what
    cleared it; waiting did not. Budget roughly two minutes per URL.
+
+## 56. P27 — the money path, the machine-readable surface, and metering
+
+Seven commits on `shivam/friendly-ride-nmnaj7`, PR #4. **All four CI jobs green
+on `efc129e`** — build/unit, E2E, Lighthouse and Vercel — which is only the
+second run in this project's history where Lighthouse passed alongside the rest
+(§54 was the first). Unit tests **592 → 683**.
+
+**The DNS move is still blocked and was not attempted.** Wix's zone editor shows
+`NS records are not editable`, confirmed by screenshot. Everything below was
+chosen to need no DNS change and no new credential.
+
+### 56a. The oldest defect, and a second one found beside it (`896cbe7`)
+
+§37 item 4 is closed. `Booking.reference` is `@unique` and the route created the
+row with a single unretried `create()`, so a collision was a 500 for a customer
+mid-payment. `createBookingWithReference()` retries three times, scoped to
+`reference` via a new `isUniqueConstraintOn()` — a blind P2002 retry would
+regenerate the wrong value and loop until it gave up.
+
+**The reference stays random rather than becoming a counter, and that is a
+security decision, not a style one.** `app/booking/success/page.tsx` looks a
+booking up _by reference_ and renders the customer's name, email, service and
+amount to whoever holds it. The reference is a bearer token in practice.
+`BK-2608-0000000042` would let anyone walk every booking on the site by
+incrementing a number — trading a 1-in-550,000 500 for an enumeration hole that
+is open permanently.
+
+**The second defect, which nothing had noticed:** the route had no
+request-level idempotency. `checkoutIdempotencyKey` is derived from
+`booking.id`, minted fresh per request, so it deduped retries of the _checkout
+call for one booking_ and did nothing about retries of the _HTTP request_. A
+double-clicked submit produced two Booking rows and two provider orders. The
+route now honours `Idempotency-Key`; `components/booking/booking-form.tsx` mints
+one keyed on the serialised body, so a retry reuses it and an edit mints a new
+one. **Both of these had to land before any payment credential does.**
+
+### 56b. The canonical origin had split in two (`100df08`)
+
+Seven files each carried `NEXT_PUBLIC_SITE_URL ?? "<literal>"` and the literals
+disagreed: `app/api/openapi/route.ts` said `www`, while `lib/seo/site.ts`,
+`app/robots.ts`, `lib/mail.ts` and three API routes said the bare apex.
+**`ci.yml` pinned the bare apex too.** Invisible in production, which sets the
+variable; visible anywhere it is unset, where `robots.txt` advertised a sitemap
+on one host while the OpenAPI document advertised servers on another.
+
+`lib/seo/site.ts` is now the only definition. The two remaining
+`?? new URL(request.url).origin` fallbacks in `app/r/[code]` and `app/d/[slug]`
+are deliberate — they keep a preview deployment redirecting to itself.
+
+### 56c. robots.txt was blocking the best artifact on the domain (`054f0a6`)
+
+`Disallow: /api/` took `/api/openapi` with it — a hand-written OpenAPI 3.1
+description of every public endpoint. Nothing was protecting it; it was
+collateral from a rule aimed at machinery. Sixteen assistant crawlers now get an
+explicit rule allowing that and `/api/graphql`, with everything else still
+closed.
+
+**The mechanism is longest-prefix matching**, and `tests/p27-llms.test.ts`
+asserts every allowed API path is strictly longer than `/api/` — an allow of
+`/api/` itself would tie, and a tie resolves in favour of allowing.
+
+New `/llms.txt` and `/llms-full.txt`, both generated. §48 found three copies of
+the route map already ten routes apart; this would have been a fourth.
+`/llms-full.txt` serialises `buildCorpus()` — the same corpus `/api/ai/ask`
+retrieves over — so a model quoting it cannot end up at odds with the site.
+
+### 56d. The `<link rel="alternate">` that never rendered (`efc129e`)
+
+Worth keeping because the failure was invisible to every check except a browser.
+
+Three attempts, each measured against a running production build:
+
+1. `alternates.types` in the root layout's `metadata` — **zero** `alternate`
+   links in the served HTML. Next 16 does not emit that field.
+2. Moved into `pageMetadata()`, on the theory that a page's own `alternates`
+   replaces the layout's. That is a real trap and §103 already records it, so it
+   was a reasonable hypothesis. **Still absent.**
+3. A literal `<link>` in the layout body, relying on React 19 hoisting. This one
+   works — **but only on dynamically rendered routes.** Present on
+   `/system-design`, absent on `/`, `/about`, `/skills`.
+
+Removed. A tag true on some pages and false on others is a worse artifact than
+no tag. Discovery rests on `robots.txt`, the well-known path, and `/for/ai`,
+which links all three documents as ordinary anchors — verified in-browser.
+
+### 56e. The internal link graph (`48182fa`)
+
+§55a's twenty uncrawled URLs are a link-graph problem, not a metadata one.
+Case studies were worst: `nextProject` links each to the next and nothing else,
+so the six form a closed ring, and **all six were in the never-crawled set**.
+
+`relatedPages()` runs the site's own hybrid retriever over the page's own
+vocabulary. Three properties decide whether it works at all, so each is
+asserted: it returns distinct **pages** (retrieval is chunk-level; a naive
+take(3) renders one destination three times), it never links a page to itself,
+and it degrades to empty rather than throwing.
+
+Deliberately no reciprocal-link forcing and no padding a thin result — filler
+links read as manipulation to a crawler and lie to a visitor.
+
+### 56f. API metering, charging nobody (`4cd4073`)
+
+**The rule: a key raises a limit, it never opens a door.** Every endpoint public
+today stays public, anonymous and free. Everything on this site is free to use,
+so a paywall would be a regression dressed as a feature.
+
+**The near-bug worth remembering.** The first design had one absolute budget per
+tier for the whole API. But the routes do not share a limit — `/api/rpc` allows
+30 burst, `/api/graphql` 20, `/api/ai/ask` 12, each sized for what that route
+costs. A single `ANONYMOUS` budget would have replaced all three with the
+smallest, **silently cutting the RPC endpoint's burst by more than half for
+every anonymous caller.** Tiers are now multipliers on each route's own
+baseline, so `ANONYMOUS` is ×1 and no arithmetic can make a tier worse than no
+key. Verified live over HTTP: `/api/graphql` reports limit 20, `/api/ai/ask`
+serves exactly 12 then 429s with `x-ratelimit-limit: 12`.
+
+`UsageRecord` is one row per key per route per **UTC day**, not per request — at
+request granularity it is the largest table in the database inside a week. The
+unique constraint makes the increment one atomic upsert.
+
+Secrets are stored only as SHA-256 and shown once. Revoke marks `REVOKED` rather
+than deleting, because `UsageRecord` cascades and the history is exactly what
+you want after revoking a leaked key.
+
+**Applied to production on 21 Aug.** `pnpm exec prisma db push` against
+`neondb` at `ep-wispy-shape-axy1da3z…`, reporting _"Your database is now in sync
+with your Prisma schema"_ with no warnings. Purely additive — 2 `CREATE TYPE`,
+2 `CREATE TABLE`, 5 `CREATE INDEX`, 2 `ADD CONSTRAINT`, no `ALTER`, no `DROP`.
+This is the fourth schema change to go straight to production (§45 records the
+first three).
+
+`prisma/migrations/` now exists for the first time, holding a `0_init` baseline
+and the additive migration, with a README covering both apply paths. **CI still
+runs `prisma db push`** and that is deliberate — the CI database is disposable.
+
+### 56g. Adaptive concurrency (`e98f810`)
+
+`lib/rate-limit.ts` meters arrivals and is open-loop: sized for a healthy
+database, `/api/ai/ask` admits identical traffic whether Neon answers in 40ms or
+4s, each request now holding a connection twenty times longer. The limiter meant
+to protect the database becomes the thing feeding it.
+
+`AdaptiveLimiter` derives the limit from observed latency —
+`newLimit = limit × gradient + √limit`, gradient = longRTT/shortRTT. No
+threshold to tune.
+
+**Three things a future reader will otherwise re-derive:**
+
+1. The `√limit` queue term is load-bearing. Without it `limit × gradient` has a
+   fixed point at gradient 1.0 and can only shrink — one blip would ratchet the
+   route down permanently.
+2. `guard()` wraps acquire/release in `try/finally`. A handler throwing between
+   them leaks a permit forever, closing the route with nothing in the logs.
+3. **A uniformly slow route is not a degraded route.** The gradient measures a
+   route against its own best, so an endpoint that has always taken 2s
+   converges to gradient 1.0 and opens fully. Found by a test asserting the
+   opposite, which failed. An absolute ceiling is a different mechanism, and
+   `lib/sre/breaker.ts` already is it.
+
+Shed requests get 503, not 429: 429 says "you asked too often" and a good client
+slows down; 503 says "we are unwell", where slowing down will not help.
+
+### 56h. Verified live, and what could not be
+
+The egress proxy in the build environment **denies CONNECT to
+`www.shivamsfolio.com` and to Vercel preview URLs** (403, org policy). Live
+verification against the real site is not possible from there and a browser does
+not change that — it uses the same proxy.
+
+What was done instead: a production build served locally and driven with real
+Chromium. `robots.txt` (694 B), `llms.txt` (4338 B), `llms-full.txt` and
+`sitemap.xml` all 200; the rate-limit headers above; and `/for/ai` rendering
+three crawlable anchors. That is what caught 56d.
+
+### 56i. Resend, re-examined 21 Aug
+
+The domain has existed in Resend for 14 days, status **Not Started**, on account
+`shivampatilinfo`. Mail is being **delivered and opened** — three sends to the
+owner address, confirmed in the dashboard.
+
+`/domains GET → 401` in the Resend logs is **expected**, not a fault: §9 records
+the key as send-only on purpose. It also means the domain state cannot be
+inspected via the API with the key this project holds.
+
+**The MX question is now settled, and §3 was right.** The hypothesis was that
+Resend's sending/receiving split might have made MX a receiving-only concern, in
+which case Wix could do the TXT records and the blocker would be stale. The
+domain detail page disproves it. The records are grouped, and the grouping is
+the answer:
+
+| Group               | Records                                                           |
+| ------------------- | ----------------------------------------------------------------- |
+| Domain Verification | TXT `resend._domainkey` (DKIM)                                    |
+| **Enable Sending**  | **MX `send`** → `feedback-smtp.*.amazonses.com`, TXT `send` (SPF) |
+| DMARC (optional)    | TXT `_dmarc`                                                      |
+| Enable Receiving    | _separate toggle, off_                                            |
+
+**The MX sits under Enable Sending, not Enable Receiving.** Resend also now
+renders an explicit banner naming the provider: _"Wix doesn't support subdomains
+for MX records. This means you can't verify your domain for Resend if your DNS
+is managed by Wix."_ Provider is detected as Wix, region Tokyo.
+
+So Resend cannot be verified on Wix DNS. Do not re-test this hypothesis.
+
+**What that leaves, none of which needs a DNS move:**
+
+1. **Change provider to one whose domain authentication avoids subdomain MX.**
+   SendGrid with Automated Security enabled needs only **CNAME** records — it
+   delegates a subdomain to its own zone and generates the SPF and MX inside
+   that zone itself, so nothing MX-shaped is ever entered at Wix. Brevo
+   authenticates on **TXT** alone. Wix does both record types; the existing zone
+   already has a CNAME on `www`. The work is swapping `lib/mail.ts`, and
+   `lib/payments/` is the precedent for doing it as an adapter rather than a
+   rewrite.
+2. **Accept spam placement**, which is the standing decision from 10 Aug.
+
+**One thing worth checking before either.** The Wix screen showing
+`NS records are not editable` is the DNS **zone editor**, and that message is
+normal everywhere — a zone never edits its own NS records. Pointing a domain at
+external nameservers is a **registrar-level** setting on a different screen
+(Wix: Domains → the domain → Advanced / nameservers), and Wix does permit it for
+domains registered with them. Whether that screen is available here has not been
+verified, and it is the difference between "blocked" and "one setting".
+
+## 57. Outstanding after P27
+
+1. **E2E still covers none of P17–P25.** Unchanged from §47 item 1, and now
+   larger again — P27 added `/llms.txt`, `/llms-full.txt`, the related-links
+   block and the metering headers, none of which have a browser test.
+2. **`/engineering-log` is not built.** HANDOFF.md remains the strongest
+   artifact in this repo and is invisible to every reader of the site.
+3. §37 items 1–3 (DNS/Resend, OAuth apps, Razorpay/R2/Cal.com) are unchanged.
+   **Resend on Wix is now proven impossible** (§56i) rather than assumed, so the
+   real choice is a provider swap or accepting spam placement — not "wait until
+   DNS moves".
+4. **Nothing creates an API key through the UI yet.** `/api/account/api-keys`
+   works (GET/POST/DELETE, session-gated) but there is no page calling it.
+5. The Stripe fields on `ApiKey` are unused and billing is inert. That is
+   deliberate — everything on this site is free — but the columns exist.
+6. §47 items 3–5 (twelve golden queries, `toLocaleString` on /reliability, no
+   subword information in the embedding) are all unchanged.

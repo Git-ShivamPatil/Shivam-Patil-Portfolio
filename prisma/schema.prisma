@@ -32,6 +32,7 @@ model User {
 
   pushSubscriptions PushSubscription[]
   chatConversation  ChatConversation?
+  apiKeys           ApiKey[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1054,4 +1055,103 @@ model BreakerTransition {
 
   @@index([target, createdAt])
   @@index([createdAt])
+}
+
+
+// ---------------------------------------------------------------------------
+// P27 — API metering.
+//
+// The site publishes a hand-written OpenAPI 3.1 description, a protobuf RPC
+// endpoint and a GraphQL endpoint, and until now metered none of them: every
+// caller was anonymous and limited only by IP. These two models are what turn
+// that surface into something with an identity attached to each call.
+// ---------------------------------------------------------------------------
+
+enum ApiKeyTier {
+  // No key required. What every caller gets today, kept as a named tier so the
+  // limit table has one shape rather than a special case for "no key".
+  ANONYMOUS
+  FREE
+  PRO
+}
+
+enum ApiKeyStatus {
+  ACTIVE
+  REVOKED
+}
+
+model ApiKey {
+  id String @id @default(cuid())
+
+  // SHA-256 of the presented secret. The secret itself is displayed once, at
+  // creation, and never stored — the same reason PasswordResetToken stores a
+  // hash. A leaked database backup must not be a set of working credentials.
+  hash String @unique
+
+  // The public, non-secret half: "sfk_live_3f9a2c" — enough for a person to
+  // recognise which key a log line is about without it being usable.
+  prefix String @unique
+
+  // What the owner called it. "laptop", "ci", "that script".
+  name String
+
+  tier   ApiKeyTier   @default(FREE)
+  status ApiKeyStatus @default(ACTIVE)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Set only once a key is on a paid plan. Null keys are billed nothing, which
+  // is why every one of these is optional — the metering works with no payment
+  // provider configured at all, exactly like the booking flow does.
+  stripeCustomerId         String?
+  stripeSubscriptionItemId String?
+
+  // Advisory only: written on a best-effort basis so a busy key does not pay
+  // for a write on every request. Never used to make an authorization decision.
+  lastUsedAt DateTime?
+
+  expiresAt DateTime?
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  usage UsageRecord[]
+
+  @@index([userId, status])
+}
+
+// One row per key, per route, per UTC day.
+//
+// NOT one row per request. At request granularity this table is the largest in
+// the database within a week and every billing query is a full scan of it; the
+// aggregate answers "how much did this key use" in one indexed read, and the
+// unique constraint below makes the increment a single atomic upsert with no
+// read-modify-write to race.
+model UsageRecord {
+  id String @id @default(cuid())
+
+  apiKeyId String
+  apiKey   ApiKey @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+
+  route String
+  day   DateTime @db.Date
+
+  // Requests served. Distinct from `units` because they are not the same
+  // question: this is traffic, units are cost.
+  count Int @default(0)
+
+  // Billable units. A retrieval call costs more than a metadata read, so a
+  // flat per-request price would either overcharge the cheap routes or
+  // undercharge the expensive one. See lib/api/metering.ts for the weights.
+  units Int @default(0)
+
+  // When this row was reported to the billing provider. Null means unreported.
+  // Reporting is idempotent on (apiKeyId, route, day), so a retried report
+  // cannot double-bill — the whole reason the aggregate is keyed this way.
+  reportedAt DateTime?
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([apiKeyId, route, day])
+  @@index([day, reportedAt])
 }

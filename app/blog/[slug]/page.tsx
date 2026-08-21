@@ -6,6 +6,8 @@ import { blogPostJsonLd, breadcrumbJsonLd } from "../../../lib/seo/structured-da
 import { notFound } from "next/navigation";
 import { prisma } from "../../../lib/prisma";
 import { readOrFallback } from "../../../lib/db-read";
+import { RelatedPages } from "../../../components/seo/related-pages";
+import { relatedPages, queryFor } from "../../../lib/seo/related";
 
 // Revalidate rather than prerender-once: if the build could not reach the
 // database, the empty prerender heals on the next revalidation instead of
@@ -65,6 +67,13 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   // separated by a blank line, no markdown/HTML parsing involved.
   const paragraphs = post.content.split(/\n{2,}/).filter(Boolean);
 
+  // P27 — see the note in app/projects/[slug]/page.tsx. A post previously
+  // linked only back to /blog, so it was a leaf in the crawlable graph.
+  const related = await relatedPages({
+    self: `/blog/${slug}`,
+    query: queryFor([post.title, post.excerpt, post.tags]),
+  });
+
   return (
     <>
       <JsonLd
@@ -101,6 +110,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           ))}
         </div>
       </article>
+
+      <RelatedPages pages={related} />
     </>
   );
 }

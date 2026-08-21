@@ -198,6 +198,18 @@ export const SITE_ROUTES: SiteRoute[] = [
     changeFrequency: "monthly",
   },
   {
+    href: "/engineering-log",
+    label: "Bugs I got wrong",
+    blurb: "Eight failures, and the wrong theory I held before each fix.",
+    technicalLabel: "Engineering log · debugging write-ups",
+    group: "proof",
+    // Above the demo pages and just under the case studies. It is the deepest
+    // evidence on the site of how the work is actually done, and unlike the
+    // demos it reads without needing a browser that can run WebGPU.
+    priority: 0.85,
+    changeFrequency: "monthly",
+  },
+  {
     href: "/ask",
     label: "Ask me anything",
     blurb: "Ask a question; it answers by quoting this site.",

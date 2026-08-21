@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { clientIp, consume } from "../../../lib/rate-limit";
+import { meterApi } from "../../../lib/api-guards";
 import { withRed } from "../../../lib/sre/red";
 import {
   GraphQLError,
@@ -53,9 +53,9 @@ async function handleGET() {
 }
 
 async function handlePOST(request: Request) {
-  if (!(await consume(`graphql:${clientIp(request)}`, 20, 0.3)).ok) {
-    return NextResponse.json({ errors: [{ message: "Too many requests." }] }, { status: 429 });
-  }
+  // P27 — metered, at this route's own existing limit for anonymous callers.
+  const gate = await meterApi(request, "/api/graphql", { capacity: 20, refillPerSecond: 0.3 });
+  if ("error" in gate) return gate.error;
 
   const body = (await request.json().catch(() => null)) as { query?: unknown } | null;
   const query = typeof body?.query === "string" ? body.query : null;
@@ -89,6 +89,10 @@ async function handlePOST(request: Request) {
 
   const { data, errors } = await execute(selections, buildSchema());
 
+  // A GraphQL response carrying field errors is still a served request — the
+  // work was done. Only a refusal before execution goes unrecorded.
+  gate.record();
+
   return NextResponse.json(
     {
       data,
@@ -106,7 +110,7 @@ async function handlePOST(request: Request) {
       // surprises people: transport succeeded, so the status describes the
       // transport. The `errors` array describes the query.
       status: 200,
-      headers: { "Cache-Control": "no-store" },
+      headers: { ...gate.headers, "Cache-Control": "no-store" },
     },
   );
 }

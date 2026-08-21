@@ -5,7 +5,7 @@ import { sendNewsletterWelcome } from "../../../../lib/mail";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://shivamsfolio.com";
+import { siteUrl } from "../../../../lib/seo/site";
 
 /**
  * Confirmation link target (GET, because it is followed from an email).
