@@ -9,6 +9,8 @@ import { CopyButton } from "../../../components/copy-button";
 import { ImageGallery } from "../../../components/image-gallery";
 import { Disclosure, DisclosureGroup } from "../../../components/ui/disclosure";
 import { getProjectBySlug, getProjects } from "../../projects";
+import { RelatedPages } from "../../../components/seo/related-pages";
+import { relatedPages, queryFor } from "../../../lib/seo/related";
 
 // See the note in app/blog/[slug]/page.tsx - getProjects() already falls back
 // to [] when the database is unreachable, so this degrades to on-demand
@@ -56,6 +58,29 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
   // undefined and take the whole page down on a transient outage.
   const nextProject =
     projects.length > 0 ? projects[(projectIndex + 1) % projects.length] : undefined;
+
+  /**
+   * The internal link graph (P27).
+   *
+   * `nextProject` above is a *ring* — it links each case study to the one after
+   * it and nothing else, so the six of them form a closed loop that points
+   * nowhere. Every one of these six pages was in the "never crawled" set in
+   * §55a, and three were unknown to Google entirely.
+   *
+   * This retrieves over the project's own vocabulary, so a case study about
+   * rate limiting links to /skills, /system-design or /reliability by whatever
+   * the index actually says is nearest — not by a list someone maintains.
+   */
+  const related = await relatedPages({
+    self: `/projects/${slug}`,
+    query: queryFor([
+      project.title,
+      project.summary,
+      project.category,
+      project.stack,
+      project.tags,
+    ]),
+  });
 
   return (
     <>
@@ -231,6 +256,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
 
       {/* Omitted entirely when the project list is unavailable, rather than
           rendering a link to nowhere. */}
+      <RelatedPages pages={related} />
+
       {nextProject && (
         <section className="next-project shell">
           <p className="eyebrow">Continue exploring</p>
