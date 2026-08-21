@@ -24,7 +24,10 @@ env:
   DIRECT_URL: "postgresql://user:pass@localhost:5432/db"
   AUTH_SECRET: "ci-placeholder-secret"
   AUTH_URL: "http://localhost:3000"
-  NEXT_PUBLIC_SITE_URL: "https://shivamsfolio.com"
+  # The `www` form, matching production. This used to be the bare apex, which
+  # made CI the one environment that built the site against a host the
+  # canonical tags, og:url and the OAuth redirect URIs all disagree with.
+  NEXT_PUBLIC_SITE_URL: "https://www.shivamsfolio.com"
 
 jobs:
   # Lint, typecheck, test and build. The gate every change passes.

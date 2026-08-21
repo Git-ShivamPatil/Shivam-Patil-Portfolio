@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { buildOpenApi } from "../../../lib/api/openapi";
 import { withRed } from "../../../lib/sre/red";
+import { siteUrl } from "../../../lib/seo/site";
 
 export const runtime = "nodejs";
 
@@ -12,8 +13,6 @@ export const runtime = "nodejs";
 export const GET = withRed("/api/openapi", handleGET);
 
 async function handleGET() {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.shivamsfolio.com";
-
   return NextResponse.json(buildOpenApi(siteUrl), {
     headers: {
       // The registered media type for OpenAPI 3.1. `application/json` also

@@ -15,7 +15,23 @@ import { contactEmail } from "../site-contact";
  * ./structured-data.ts without any of them reaching for the database.
  */
 
-export const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://shivamsfolio.com";
+/**
+ * The site's origin, and the only place its default is written.
+ *
+ * **The default is the `www` form because that is the canonical host** — the
+ * `link[rel=canonical]`, `og:url`, `sitemap.xml` and the registered OAuth
+ * redirect URIs all use it. Seven files used to inline this same expression,
+ * and they had already split: app/api/openapi/route.ts defaulted to `www`
+ * while lib/seo/site.ts, app/robots.ts, lib/mail.ts and three API routes
+ * defaulted to the bare apex. Production sets `NEXT_PUBLIC_SITE_URL`, so the
+ * split was invisible there — but any environment that does not (a preview
+ * without the variable, CI, a fresh clone) emitted a `robots.txt` whose
+ * sitemap URL pointed at the non-canonical host while the OpenAPI document's
+ * `servers[]` pointed at the canonical one. Two documents disagreeing about
+ * which origin the site lives at is precisely the signal a crawler resolves by
+ * picking one and ignoring the other.
+ */
+export const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.shivamsfolio.com";
 
 export const person = {
   name: "Shivam Patil",

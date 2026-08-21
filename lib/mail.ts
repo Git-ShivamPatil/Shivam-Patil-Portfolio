@@ -8,7 +8,7 @@ import {
   passwordResetEmail,
 } from "./email/templates";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://shivamsfolio.com";
+import { siteUrl } from "./seo/site";
 // Falls back to Resend's shared test sender until shivamsfolio.com is
 // domain-verified in the Resend dashboard.
 const FROM = process.env.EMAIL_FROM ?? "Shivam Patil <onboarding@resend.dev>";
