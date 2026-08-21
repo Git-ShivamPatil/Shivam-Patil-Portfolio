@@ -28,6 +28,31 @@ import { ROUTE_GROUPS, indexableRoutes, type SiteRoute } from "../site-routes";
  * appears here by construction, and `tests/p26-seo.test.ts` already fails if a
  * page on disk is missing from the registry.
  *
+ * ### There is deliberately no `<link rel="alternate">` pointing here
+ *
+ * Three ways were tried and measured in a real browser against a production
+ * build, because the docs and the served HTML disagreed:
+ *
+ * 1. `alternates.types` in the root layout's `metadata` — **zero** `alternate`
+ *    links in the output. Next 16 does not emit that field.
+ * 2. The same, moved into `pageMetadata()` on the theory that a page's own
+ *    `alternates` replaces the layout's (which §103 records as a genuine trap,
+ *    so it was a reasonable hypothesis) — still absent.
+ * 3. A literal `<link>` element in the layout body, relying on React 19 to
+ *    hoist it into `<head>`. This one *works* — but only on dynamically
+ *    rendered routes. On the prerendered static ones (`/`, `/about`,
+ *    `/skills`) it does not appear at all.
+ *
+ * A tag that is present on `/system-design` and absent on `/` is a worse
+ * artifact than no tag: it makes a claim about the site that is true on some
+ * pages and false on others, and anything reconciling the two is guessing.
+ *
+ * So discovery rests on the two mechanisms that provably work, both verified
+ * over HTTP: **the well-known path** (which is the actual convention — a
+ * reader that knows about `llms.txt` fetches `/llms.txt`), and **`/for/ai`,
+ * which links all three machine-readable documents as ordinary crawlable
+ * anchors**. `robots.txt` is the third, and it is what a crawler reads first.
+ *
  * ### The one thing it must not become
  *
  * A keyword dump. `llms.txt` is read by something that will quote it back to a
