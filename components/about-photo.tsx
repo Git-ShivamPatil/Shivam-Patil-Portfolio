@@ -3,12 +3,12 @@ import { join } from "node:path";
 import Image from "next/image";
 
 /**
- * Expects a real photo at `public/profile.jpg`, and renders the wordmark
- * treatment when it is absent.
+ * The portrait on /about, resolved at build time against what is actually on
+ * disk.
  *
  * **The existence check happens here, on the server, and that is the point.**
  * This was previously a client component that always rendered the `<Image>` and
- * swapped to the fallback from `onError`. The visible result was correct — no
+ * swapped to a fallback from `onError`. The visible result was correct — no
  * broken-image icon — but every visitor still paid for a request to
  * `/_next/image?url=%2Fprofile.jpg`, which **400s** while the file does not
  * exist. A fallback that runs after the failed request hides the symptom from
@@ -17,23 +17,42 @@ import Image from "next/image";
  * best-practices to 0.96 on every page of the site.
  *
  * `/about` is a static route, so this resolves once at build time and costs
- * nothing per request. Dropping the client component also takes a small amount
- * of JavaScript off the page.
+ * nothing per request.
  *
- * Adding `public/profile.jpg` is all that is needed to switch the photo on —
- * there is nothing else to change here.
+ * ### Why there are two candidates
+ *
+ * `profile.jpg` has never existed, so for the whole life of this page the frame
+ * rendered a 64px "SP" on a near-black card — a placeholder that looked
+ * deliberate enough that nobody read it as missing. Meanwhile `logo.jpeg` — the
+ * same photograph the header already shows as a 28px avatar — was sitting in
+ * `public/` the entire time at 720×1280, which is far more resolution than this
+ * frame needs.
+ *
+ * So the list is ordered by intent rather than collapsed to one file:
+ * `profile.jpg` first, because a portrait shot for a 4:5 frame will always beat
+ * one cropped from a phone photo, and dropping that file in is still all it
+ * takes to switch to it. `logo.jpeg` second, because it is a real photograph of
+ * a real person and that is what this slot is for. The lettermark stays last,
+ * for the case where someone removes both.
  */
+const CANDIDATES = ["/profile.jpg", "/logo.jpeg"];
+
 export function AboutPhoto() {
-  const hasPhoto = existsSync(join(process.cwd(), "public", "profile.jpg"));
+  const photo = CANDIDATES.find((src) =>
+    existsSync(join(process.cwd(), "public", src.replace(/^\//, ""))),
+  );
 
   return (
     <div className="about-photo-frame">
-      {hasPhoto ? (
+      {photo ? (
         <Image
-          src="/profile.jpg"
+          src={photo}
           alt="Shivam Patil"
           fill
           priority
+          /* `fill` + object-fit: cover, so the 9:16 source is cropped to the
+             frame's 4:5 rather than letterboxed. The crop takes it off the top
+             and bottom, which is the right axis for a portrait. */
           sizes="(max-width: 900px) 100vw, 40vw"
           className="about-photo-img"
         />
