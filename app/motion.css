@@ -270,16 +270,30 @@
   height: 100%;
   object-fit: cover;
 }
+/* `right: 0`, not the `right: -3%` these carried.
+   The negative offset bled the mark past the right edge of `main`, and the
+   only thing preventing that from widening the page was `main { overflow-x:
+   clip }` below — a property iOS Safari did not support until version 16. On
+   anything older the bleed is not clipped, the layout viewport grows to
+   contain it, and the whole site renders zoomed-in until the reader pinches
+   out. Measured in mobile emulation at 390px: the mark's right edge sat at
+   402px, twelve past the viewport.
+
+   Nothing is lost visually. The radial mask above already fades this element
+   to fully transparent well before its own edge, so the impression of bleeding
+   off the page comes from the mask, not from the three percent. */
 .brand-watermark-bottom-right {
-  right: -3%;
+  right: 0;
   bottom: 5%;
 }
 .brand-watermark-top-right {
-  right: -3%;
+  right: 0;
   top: 8%;
 }
-/* Stops the bleed from producing a horizontal scrollbar. `clip` rather than
-   `hidden` so the sticky .section-heading inside main still sticks. */
+/* Kept as defence, no longer load-bearing. With no bleed to clip there is
+   nothing for this to catch — but a future offset, a wide figure or a long
+   unbroken string would all land here, and it costs nothing. `clip` rather
+   than `hidden` so the sticky .section-heading inside main still sticks. */
 main {
   overflow-x: clip;
 }

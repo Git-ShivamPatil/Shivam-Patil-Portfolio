@@ -12,10 +12,12 @@ import type { MetadataRoute } from "next";
  * status bar, which on a phone means hiding the clock and the battery to show
  * a portfolio. That is a trade a game can justify and a document cannot.
  *
- * No `theme_color` that contradicts the palette — the value here is the light
- * theme's paper, and the dark theme's is supplied at runtime by the theme
- * provider through a meta tag, because a manifest is static and this site's
- * theme is not.
+ * `theme_color` matches the DEFAULT theme, which is dark. It used to hold the
+ * light theme's paper on the reasoning that "the dark theme's is supplied at
+ * runtime by the theme provider through a meta tag" — that was not true. There
+ * is no such meta tag anywhere in this repo, so this static value was the only
+ * one, and it painted an installed copy's splash screen and Android status bar
+ * white before a dark page loaded behind it.
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
@@ -29,11 +31,12 @@ export default function manifest(): MetadataRoute.Manifest {
     // the analytics and the ISR cache entry for the busiest page on the site.
     display: "standalone",
     orientation: "any",
-    // --paper, the light theme's page ground. These paint the splash screen
-    // and the Android status bar of an installed copy, so a value from the
-    // retired palette would frame the app in a colour the app no longer has.
-    background_color: "#ffffff",
-    theme_color: "#ffffff",
+    // --bg from the dark block in app/globals.css. These paint the splash
+    // screen and the Android status bar of an installed copy, so they have to
+    // track whatever the default theme is — a mismatch here is a white flash
+    // on every launch.
+    background_color: "#0a0a0a",
+    theme_color: "#0a0a0a",
     categories: ["business", "productivity"],
     icons: [
       {
