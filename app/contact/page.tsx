@@ -3,6 +3,7 @@ import { pageMetadata } from "../../lib/seo/metadata";
 import { ArrowUpRight } from "../../components/icons";
 import { ContactForm } from "../../components/contact-form";
 import { BrandWatermark } from "../../components/brand-watermark";
+import { contactEmail, mailtoHref, telHref } from "../../lib/site-contact";
 
 const services: [string, string][] = [
   ["Backend & APIs", "High-throughput services, clear API contracts, and reliable integrations."],
@@ -21,6 +22,8 @@ export const metadata = pageMetadata({
 });
 
 export default function ContactPage() {
+  const phone = telHref();
+
   return (
     <>
       <BrandWatermark placement="top-right" />
@@ -80,9 +83,32 @@ export default function ContactPage() {
             <br />
             to reach me.
           </h2>
+          {/* The phone lives here now.
+              It used to be an unlabelled icon in the header, then a "Call me"
+              entry in the footer directory, and both are gone — the header was
+              trimmed to three zones and the directory was removed at the
+              owner's request. That left this page's own description promising
+              "Email, phone and the fastest way to reach..." while the page
+              rendered no phone number at all, which is the kind of quiet lie a
+              redesign leaves behind.
+
+              `telHref()` gates it on NEXT_PUBLIC_CONTACT_PHONE exactly as it
+              always has: a `tel:` built from a placeholder is worse than an
+              absent link, because it looks live, it is tappable, and it fails
+              in the visitor's dialler rather than on the page. */}
+          <ul className="contact-quick-channels">
+            <li>
+              <a href={mailtoHref()}>{contactEmail}</a>
+            </li>
+            {phone ? (
+              <li>
+                <a href={phone}>{phone.replace("tel:", "")}</a>
+              </li>
+            ) : null}
+          </ul>
         </div>
         <Link href="/reach-out" className="button button-solid" data-magnetic>
-          View contact details <ArrowUpRight />
+          Send a message instead <ArrowUpRight />
         </Link>
       </section>
     </>

@@ -63,6 +63,21 @@ export interface SiteRoute {
   blurb: string;
   /** The industry name for the same thing. Secondary text, and search signal. */
   technicalLabel?: string;
+  /**
+   * What the HEADER bar calls it, when that has to differ from `label`.
+   *
+   * Only /system-design sets it. Its `label` is "How this site works", which is
+   * the right phrase in a directory where a sentence of blurb sits under it and
+   * the reader is browsing. In an eleven-character slot next to three other
+   * items it is four words of nothing — "System design" says the same thing and
+   * says it at a glance.
+   *
+   * Deliberately NOT `technicalLabel`, even though that field already holds the
+   * string "System design": reusing it would silently rename "Projects" to
+   * "Case studies" and "What I know" to "Skills & tech stack" in the same bar,
+   * which is not what anyone asked for. One override, one field, one route.
+   */
+  navLabel?: string;
   group: RouteGroupId;
   /**
    * `false` only on the server-rendered routes. A prefetch on those is a full
@@ -193,9 +208,11 @@ export const SITE_ROUTES: SiteRoute[] = [
     label: "How this site works",
     blurb: "The architecture, drawn — plus a live Raft election.",
     technicalLabel: "System design",
+    navLabel: "System design",
     group: "proof",
     priority: 0.85,
     changeFrequency: "monthly",
+    primary: true,
   },
   {
     href: "/engineering-log",
@@ -325,6 +342,14 @@ export const SITE_ROUTES: SiteRoute[] = [
     priority: 0.75,
     changeFrequency: "monthly",
   },
+  {
+    href: "/newsletter",
+    label: "Get the newsletter",
+    blurb: "Occasional notes on systems that hold up.",
+    group: "hire",
+    priority: 0.6,
+    changeFrequency: "yearly",
+  },
 ];
 
 /**
@@ -377,8 +402,32 @@ export function routesInGroup(group: RouteGroupId): SiteRoute[] {
 }
 
 /** The handful of routes the compact top-bar nav shows. */
+/**
+ * The header bar's order, stated rather than inherited.
+ *
+ * `primaryRoutes()` used to return SITE_ROUTES in declaration order, which made
+ * the bar's order a side effect of where each entry happened to sit in this
+ * file — /system-design is declared under "see it running", two hundred lines
+ * above /reach-out, so flagging it `primary` would have put it third with no
+ * way to read why from the code. It belongs last, to the right of "Send me a
+ * message", and this is where that is written down.
+ *
+ * Membership is still the `primary` flag on each route; this only orders them.
+ * The assertion below is what keeps the two from drifting apart.
+ */
+const PRIMARY_ORDER = ["/about", "/projects", "/skills", "/reach-out", "/system-design"];
+
 export function primaryRoutes(): SiteRoute[] {
-  return SITE_ROUTES.filter((route) => route.primary);
+  const primary = SITE_ROUTES.filter((route) => route.primary);
+  const ordered = PRIMARY_ORDER.map((href) => primary.find((route) => route.href === href)).filter(
+    (route): route is SiteRoute => route !== undefined,
+  );
+
+  // A route flagged `primary` but missing from PRIMARY_ORDER would vanish from
+  // the header silently — the failure mode that is invisible in review and
+  // obvious only to whoever notices a link is gone. Append rather than drop.
+  const unlisted = primary.filter((route) => !PRIMARY_ORDER.includes(route.href));
+  return [...ordered, ...unlisted];
 }
 
 /**

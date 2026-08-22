@@ -20,9 +20,10 @@ import { primaryRoutes } from "../lib/site-routes";
  *   room. /search is still in the footer, still in the palette, still in the
  *   sitemap — only the duplicate entrance is gone.
  * - **The phone and mail icons** are contact channels, and contact is not a
- *   thing you do from a header on the way somewhere else. Both moved into the
- *   footer's Elsewhere group, beside the addresses they dial, where they read
- *   as information rather than as buttons. **Neither channel was removed** —
+ *   thing you do from a header on the way somewhere else. Both now live on
+ *   /contact, the page whose own description promises "email, phone and the
+ *   fastest way to reach" — they went to the footer first, and moved again
+ *   when the footer directory was removed. **Neither channel was removed** —
  *   `telHref()` still gates the phone on NEXT_PUBLIC_CONTACT_PHONE exactly as
  *   it did here.
  *
@@ -65,8 +66,10 @@ export function Header() {
           </Link>
         </div>
 
-        {/* The four routes a first-time visitor is most likely to want, read
-            from the shared registry rather than written out here. Their
+        {/* The primary routes, read from the shared registry rather than
+            written out here — including their ORDER, which is stated in
+            PRIMARY_ORDER rather than inherited from where each entry sits in
+            that file. Their
             prefetch flags come from the registry too, so the rule stays in one
             place: ON for the static and ISR routes, which come off the CDN, OFF
             for the server-rendered ones where a prefetch is a real render plus
@@ -74,7 +77,11 @@ export function Header() {
         <nav className="header-nav" aria-label="Main navigation">
           {primaryRoutes().map((route) => (
             <Link key={route.href} href={route.href} prefetch={route.prefetch}>
-              {route.label}
+              {/* `navLabel` where a route sets one — only /system-design does.
+                  See the field's note in lib/site-routes.ts for why it is not
+                  `technicalLabel`, which would have renamed two other items in
+                  this same bar. */}
+              {route.navLabel ?? route.label}
             </Link>
           ))}
         </nav>

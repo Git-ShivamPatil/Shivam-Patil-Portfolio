@@ -58,19 +58,44 @@ test.describe("getting off the homepage", () => {
   });
 
   test("the header offers the primary routes without JavaScript running", async ({ page }) => {
-    // The footer directory and the header nav are both server-rendered, which
-    // is what stops the whole route map living behind a hydration boundary —
-    // the failure the footer directory was reinstated to fix. Asserting on the
-    // HTML rather than on the hydrated page is the only way to see that.
+    // The header nav is server-rendered, and it is now the ONLY server-rendered
+    // navigation on the site: the footer directory was removed at the owner's
+    // request, and the nav drawer portals into <body> after mount so it
+    // contributes nothing to the HTML.
+    //
+    // This asserts the five that survive, deliberately and narrowly. It used to
+    // also assert /engineering-log as a stand-in for "the long tail has inbound
+    // links" — that is no longer true by design, and leaving the assertion in
+    // as something that happens to pass would misreport what this file checks.
+    // The long tail's reachability is sitemap.xml and /llms.txt now, which
+    // e2e/labs.spec.ts covers.
     const response = await page.goto("/");
     const html = (await response?.text()) ?? "";
 
-    expect(html).toContain('href="/projects"');
-    expect(html).toContain('href="/about"');
-    // Every route on the site, not just the primary four: the footer directory
-    // is what gives the long tail its inbound links.
-    expect(html).toContain('href="/engineering-log"');
-    expect(html).toContain('href="/system-design"');
+    for (const href of ["/about", "/projects", "/skills", "/reach-out", "/system-design"]) {
+      expect(html, `${href} is not in the server HTML`).toContain(`href="${href}"`);
+    }
+  });
+
+  test("the header puts System design last, after Send me a message", async ({ page }) => {
+    // Order is the ask, so order is what is asserted. PRIMARY_ORDER in
+    // lib/site-routes.ts is what makes this hold; without it the bar inherits
+    // the order entries happen to sit in that file, which put /system-design
+    // third because it is declared two hundred lines above /reach-out.
+    await page.goto("/");
+
+    const labels = await page
+      .getByRole("navigation", { name: "Main navigation" })
+      .getByRole("link")
+      .allTextContents();
+
+    expect(labels.map((text) => text.trim())).toEqual([
+      "About me",
+      "Projects",
+      "What I know",
+      "Send me a message",
+      "System design",
+    ]);
   });
 
   test("nothing covers the page on arrival", async ({ page }) => {
