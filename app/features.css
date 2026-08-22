@@ -152,7 +152,6 @@
   font-size: 12px;
 }
 
-
 /* ---------- responsive ----------
    Every other rule that used to live in the two shared breakpoint blocks moved
    into the stylesheet that owns its selector. Splitting a media query by

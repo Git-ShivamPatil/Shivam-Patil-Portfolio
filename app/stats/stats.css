@@ -24,83 +24,60 @@
    (see the project-card title and Plan/Find/Act chip comments in globals.css),
    so it is fixed with numbers rather than with judgement.
 
-   DERIVED FROM --accent-base, NOT --accent. The theme customiser rewrites
-   --accent's hue in OKLCH, and globals.css argues that provably cannot move a
-   contrast ratio because OKLCH passes lightness through untouched. That holds
-   for OKLCH lightness; it does not hold for WCAG relative luminance, which
-   weights green ~7x more than blue. Measured across the full 360 degrees of the
-   slider, the palest step of an --accent-derived ramp falls from 3.22:1 to
-   2.71:1 — under the 1.4.11 floor. --accent-base is the unrotated original, so
-   every ratio below is unconditional.
+   ONE FORMULA, BOTH THEMES — and that is new. The ramp used to be derived
+   from --accent-base with a different set of percentages per theme, plus a
+   verbatim @media(prefers-color-scheme: dark) copy of those overrides. Under
+   the monochrome rule --accent-base and --fg became the same value, which made
+   `color-mix(--accent-base X%, --fg)` degenerate: --chart-1 and --chart-2 both
+   resolved to #121212 in light and #f5f5f5 in dark. Two of six series were
+   arithmetically identical — the same class of defect this block was written
+   to fix, reintroduced by a token change three files away.
 
-   LIGHT — measured against the tightest surface each mark is drawn on: the bar
-   track (#e7d1d4, which is --fg at 10% over --surface). Against the flat panel
-   (#f8e6e7) and the page (#fdf8f5) every value is higher still.
-     --chart-1  #4f1228   9.98:1     --chart-4  #903053   5.29:1
-     --chart-2  #721035   7.86:1     --chart-5  #9c4564   4.20:1
-     --chart-3  #841b42   6.53:1     --chart-6  #a85a75   3.30:1
-     --chart-axis  #98717d  3.50:1   --chart-label (--fg)  12.42:1
-     --chart-grid  #dcc4c8  1.37:1
+   So the ramp is now a straight lightness walk from --fg toward --surface.
+   Both of those flip with the theme, so one definition produces the dark ramp
+   for free and the two override blocks are gone rather than resynchronised.
+   That is the point of writing it this way: there is no longer a second copy
+   that can drift.
 
-   DARK — same measurement, track #212a21 over --surface #0b120b.
-     --chart-1  #ccffd1  13.25:1     --chart-4  #3ebb51   5.95:1
-     --chart-2  #55ff70  11.23:1     --chart-5  #37a047   4.43:1
-     --chart-3  #45dd5e   8.29:1     --chart-6  #338a40   3.42:1
-     --chart-axis  #859485  5.94:1   --chart-label (--fg)  18.00:1
-     --chart-grid  #2e382e  1.56:1
+   MEASURED against the tightest surface each mark is drawn on — the bar track,
+   which is --fg at 10% over --surface (#e3e3e3 light, #2a2a2a dark).
 
-   So: every series clears the 3:1 WCAG 1.4.11 floor for non-text (worst 3.30
-   light, 3.42 dark) and every label clears 4.5:1 by a wide margin (12.42 /
-   18.00). --chart-grid is deliberately BELOW 3:1 and that is correct: no datum
-   depends on reading a gridline — the axis is drawn separately at 3.50/5.94,
-   every bar carries its value as text, and every arc carries its count.
+     LIGHT                              DARK
+     --chart-1  #121212  14.60:1        #f5f5f5  13.17:1
+     --chart-2  #272727  11.64:1        #e1e1e1  10.98:1
+     --chart-3  #3c3c3c   8.60:1        #cccccc   8.94:1
+     --chart-4  #535353   5.99:1        #b6b6b6   7.08:1
+     --chart-5  #686868   4.34:1        #a2a2a2   5.62:1
+     --chart-6  #7d7d7d   3.21:1        #8e8e8e   4.38:1
+     --chart-axis #7a7a7a 4.11:1        #909090   5.77:1
+     --chart-grid #d5d5d5 1.41:1        #383838   1.57:1
+     --chart-label (--fg) 17.95:1                16.90:1
 
-   AND THE HONEST PART. Adjacent steps of this ramp separate from each other by
-   only 1.18-1.27:1, because light theme is a strict two-colour system and a
-   six-step categorical scale inside one hue is a lightness ramp whether you
-   call it one or not. That is enough to see a boundary and not enough to match
-   a mark to a legend entry, so colour is never the sole encoding anywhere on
-   this page: every series also carries a texture (components/stats/
-   chart-textures.tsx) and prints its own value in place. WCAG 1.4.1 is
-   satisfied by the texture and the label, not by the palette.
+   Every series clears the 3:1 WCAG 1.4.11 floor for non-text graphics (worst
+   3.21 light, 4.38 dark) and every label clears 4.5:1 many times over.
+   --chart-grid is deliberately BELOW 3:1 and that is correct: no datum depends
+   on reading a gridline — the axis is drawn separately at 4.11/5.77, every bar
+   carries its value as text, and every arc carries its count.
+
+   AND THE HONEST PART. Adjacent steps separate by only 1.20-1.27:1, because a
+   six-step categorical scale with no hue to spend IS a lightness ramp. That is
+   enough to see a boundary and not enough to match a mark to a legend entry,
+   so colour is never the sole encoding anywhere on this page: every series
+   also carries a texture (components/stats/chart-textures.tsx) and prints its
+   own value in place. WCAG 1.4.1 is satisfied by the texture and the label,
+   not by the palette — which was already true when the palette had hues, and
+   is the only reason removing them costs nothing here.
    ------------------------------------------------------------------------- */
 :root {
-  --chart-1: color-mix(in srgb, var(--accent-base) 10%, var(--fg));
-  --chart-2: color-mix(in srgb, var(--accent-base) 78%, var(--fg));
-  --chart-3: color-mix(in srgb, var(--accent-base) 94%, var(--line));
-  --chart-4: color-mix(in srgb, var(--accent-base) 83%, var(--line));
-  --chart-5: color-mix(in srgb, var(--accent-base) 72%, var(--line));
-  --chart-6: color-mix(in srgb, var(--accent-base) 61%, var(--line));
+  --chart-1: color-mix(in srgb, var(--fg) 100%, var(--surface));
+  --chart-2: color-mix(in srgb, var(--fg) 91%, var(--surface));
+  --chart-3: color-mix(in srgb, var(--fg) 82%, var(--surface));
+  --chart-4: color-mix(in srgb, var(--fg) 72%, var(--surface));
+  --chart-5: color-mix(in srgb, var(--fg) 63%, var(--surface));
+  --chart-6: color-mix(in srgb, var(--fg) 54%, var(--surface));
   --chart-grid: color-mix(in srgb, var(--fg) 16%, transparent);
   --chart-axis: color-mix(in srgb, var(--fg) 55%, transparent);
   --chart-label: var(--fg);
-}
-:root[data-theme="dark"] {
-  /* Different percentages, not a different formula: --accent-base is bright on
-     a dark ground here, so the ramp runs the other way and the two ends need
-     different distances to land on the same contrast targets. */
-  --chart-1: color-mix(in srgb, var(--accent-base) 18%, var(--fg));
-  --chart-2: color-mix(in srgb, var(--accent-base) 95%, var(--fg));
-  --chart-3: color-mix(in srgb, var(--accent-base) 84%, var(--line));
-  --chart-4: color-mix(in srgb, var(--accent-base) 68%, var(--line));
-  --chart-5: color-mix(in srgb, var(--accent-base) 55%, var(--line));
-  --chart-6: color-mix(in srgb, var(--accent-base) 45%, var(--line));
-}
-/* No-JS fallback for a visitor whose OS prefers dark, mirroring the duplicate
-   block globals.css keeps for the same reason: next-themes writes data-theme
-   before first paint, so with JS this never applies, and the
-   :not([data-theme="light"]) guard is what stops it fighting an explicit light
-   choice. Kept verbatim because custom properties cannot be aliased across a
-   media query and an attribute selector. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --chart-1: color-mix(in srgb, var(--accent-base) 18%, var(--fg));
-    --chart-2: color-mix(in srgb, var(--accent-base) 95%, var(--fg));
-    --chart-3: color-mix(in srgb, var(--accent-base) 84%, var(--line));
-    --chart-4: color-mix(in srgb, var(--accent-base) 68%, var(--line));
-    --chart-5: color-mix(in srgb, var(--accent-base) 55%, var(--line));
-    --chart-6: color-mix(in srgb, var(--accent-base) 45%, var(--line));
-  }
 }
 
 /* One indirection per series slot, set on the element that carries

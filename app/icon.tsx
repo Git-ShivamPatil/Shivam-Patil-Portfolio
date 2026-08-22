@@ -13,8 +13,11 @@ export default function Icon() {
         alignItems: "center",
         justifyContent: "center",
         borderRadius: "50%",
-        background: "#111110",
-        color: "#d8fe67",
+        // --ink and --paper. The favicon is 32px of solid colour and the
+        // first thing a tab shows, so it carries the site's highest-contrast
+        // pairing rather than an accent that no longer exists.
+        background: "#0e0e0e",
+        color: "#ffffff",
         fontSize: "14px",
         fontWeight: 600,
         letterSpacing: "-1px",

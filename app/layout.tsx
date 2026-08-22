@@ -198,14 +198,18 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <AnalyticsTracker />
             <ScrollReveal />
             <SplitText />
-            {/* Decorative light field behind everything. Sits below the
-                grid so the two textures layer rather than compete. */}
-            <div className="ambient-backdrop" aria-hidden="true">
-              <span className="ambient-blob ambient-blob-1" />
-              <span className="ambient-blob ambient-blob-2" />
-              <span className="ambient-blob ambient-blob-3" />
-            </div>
-            <div className="page-grid" aria-hidden="true" />
+            {/* Two decorative backdrop layers used to sit here: three
+                46vw blurred colour washes, and a 40px graph-paper grid over
+                the whole viewport. Both are gone.
+
+                They were the largest tinted surfaces on the site — the
+                washes' own comment in theme-visuals.css records that they,
+                not the accent tokens, were what actually decided each theme's
+                cast — so a monochrome brief cannot leave them in any colour,
+                and a grey wash behind a grey page is a blur filter running on
+                every frame for nothing. The grid went with them under the
+                same brief: it is texture with no meaning, and this design's
+                ground is flat. */}
             <Header />
             <main id="main-content">
               <PageTransition>{children}</PageTransition>

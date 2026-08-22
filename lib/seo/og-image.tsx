@@ -16,28 +16,35 @@ import { person } from "./site";
  * calls this. Segments that do not inherit the root's, which is correct: a card
  * saying who this is beats no card, and beats a bad generated one.
  *
- * ### The palette was also wrong
+ * ### The palette has now been wrong twice
  *
- * The original card was `#111110` / `#f4f3ee` / `#d8fe67` — near-black, bone and
- * an olive lime. That was the site's identity once. The theme is a two-colour
- * pink-and-cream system now, and every one of those three values is outside it,
- * so the card a stranger saw first looked like a different site than the one the
- * link opened. The values below are the real tokens: `--ink`, `--paper`,
- * `--pink`.
+ * The card was `#111110` / `#f4f3ee` / `#d8fe67` while the site was pink and
+ * cream, and then pink and cream while the site went monochrome — both times a
+ * stranger's first impression was of a different site than the link opened.
  *
- * They are written as literals rather than read from CSS on purpose — this runs
- * in the Edge runtime with no stylesheet and no `getComputedStyle`. That makes
- * them a second copy, so they are named here explicitly to be found when the
- * palette next moves.
+ * That is the failure mode this file has, and it has it structurally: these are
+ * a hand-copied second copy of the palette, so nothing breaks when the real one
+ * moves. It is not fixable from here — see below for why — so the mitigation is
+ * to name it. The values are `--ink`, `--paper` and `--muted`, and if the
+ * palette moves again this file does not follow on its own.
+ *
+ * Why it is not fixable: this runs in the Edge runtime, rendering to a PNG with
+ * no document, no stylesheet and no `getComputedStyle`. There is nothing here
+ * to read a custom property off. A build step could inline them, and that is
+ * the real fix if this happens a third time.
  */
 
 export const OG_SIZE = { width: 1200, height: 630 };
 export const OG_CONTENT_TYPE = "image/png";
 
-const INK = "#1a0a10"; // --ink
-const PAPER = "#fdf8f5"; // --paper
-const PINK = "#ffc2da"; // --pink
-const MUTED = "#c9b3bc";
+const INK = "#0e0e0e"; // --ink
+const PAPER = "#ffffff"; // --paper
+/** The monogram disc and the eyebrow — the card's one non-text tone.
+ *  Named for its job now that the palette has no hue to name it after.
+ *  14.0:1 on INK. */
+const TONE = "#d9d9d9";
+/** Supporting copy: the subtitle and the footer role line. 8.5:1 on INK. */
+const MUTED = "#9e9e9e";
 
 export function renderOgImage({
   eyebrow,
@@ -82,7 +89,7 @@ export function renderOgImage({
             width: "72px",
             height: "72px",
             borderRadius: "50%",
-            background: PINK,
+            background: TONE,
             color: INK,
             fontSize: "26px",
             fontWeight: 700,
@@ -97,7 +104,7 @@ export function renderOgImage({
               fontSize: "22px",
               letterSpacing: "3px",
               textTransform: "uppercase",
-              color: PINK,
+              color: TONE,
             }}
           >
             {eyebrow}

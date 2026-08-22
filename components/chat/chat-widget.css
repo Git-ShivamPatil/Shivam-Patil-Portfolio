@@ -148,7 +148,7 @@
    dark, matching .live-dot in the hero. */
 .chat-status.is-live::before {
   background: var(--accent);
-  box-shadow: 0 0 0 3px rgba(142, 186, 0, 0.18);
+  box-shadow: 0 0 0 3px rgba(171, 171, 171, 0.18);
 }
 .chat-messages {
   flex: 1;

@@ -32,7 +32,9 @@
   border-radius: 999px;
   background: var(--surface);
   color: var(--fg);
-  font: 400 15px var(--font-manrope), sans-serif;
+  font:
+    400 15px var(--font-manrope),
+    sans-serif;
   transition:
     border-color 0.2s,
     box-shadow 0.2s;
@@ -53,7 +55,9 @@
   /* --ink is a near-black in BOTH themes, so the label has to be light in both
      — inheriting --fg would put near-black on near-black in light mode. */
   color: var(--paper);
-  font: 600 14px var(--font-manrope), sans-serif;
+  font:
+    600 14px var(--font-manrope),
+    sans-serif;
   cursor: pointer;
   transition: opacity 0.2s;
 }
@@ -76,7 +80,9 @@
   border-radius: 999px;
   background: transparent;
   color: var(--muted);
-  font: 500 12px var(--font-manrope), sans-serif;
+  font:
+    500 12px var(--font-manrope),
+    sans-serif;
   cursor: pointer;
   transition:
     color 0.2s,
@@ -230,7 +236,9 @@
   border-radius: var(--radius);
   background: var(--surface);
   color: var(--fg);
-  font: 400 14px var(--font-manrope), sans-serif;
+  font:
+    400 14px var(--font-manrope),
+    sans-serif;
   line-height: 1.6;
   resize: vertical;
 }

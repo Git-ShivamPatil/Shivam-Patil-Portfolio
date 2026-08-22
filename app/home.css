@@ -1,0 +1,129 @@
+/* The homepage: one screen, left-aligned, mostly empty.
+
+   The restraint IS the design. Every value here exists to hold a small amount
+   of text in a large amount of space, so anything that does not serve that has
+   been left out rather than tuned down. */
+
+.home {
+  display: flex;
+  align-items: center;
+  /* Fills the viewport minus the header, without `100vh`.
+     `dvh` is the unit that accounts for mobile browser chrome collapsing on
+     scroll; `vh` measures the tallest state, so a `100vh` hero on a phone is
+     taller than the screen and pushes its own last line under the URL bar. */
+  min-height: calc(100dvh - var(--header-h));
+  padding: 40px 0 120px;
+}
+
+.home-inner {
+  /* Not `.shell`. The reference sits its hero left of centre rather than
+     centred in the page, and `.shell` is a centred max-width container — the
+     two fight. This is an explicit left inset that grows with the viewport. */
+  width: min(1180px, calc(100% - 64px));
+  margin: 0 auto;
+}
+
+.home-name {
+  margin: 0 0 28px;
+  /* Clamped rather than stepped at breakpoints. §54's sibling assertion in
+     e2e/navigation.spec.ts checks the hero scales fluidly instead of jumping,
+     because a stepped heading changes height mid-resize and that is a layout
+     shift by another name. */
+  font-size: clamp(52px, 9vw, 112px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.035em;
+  color: var(--fg);
+}
+
+.home-role,
+.home-tagline {
+  max-width: 44ch;
+  margin: 0 0 10px;
+  font-size: clamp(15px, 1.5vw, 17px);
+  line-height: 1.6;
+}
+
+.home-role {
+  color: var(--fg);
+  font-weight: 500;
+}
+
+.home-role a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  /* The only hue-free way left to signal a link. With no accent colour, an
+     underline is not decoration — it is the entire affordance. */
+  text-decoration-thickness: 1px;
+}
+.home-role a:hover {
+  text-decoration-thickness: 2px;
+}
+
+.home-tagline {
+  margin-bottom: 40px;
+  color: var(--muted);
+}
+
+/* "Press ctrl K to start" — a button, styled as the sentence it reads as.
+   See components/entry/palette-hint.tsx for why it is a button at all. */
+.palette-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  font-size: clamp(15px, 1.5vw, 17px);
+  font-weight: 500;
+  cursor: pointer;
+  /* Generous, because this is the primary navigation affordance on the page
+     and a 1px-tall hit target on a phone would be a joke. */
+  padding: 10px 0;
+}
+
+.palette-hint kbd {
+  display: inline-block;
+  min-width: 1.6em;
+  padding: 3px 7px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--surface-2);
+  /* Explicit, never inherited. A pale surface inheriting --fg is how this
+     project produced invisible dark-theme text three separate times (§9). */
+  color: var(--fg);
+  font:
+    500 12px "DM Mono",
+    monospace;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.palette-hint span {
+  transition: transform 0.2s;
+}
+.palette-hint:hover span {
+  transform: translateX(4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .palette-hint span {
+    transition: none;
+  }
+  .palette-hint:hover span {
+    transform: none;
+  }
+}
+
+@media (max-width: 700px) {
+  .home {
+    padding: 24px 0 80px;
+    min-height: calc(100dvh - var(--header-h));
+  }
+  .home-inner {
+    width: calc(100% - 44px);
+  }
+}

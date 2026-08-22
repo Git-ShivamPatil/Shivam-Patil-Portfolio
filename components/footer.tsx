@@ -3,7 +3,7 @@ import { NewsletterForm } from "./newsletter-form";
 import { PushToggle } from "./push-toggle";
 import { ROUTE_GROUPS, routesInGroup } from "../lib/site-routes";
 import { person } from "../lib/seo/site";
-import { mailtoHref } from "../lib/site-contact";
+import { mailtoHref, telHref } from "../lib/site-contact";
 
 /**
  * The footer, which is now the site's directory.
@@ -39,6 +39,11 @@ import { mailtoHref } from "../lib/site-contact";
  */
 export function Footer() {
   const year = new Date().getFullYear();
+  // Gated on NEXT_PUBLIC_CONTACT_PHONE — see lib/site-contact.ts. A `tel:`
+  // built from a placeholder is worse than an absent link: it looks live, it is
+  // tappable, and it fails in the visitor's dialler rather than on the page.
+  // This moved down from the header, where it was an unlabelled icon.
+  const phoneHref = telHref();
 
   return (
     <footer className="site-footer">
@@ -134,23 +139,44 @@ export function Footer() {
                 <span className="footer-directory-link-blurb">{person.email}</span>
               </a>
             </li>
+            {phoneHref ? (
+              <li>
+                <a href={phoneHref}>
+                  <span className="footer-directory-link-label">Call me</span>
+                  <span className="footer-directory-link-blurb">
+                    {phoneHref.replace("tel:", "")}
+                  </span>
+                </a>
+              </li>
+            ) : null}
           </ul>
         </div>
       </nav>
 
+      {/* A centred row of lowercase links over one line of copyright. It used
+          to be a two-column `space-between` bar with the notice on the left and
+          the meta links on the right, which reads as chrome; centred and
+          lowercase it reads as the end of a document, which is what it is.
+
+          The sitemap link is for people, not crawlers — crawlers find
+          /sitemap.xml from robots.txt. It is here because "show me everything"
+          is a real request and this is where people look for it. */}
       <div className="shell footer-inner">
-        <p>
-          © {year} {person.name}. Built with clarity and intent.
-        </p>
-        {/* The sitemap link is for people, not crawlers — crawlers find
-            /sitemap.xml from robots.txt. It is here because "show me
-            everything" is a real request and this is where people look for it. */}
         <p className="footer-inner-meta">
+          <a href={mailtoHref()}>email</a>
+          <a href={person.github} target="_blank" rel="noreferrer noopener">
+            github
+          </a>
+          <a href={person.linkedin} target="_blank" rel="noreferrer noopener">
+            linkedin
+          </a>
           <Link href="/search" prefetch={false}>
-            Search this site
+            search
           </Link>
-          <span aria-hidden="true">·</span>
-          <a href="/sitemap.xml">Sitemap</a>
+          <a href="/sitemap.xml">sitemap</a>
+        </p>
+        <p className="footer-copyright">
+          © {year} {person.name}
         </p>
       </div>
     </footer>

@@ -298,10 +298,25 @@ test.describe("client-side navigation", () => {
   });
 
   test("the split-text heading resolves to readable characters", async ({ page }) => {
+    // Reached by a CLIENT navigation, not a `goto`, and that is the point.
+    //
+    // SplitText had the identical MutationObserver flaw, and its failure was
+    // cosmetic — an unsplit heading is plain visible text — so the signature
+    // reveal only ever played on a full page load and nobody noticed. A test
+    // that arrives by `goto` is a full page load and would not have caught it.
+    //
+    // It used to arrive at `/`, which carried a [data-split] hero. The homepage
+    // is one screen now and its heading is two short words with nothing beside
+    // it, so it deliberately opts out of the split (see app/page.tsx). /about
+    // still has one, and it is the heading the invariant below was written for.
     await page.goto("/");
-    // SplitText had the identical MutationObserver flaw. Its failure was
-    // cosmetic — an unsplit heading is plain visible text — which meant the
-    // signature reveal only ever played on a full page load and nobody noticed.
+    await page
+      .getByRole("navigation", { name: "Main navigation" })
+      .getByRole("link")
+      .first()
+      .click();
+    await expect(page).toHaveURL(/\/about\/?$/);
+
     const heading = page.locator("h1[data-split]").first();
     await expect(heading).toBeVisible();
     await expect(heading).toHaveAttribute("data-split-revealed", "true", { timeout: 10_000 });
@@ -399,10 +414,15 @@ test.describe("layout invariants", () => {
     // budget, on production.
     //
     // The invariant is the general form of that: a word may be as wide as the
-    // heading, never wider. Asserted on /about and / because both carry a
-    // [data-split] hero beside a sized element, which is the shape that turns
-    // an overflowing word into a layout shift rather than a cosmetic overhang.
-    for (const path of ["/about", "/"]) {
+    // heading, never wider.
+    //
+    // /about only. `/` was in this list while its hero was a [data-split]
+    // heading beside a sized photograph — the exact shape that turns an
+    // overflowing word into a layout shift. The homepage's heading is now two
+    // short words with nothing beside them and no `data-split`, so there is no
+    // split to measure and nothing whose width could move a neighbour. Put `/`
+    // back the moment a hero heading returns there.
+    for (const path of ["/about"]) {
       await page.goto(path);
       // The split is a client effect; wait for it rather than racing it.
       await expect(page.locator("[data-split][data-split-done='true']").first()).toBeAttached();
@@ -485,7 +505,10 @@ test.describe("layout invariants", () => {
         // The specific symptom: .offset-card pushed every odd card down 52px,
         // so rows overlapped whenever the cards were not all the same height.
         const collisions = await page.evaluate(() => {
-          const cards = [...document.querySelectorAll(".project-card, .hub-card")];
+          // `.hub-card` was the homepage's twenty-eight-route grid, which is
+          // gone; `.project-card` is the remaining offset-card layout and
+          // the one this was written for.
+          const cards = [...document.querySelectorAll(".project-card")];
           const hits: string[] = [];
           for (let i = 0; i < cards.length; i++) {
             for (let j = i + 1; j < cards.length; j++) {

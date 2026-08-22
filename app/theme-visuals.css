@@ -1,30 +1,34 @@
 /* =========================================================================
    VISUAL SYSTEM
-   Elevation, gradient accents, grain, ambient light, and the cross-theme
-   transition. Layered on top of the base tokens in globals.css rather than
-   replacing them — the editorial paper/ink identity stays, this gives it
-   depth and colour.
+   Elevation and the cross-theme transition. Layered on top of the base tokens
+   in globals.css rather than replacing them.
+
+   This file used to be the colour in the design: a three-stop accent ramp, a
+   warm ramp, a cool ramp, a separate ramp just for heading italics, three
+   blurred ambient washes and a grain tile. Under a monochrome brief none of
+   that survives as colour, and a grey gradient is not a quieter version of a
+   coloured one — it is a band of noise across a flat field. So the ramps are
+   gone rather than desaturated, and what is left is depth: shadow in light,
+   rim-light in dark.
    ========================================================================= */
 
 :root {
-  /* --- accent ramp ---
-     One gradient reused across the site so highlights read as a family
-     rather than as unrelated one-off colours. */
-  --grad-accent: linear-gradient(115deg, var(--lime) 0%, var(--cyan) 55%, var(--violet) 100%);
-  --grad-warm: linear-gradient(115deg, var(--orange) 0%, var(--pink) 100%);
-  --grad-cool: linear-gradient(115deg, var(--cyan) 0%, var(--blue) 100%);
+  /* --- the ramps, retired ---
+     `--grad-accent`, `--grad-warm`, `--grad-cool` and `--grad-heading` are
+     still referenced by a handful of rules below and in globals.css, so they
+     resolve to a flat surface rather than being deleted out from under them.
+     `background: var(--grad-accent)` on a card therefore paints one colour,
+     which is the whole point.
 
-  /* --grad-accent is clipped to TEXT on the heading italics and used as a FILL
-     everywhere else (.button-light, .center-core, .scroll-progress, a 1px
-     border ramp). Those two jobs want opposite things: a fill behind dark text
-     must stay pale, while text drawn in the ramp must be dark enough to read.
-     Sharing one gradient meant the heading italics rendered as pale peach on
-     cream — decorative, and effectively unreadable.
-
-     So the heading gets its own ramp. Light stays inside the rose family and
-     every stop is >= 7:1 on cream; dark uses the neon set, where the same
-     stops are already high-contrast against near-black. */
-  --grad-heading: linear-gradient(115deg, #7d1039 0%, #a81e52 52%, #5e0a2a 100%);
+     `--grad-heading` is `none` and not a colour, because it is applied with
+     `background-clip: text` and `-webkit-text-fill-color: transparent`. Any
+     value there would paint the italics in that value; `none` lets the
+     accompanying `color`/`-webkit-text-fill-color` reset in the rule take
+     over so the italics simply render in --fg like the rest of the heading. */
+  --grad-accent: var(--surface-2);
+  --grad-warm: var(--surface-2);
+  --grad-cool: var(--surface-2);
+  --grad-heading: none;
 
   /* --- elevation ---
      Light theme uses real shadows. Dark theme overrides these below with a
@@ -35,19 +39,15 @@
   --elev-3: 0 4px 8px rgba(17, 17, 16, 0.08), 0 24px 56px rgba(17, 17, 16, 0.14);
   --rim: inset 0 1px 0 rgba(255, 255, 255, 0.6);
 
-  /* --- ambient light ---
-     Tinted washes behind the page. Deliberately low-alpha; they should be
-     felt rather than seen. */
-  /* Rose, blush and warm cream. These were lime/cyan/violet, which is what
-     actually made the page read mint: three 46vw blurred washes tint far more
-     of the viewport than any accent element does, so they, not the tokens,
-     decide the theme's overall cast. */
-  --ambient-1: rgba(232, 122, 168, 0.17);
-  --ambient-2: rgba(250, 190, 214, 0.16);
-  --ambient-3: rgba(214, 138, 176, 0.14);
-  --ambient-blur: 90px;
+  /* --- focus / hover glow ---
+     What is left of the accent glow once there is no accent: a ring in the
+     ink itself. Kept as a token rather than inlined because it is the shared
+     "this element is live" signal across buttons, cards and the palette, and
+     one definition is the only way that stays consistent.
 
-  --glow-accent: 0 0 0 1px rgba(125, 16, 57, 0.3), 0 8px 30px rgba(125, 16, 57, 0.17);
+     The three tinted ambient washes that used to live here are gone entirely
+     — see app/layout.tsx for why. */
+  --glow-accent: 0 0 0 1px rgba(18, 18, 18, 0.3), 0 8px 30px rgba(18, 18, 18, 0.17);
 }
 
 :root[data-theme="dark"] {
@@ -56,20 +56,9 @@
   --elev-3: 0 6px 14px rgba(0, 0, 0, 0.6), 0 28px 64px rgba(0, 0, 0, 0.55);
   --rim: inset 0 1px 0 rgba(255, 255, 255, 0.07);
 
-  --grad-heading: linear-gradient(
-    115deg,
-    var(--neon-cyan) 0%,
-    var(--neon-violet) 52%,
-    var(--neon-magenta) 100%
-  );
-
-  /* Neon washes, pushed harder than light theme's. On a near-black ground a
-     low-alpha tint disappears, and the bloom is the point of this theme. */
-  --ambient-1: rgba(77, 255, 106, 0.15);
-  --ambient-2: rgba(34, 224, 67, 0.17);
-  --ambient-3: rgba(124, 255, 146, 0.12);
-
-  --glow-accent: 0 0 0 1px rgba(77, 255, 106, 0.42), 0 8px 34px rgba(77, 255, 106, 0.26);
+  /* Inverted: on a near-black ground the ring has to be lighter than what it
+     surrounds, exactly as --elev-* above becomes --rim. */
+  --glow-accent: 0 0 0 1px rgba(245, 245, 245, 0.42), 0 8px 34px rgba(245, 245, 245, 0.26);
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -77,16 +66,7 @@
     --elev-2: 0 2px 6px rgba(0, 0, 0, 0.55), 0 14px 34px rgba(0, 0, 0, 0.45);
     --elev-3: 0 6px 14px rgba(0, 0, 0, 0.6), 0 28px 64px rgba(0, 0, 0, 0.55);
     --rim: inset 0 1px 0 rgba(255, 255, 255, 0.07);
-    --grad-heading: linear-gradient(
-      115deg,
-      var(--neon-cyan) 0%,
-      var(--neon-violet) 52%,
-      var(--neon-magenta) 100%
-    );
-    --ambient-1: rgba(77, 255, 106, 0.15);
-    --ambient-2: rgba(34, 224, 67, 0.17);
-    --ambient-3: rgba(124, 255, 146, 0.12);
-    --glow-accent: 0 0 0 1px rgba(77, 255, 106, 0.42), 0 8px 34px rgba(77, 255, 106, 0.26);
+    --glow-accent: 0 0 0 1px rgba(245, 245, 245, 0.42), 0 8px 34px rgba(245, 245, 245, 0.26);
   }
 }
 
@@ -147,80 +127,6 @@
   transform: rotate(35deg) scale(1.1);
 }
 
-/* ---- grain ----
-   An SVG feTurbulence tile as a data URI: a few hundred bytes, no network
-   request, and it stops the large flat fields from banding on wide gamut
-   displays. */
-.ambient-backdrop::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.4;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.28'/%3E%3C/svg%3E");
-  mix-blend-mode: overlay;
-}
-:root[data-theme="dark"] .ambient-backdrop::after {
-  opacity: 0.22;
-  mix-blend-mode: soft-light;
-}
-
-/* ---- ambient light field ----
-   Three slow-drifting tinted blobs behind everything. Fixed so they don't
-   reflow on scroll, and pointer-events:none so they never intercept a click. */
-.ambient-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
-.ambient-blob {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(var(--ambient-blur));
-  will-change: transform;
-}
-.ambient-blob-1 {
-  top: -12vh;
-  left: -8vw;
-  width: 46vw;
-  height: 46vw;
-  background: var(--ambient-1);
-  animation: ambient-drift-1 34s ease-in-out infinite alternate;
-}
-.ambient-blob-2 {
-  top: 28vh;
-  right: -12vw;
-  width: 40vw;
-  height: 40vw;
-  background: var(--ambient-2);
-  animation: ambient-drift-2 42s ease-in-out infinite alternate;
-}
-.ambient-blob-3 {
-  bottom: -18vh;
-  left: 22vw;
-  width: 38vw;
-  height: 38vw;
-  background: var(--ambient-3);
-  animation: ambient-drift-3 38s ease-in-out infinite alternate;
-}
-@keyframes ambient-drift-1 {
-  to {
-    transform: translate3d(6vw, 8vh, 0) scale(1.15);
-  }
-}
-@keyframes ambient-drift-2 {
-  to {
-    transform: translate3d(-7vw, -6vh, 0) scale(1.1);
-  }
-}
-@keyframes ambient-drift-3 {
-  to {
-    transform: translate3d(4vw, -9vh, 0) scale(1.18);
-  }
-}
-
 /* ---- elevated surfaces ----
    Applied to the existing card classes so every panel picks up real depth
    and a gradient hairline instead of a flat 1px border. */
@@ -243,99 +149,43 @@
   box-shadow: var(--elev-3);
 }
 
-/* Gradient hairline on the key panels: a pseudo-element border painted with
-   the accent ramp, masked so only the 1px edge shows. */
-.stat-panel,
-.service-offer-card {
-  position: relative;
-}
-.stat-panel::before,
-.service-offer-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: var(--grad-accent);
-  opacity: 0;
-  transition: opacity 0.35s ease;
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  pointer-events: none;
-}
-.stat-panel:hover::before,
-.service-offer-card:hover::before {
-  opacity: 0.85;
-}
+/* The gradient hairline that used to sit here — a masked pseudo-element
+   painting the accent ramp as a 1px edge on .stat-panel and
+   .service-offer-card — is gone. It existed to show the ramp; with the ramp
+   retired it would have drawn --surface-2 onto a --surface-2 card, which is
+   an extra composited layer per panel to paint nothing. Those panels still
+   lift on hover through --elev-2 above.
 
-/* ---- gradient text for the serif emphasis ----
-   The <em> spans in headings already carry the Playfair italic; giving them
-   the accent ramp ties the type to the accent system. Kept off the dark-by-
-   design sections, which already use solid lime for contrast. */
+   ---- the serif emphasis, no longer clipped ----
+
+   The <em> spans in headings carry a Playfair italic. They used to be painted
+   by clipping --grad-heading to the glyphs with `background-clip: text` and
+   `-webkit-text-fill-color: transparent`, which is why both the DOM contrast
+   audit and the axe sweep have to exclude `.split-char`: a glyph painted that
+   way computes as `transparent`, so every contrast reading against it is a
+   false positive.
+
+   With one text colour there is nothing to clip, so the whole mechanism is
+   reset rather than recoloured — including the `.split-word`/`.split-char`
+   rule that existed only to re-inherit the clip through split-text.tsx's
+   per-word wrappers. The italic is now simply --fg in italics, which is
+   measurable, and which is what an emphasis was always supposed to be. */
 .hero h1 em,
 .page-hero h1 em,
 .section-heading h2 em,
-.about-statement h2 em {
-  background: var(--grad-heading);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  /* Fallback for the split-char spans, which each need their own clip. */
-  -webkit-text-fill-color: transparent;
-}
-/* `.split-word` is in this list, and it has to be.
-
-   The gradient reaches a character span by inheritance, and split-text.tsx now
-   nests those characters inside a per-word wrapper so a heading cannot break
-   mid-word. That wrapper sits between the <em> and the characters, so without
-   a rule here `background: inherit` on a character resolves against the
-   wrapper's default `transparent` — and since -webkit-text-fill-color is also
-   transparent, the italic would clip a transparent gradient onto transparent
-   text and disappear completely. */
+.about-statement h2 em,
 .hero h1 em .split-word,
 .page-hero h1 em .split-word,
 .section-heading h2 em .split-word,
 .hero h1 em .split-char,
 .page-hero h1 em .split-char,
 .section-heading h2 em .split-char {
-  background: inherit;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-/* ---- richer orbital hero ---- */
-.orbital-field {
-  background:
-    radial-gradient(circle at 32% 28%, rgba(96, 234, 216, 0.18) 0%, transparent 45%),
-    radial-gradient(circle at 68% 72%, rgba(169, 151, 255, 0.16) 0%, transparent 45%),
-    radial-gradient(circle at center, #23231f 0 15%, #1a1a18 38%, #0e0e0d 78%);
-}
-.orbit-one {
-  border-color: rgba(216, 254, 103, 0.42);
-}
-.orbit-two {
-  border-color: rgba(96, 234, 216, 0.3);
-}
-.orbit-three {
-  border-color: rgba(169, 151, 255, 0.26);
-}
-.orbit-two::after {
-  background: var(--cyan);
-  box-shadow: 0 0 12px 2px rgba(96, 234, 216, 0.7);
-}
-.orbit-three::after {
-  background: var(--violet);
-  box-shadow: 0 0 12px 2px rgba(169, 151, 255, 0.7);
-}
-.center-core {
-  background: var(--grad-accent);
+  background: none;
+  color: var(--fg);
+  /* Explicitly reset, not merely omitted. `-webkit-text-fill-color` wins over
+     `color` wherever it is set, so a stale `transparent` from any other rule
+     would keep the glyphs invisible no matter what `color` says. */
+  -webkit-text-fill-color: var(--fg);
 }
 
 /* ---- buttons ---- */
@@ -355,27 +205,15 @@
   box-shadow: var(--glow-accent);
 }
 
-/* ---- scroll progress picks up the full ramp ---- */
+/* The reading-progress bar. --fg rather than the retired ramp: it is a
+   measurement of position, so it should read at a glance against the header
+   it sits under, in both themes. */
 .scroll-progress span {
-  background: var(--grad-accent);
+  background: var(--fg);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ambient-blob {
-    animation: none !important;
-  }
   .theme-toggle-icon {
     transition: none !important;
-  }
-}
-
-/* The ambient field is decorative and costs real GPU time on low-end
-   devices; drop it where the payoff is smallest. */
-@media (max-width: 620px) {
-  .ambient-blob-3 {
-    display: none;
-  }
-  :root {
-    --ambient-blur: 60px;
   }
 }

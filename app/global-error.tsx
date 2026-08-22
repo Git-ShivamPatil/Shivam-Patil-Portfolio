@@ -35,7 +35,6 @@ export default function GlobalError({
   return (
     <html lang="en">
       <body>
-        <div className="page-grid" aria-hidden="true" />
         <main>
           <section className="error-page shell">
             <p className="eyebrow">500</p>
