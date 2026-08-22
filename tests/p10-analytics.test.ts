@@ -405,7 +405,7 @@ describe("country display", () => {
 describe("download registry", () => {
   it("resolves a known slug", () => {
     const resume = findDownload("resume");
-    expect(resume?.file).toBe("/Shivam-Patil-SDE-II-Resume.pdf");
+    expect(resume?.file).toBe("/Shivam-Patil-SDE-Resume.pdf");
     expect(downloadHref("resume")).toBe("/d/resume");
   });
 

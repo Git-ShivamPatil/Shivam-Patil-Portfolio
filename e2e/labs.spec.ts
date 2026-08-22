@@ -192,6 +192,25 @@ test.describe("P17 — the terminal answers", () => {
 });
 
 test.describe("P18 — the Raft simulator elects a leader", () => {
+  /**
+   * Sixty seconds for twenty-five clicks, and the arithmetic is the reason.
+   *
+   * Every click on this page grows a `.ripple-ink` span inside the button and
+   * runs a 0.62s animation on it (app/motion.css). Playwright waits for a
+   * target to be actionable before each click, so the suite pays some part of
+   * that animation twenty-five times over. Measured against a local production
+   * build: individual clicks came back at 47ms, 400ms and 1490ms in a repeating
+   * pattern, averaging ~700ms — about 17s of clicking, before page load, and
+   * before any contention from a second worker.
+   *
+   * That fits inside the 30s default only on a fast, idle machine, which is the
+   * definition of a test that will fail for reasons unrelated to Raft. The
+   * clicks stay real rather than being dispatched synthetically: the ripple is
+   * part of what a visitor experiences, and a simulator driven by events the
+   * UI does not actually emit is not the thing being tested.
+   */
+  test.setTimeout(60_000);
+
   test("stepping the cluster produces exactly one leader", async ({ page }) => {
     await page.goto("/system-design");
 

@@ -117,7 +117,9 @@
   border-bottom: 1px solid var(--line);
   background: transparent;
   color: var(--fg);
-  font: 400 15px var(--font-manrope), sans-serif;
+  font:
+    400 15px var(--font-manrope),
+    sans-serif;
   outline: none;
 }
 .palette-input::placeholder {
@@ -249,6 +251,24 @@
   width: 100%;
   accent-color: var(--accent);
 }
+.customizer input[type="range"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+/* The one control that is off, and it has to LOOK off. A disabled range that
+   renders identically to a live one reads as a broken slider rather than as an
+   inapplicable setting — see the note in theme-customizer.tsx for why the hue
+   control is switched off rather than removed. */
+.customizer-disabled > span {
+  opacity: 0.6;
+}
+.customizer-disabled small {
+  color: var(--prose-soft);
+  font-size: 11px;
+  line-height: 1.5;
+  text-transform: none;
+  letter-spacing: 0;
+}
 .customizer-note {
   margin: 0;
   color: var(--prose-soft);
@@ -261,7 +281,9 @@
   border-radius: 999px;
   background: transparent;
   color: var(--fg);
-  font: 500 12px var(--font-manrope), sans-serif;
+  font:
+    500 12px var(--font-manrope),
+    sans-serif;
   cursor: pointer;
 }
 

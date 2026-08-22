@@ -95,7 +95,7 @@ export function personJsonLd(): JsonLd {
      * with the strongest independent corroboration of the employment claim
      * above, and the order is a weak but real hint at which to trust.
      */
-    sameAs: [person.linkedin, person.github],
+    sameAs: [person.linkedin, person.github, person.twitter, person.instagram],
   };
 }
 

@@ -328,7 +328,7 @@
 /* Four states, four distinct fills.
 
    **Not accent versus accent-strong.** Those two are a shade apart in both
-   themes — #7d1039/#5e0a2a in light, #4dff6a/#7cff92 in dark — so "succeeded"
+   themes — #3f3f3f/#2e2e2e in light, #dfdfdf/#e4e4e4 in dark — so "succeeded"
    and "failed" rendered as two greens a reader had to compare side by side to
    tell apart. The axis is instead accent (the thing worked) against --fg (it
    did not), which are the two furthest-apart inks the palette has, in both

@@ -21,7 +21,7 @@ export interface TrackedDownload {
 export const TRACKED_DOWNLOADS: TrackedDownload[] = [
   {
     slug: "resume",
-    file: "/Shivam-Patil-SDE-II-Resume.pdf",
+    file: "/Shivam-Patil-SDE-Resume.pdf",
     label: "Résumé (PDF)",
   },
 ];

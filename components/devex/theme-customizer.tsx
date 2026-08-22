@@ -147,10 +147,21 @@ export function ThemeCustomizer() {
         </button>
       </header>
 
-      <label>
+      {/* Disabled, not deleted, and the note says why.
+
+          The accent is a pure grey now, so its chroma is 0 — and at zero
+          chroma every hue is the same colour. Rotating it is arithmetically a
+          no-op, not a broken feature. A live slider that visibly does nothing
+          when you drag it is the worst of the three options here; removing it
+          outright would take the mechanism with it. So the control stays,
+          switched off, with the reason on screen.
+
+          Everything behind it is intact: MAX_HUE_SHIFT still clamps, apply()
+          still writes --accent-hue-shift, and the OKLCH rule in globals.css
+          still reads it. Restoring this is deleting `disabled` and the note. */}
+      <label className="customizer-disabled">
         <span>
-          Accent hue{" "}
-          <em>{preferences.hueShift > 0 ? `+${preferences.hueShift}` : preferences.hueShift}°</em>
+          Accent hue <em>monochrome</em>
         </span>
         <input
           type="range"
@@ -159,7 +170,12 @@ export function ThemeCustomizer() {
           step={1}
           value={preferences.hueShift}
           onChange={(event) => update({ hueShift: Number(event.target.value) })}
+          disabled
+          aria-describedby="customizer-hue-note"
         />
+        <small id="customizer-hue-note">
+          The palette has no colour to rotate — every accent is a shade of grey.
+        </small>
       </label>
 
       <label>

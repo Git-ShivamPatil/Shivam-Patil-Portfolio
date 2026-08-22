@@ -184,12 +184,12 @@
   color: var(--lime);
 }
 .cal-section .eyebrow {
-  color: #aaa9a2;
+  color: #a9a9a9;
 }
 .cal-copy {
   max-width: 400px;
   margin: 18px 0 0;
-  color: #c9c8c1;
+  color: #c8c8c8;
   font-size: 14px;
   line-height: 1.7;
 }

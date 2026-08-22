@@ -17,7 +17,7 @@ export const metadata = pageMetadata({
  * download for everyone who merely opened the page — and the one number this
  * phase has to get right is how many people actually took the PDF.
  */
-const RESUME_FILE = "/Shivam-Patil-SDE-II-Resume.pdf";
+const RESUME_FILE = "/Shivam-Patil-SDE-Resume.pdf";
 /** Deliberate actions go through /d/resume, which counts them server-side. */
 const RESUME_DOWNLOAD = downloadHref("resume");
 

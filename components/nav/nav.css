@@ -101,7 +101,18 @@
   border-right: 1px solid var(--line);
   background: var(--bg);
   color: var(--fg);
-  box-shadow: 0 0 60px color-mix(in srgb, var(--ink) 26%, transparent);
+  /* NO shadow in the closed state, and that is a fix rather than a taste call.
+     The panel is parked at translateX(-100%), not unmounted — but a box-shadow
+     is painted from the element's border box outward, so a 60px blur on a panel
+     sitting just off the left edge bled about 120px of grey onto the visible
+     page, on every route, in both themes, permanently. Measured off a
+     screenshot of the homepage: #e0e0e0 at x=0 ramping to #ffffff by x≈120,
+     against a page whose background is #ffffff.
+
+     It went unnoticed for as long as it did because the three ambient colour
+     washes that used to sit behind everything were tinting that same margin
+     anyway. Removing them is what made a permanent smudge down the left edge
+     the most conspicuous thing on an otherwise empty page. */
   /* Closed state is a transform, never an opacity — under
      prefers-reduced-motion the blanket `animation: none` in globals.css would
      strand an animation-driven panel, and a transition-driven opacity:0 would
@@ -111,6 +122,9 @@
 }
 .nav-drawer[data-open="true"] {
   transform: translateX(0);
+  /* Applied only here, so the blur exists exactly while the panel is over the
+     page and is lifting off it. */
+  box-shadow: 0 0 60px color-mix(in srgb, var(--ink) 26%, transparent);
 }
 
 .nav-drawer-head {

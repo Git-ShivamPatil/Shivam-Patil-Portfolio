@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { SITE_ROUTES, AUDIENCE_ROUTES, indexableRoutes, ROUTE_GROUPS } from "../lib/site-routes";
+import {
+  SITE_ROUTES,
+  AUDIENCE_ROUTES,
+  indexableRoutes,
+  primaryRoutes,
+  ROUTE_GROUPS,
+} from "../lib/site-routes";
 import { pageMetadata } from "../lib/seo/metadata";
 import {
   personJsonLd,
@@ -128,13 +134,34 @@ describe("the route registry is the only route list", () => {
     }
   });
 
-  it("keeps the top-bar nav small enough to fit beside the icons", () => {
-    // Four fit at 900px; the measured ceiling before the bar overflows is about
-    // 772px of viewport. A fifth would push the nav into the search icon at
-    // every width the media query still shows it.
+  it("keeps the top-bar nav small enough to fit beside the actions", () => {
+    // FIVE, and the media query in app/globals.css was re-measured to match:
+    // the bar needs about 1001px of viewport for five links, so the nav now
+    // hides at 1040px rather than 820px. Both numbers are in that rule's
+    // comment, with the arithmetic.
+    //
+    // The cap is what keeps them in step. Adding a sixth link without
+    // re-measuring is the failure this catches: nothing overflows on a desktop
+    // monitor, so it looks fine in review and breaks on a laptop — which is
+    // exactly how the fifth one wrapped "Shivam Patil" across two lines at
+    // 900px before this was raised.
     const primary = SITE_ROUTES.filter((route) => route.primary);
     expect(primary.length).toBeGreaterThan(0);
-    expect(primary.length).toBeLessThanOrEqual(4);
+    expect(primary.length).toBeLessThanOrEqual(5);
+  });
+
+  it("orders the top bar explicitly rather than by declaration order", () => {
+    // /system-design belongs to the right of /reach-out, but it is declared two
+    // hundred lines above it in SITE_ROUTES. Without PRIMARY_ORDER the bar
+    // inherits file position and puts it third, which is both wrong and
+    // impossible to read the intent of from the code.
+    const order = primaryRoutes().map((route) => route.href);
+    expect(order).toEqual(["/about", "/projects", "/skills", "/reach-out", "/system-design"]);
+
+    // Every primary route reaches the bar. A route flagged `primary` but left
+    // out of PRIMARY_ORDER must be appended, never dropped.
+    const flagged = SITE_ROUTES.filter((route) => route.primary).map((route) => route.href);
+    expect(new Set(order)).toEqual(new Set(flagged));
   });
 
   it("never marks a noIndex route as indexable", () => {

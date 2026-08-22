@@ -57,33 +57,6 @@
   clip-path: inset(50%);
   white-space: nowrap;
 }
-
-/* ---------- newsletter + push (footer) ---------- */
-.footer-signup {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 60px;
-  align-items: center;
-  padding: 76px 0;
-  border-bottom: 1px solid var(--line);
-}
-.footer-signup h2 {
-  margin: 0;
-  font-size: clamp(28px, 3.4vw, 44px);
-}
-.footer-signup-copy {
-  max-width: 420px;
-  margin: 20px 0 0;
-  color: var(--prose-soft);
-  font-size: 14px;
-  line-height: 1.7;
-}
-.footer-signup-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  align-items: flex-start;
-}
 .newsletter-form {
   flex-direction: row;
   align-items: center;
@@ -150,24 +123,4 @@
   margin: 0;
   color: var(--muted);
   font-size: 12px;
-}
-
-
-/* ---------- responsive ----------
-   Every other rule that used to live in the two shared breakpoint blocks moved
-   into the stylesheet that owns its selector. Splitting a media query by
-   section is the part of this that is easy to get wrong: a rule left behind
-   here would still apply, but only on the routes that happen to load this
-   file. */
-@media (max-width: 900px) {
-  .footer-signup {
-    grid-template-columns: 1fr;
-    gap: 28px;
-  }
-}
-
-@media (max-width: 620px) {
-  .footer-signup {
-    padding: 48px 0;
-  }
 }

@@ -46,6 +46,33 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ["motion", "sonner"],
   },
 
+  async redirects() {
+    return [
+      {
+        /**
+         * The résumé's old filename, kept alive as a redirect.
+         *
+         * It said "SDE-II" and the current document does not, so the file was
+         * renamed — but a PDF path is not an internal detail. This one has been
+         * the target of `/d/resume` since P10, which the route handler notes is
+         * "printed on a résumé and pasted into applications", and the file URL
+         * itself is what a browser shows in the address bar when someone opens
+         * the inline preview and then shares it. Letting it 404 would break
+         * links already out in the world with no way to find out.
+         *
+         * 308 rather than 302: the move is permanent, and the method-preserving
+         * status is the honest one for an asset that is only ever fetched.
+         *
+         * `/d/resume` is unaffected either way — it reads the current path from
+         * lib/analytics/downloads.ts, so it never pointed at this string.
+         */
+        source: "/Shivam-Patil-SDE-II-Resume.pdf",
+        destination: "/Shivam-Patil-SDE-Resume.pdf",
+        permanent: true,
+      },
+    ];
+  },
+
   async headers() {
     return [
       {
@@ -122,7 +149,7 @@ const nextConfig: NextConfig = {
         // changes a few times a year. A day at the edge with a week of
         // stale-while-revalidate means a new version is live within a day
         // without anyone waiting on a cold origin in the meantime.
-        source: "/Shivam-Patil-SDE-II-Resume.pdf",
+        source: "/Shivam-Patil-SDE-Resume.pdf",
         headers: [
           {
             key: "Cache-Control",

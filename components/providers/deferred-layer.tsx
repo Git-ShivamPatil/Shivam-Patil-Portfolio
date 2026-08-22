@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
+import { OPEN_PALETTE_EVENT } from "../../lib/devex/palette-events";
 import { Toaster } from "sonner";
 
 /**
@@ -100,13 +101,44 @@ export function DeferredLayer() {
       cancelIdleCallback?: (handle: number) => void;
     };
 
+    /**
+     * Idle is the DEFAULT wake-up, not the only one.
+     *
+     * The homepage's one navigation affordance is the line reading "Press ctrl
+     * K to start", and the palette that answers it lives in this layer. Waiting
+     * out a 2000ms idle ceiling before even starting to fetch its chunk means a
+     * visitor who does the single thing the page asks of them waits up to two
+     * seconds for a response — on the page whose entire premise is that there
+     * is nothing else to do.
+     *
+     * So an explicit ask promotes this layer immediately. The request itself is
+     * not lost in the meantime: lib/devex/palette-events.ts records it and the
+     * palette claims it when it mounts. This only makes that faster.
+     */
+    const wake = () => setReady(true);
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") wake();
+    };
+    window.addEventListener(OPEN_PALETTE_EVENT, wake);
+    window.addEventListener("keydown", onKeyDown);
+    const stopListening = () => {
+      window.removeEventListener(OPEN_PALETTE_EVENT, wake);
+      window.removeEventListener("keydown", onKeyDown);
+    };
+
     if (typeof w.requestIdleCallback === "function") {
-      const handle = w.requestIdleCallback(() => setReady(true), { timeout: 2000 });
-      return () => w.cancelIdleCallback?.(handle);
+      const handle = w.requestIdleCallback(wake, { timeout: 2000 });
+      return () => {
+        w.cancelIdleCallback?.(handle);
+        stopListening();
+      };
     }
 
-    const handle = window.setTimeout(() => setReady(true), 200);
-    return () => window.clearTimeout(handle);
+    const handle = window.setTimeout(wake, 200);
+    return () => {
+      window.clearTimeout(handle);
+      stopListening();
+    };
   }, []);
 
   if (!ready) return null;

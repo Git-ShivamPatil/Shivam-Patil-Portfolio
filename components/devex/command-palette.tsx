@@ -6,6 +6,7 @@ import { useTheme } from "next-themes";
 import { rank } from "../../lib/devex/fuzzy";
 import { allCommands, type Command } from "../../lib/devex/commands";
 import "./terminal.css";
+import { OPEN_PALETTE_EVENT, consumePaletteRequest } from "../../lib/devex/palette-events";
 
 /**
  * P17 — the Cmd+K palette.
@@ -123,8 +124,43 @@ export function CommandPalette() {
       }
     };
 
+    /**
+     * A programmatic way in, so the palette is not keyboard-only.
+     *
+     * The homepage invites a visitor to "press ctrl K", which is useless on a
+     * phone — there is no ctrl key to press, and a device with no keyboard had
+     * no route into the palette at all. That instruction is now also a button,
+     * and this is what it fires.
+     *
+     * A CustomEvent rather than lifted state or a context: the palette mounts
+     * once in the layout and the trigger can be anywhere on any page, so
+     * threading a setter through would mean a provider wrapping the whole tree
+     * to serve one boolean.
+     */
+    const onOpenRequest = () => {
+      restoreFocusTo.current = document.activeElement as HTMLElement;
+      setOpen(true);
+    };
+
+    /**
+     * A request made before this component existed.
+     *
+     * The palette is mounted after `requestIdleCallback` fires and its chunk
+     * loads, and the homepage tells a visitor to open it as their first action
+     * — so the likeliest click on "Press ctrl K to start" lands in the window
+     * where this listener is not attached yet, and a CustomEvent with no
+     * listener is dropped without a trace. lib/devex/palette-events.ts records
+     * every request so this can claim one on arrival. Returns true at most
+     * once, so a request cannot re-open the palette later.
+     */
+    if (consumePaletteRequest()) onOpenRequest();
+
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    window.addEventListener(OPEN_PALETTE_EVENT, onOpenRequest);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener(OPEN_PALETTE_EVENT, onOpenRequest);
+    };
   }, [open]);
 
   useEffect(() => {
@@ -198,7 +234,9 @@ export function CommandPalette() {
           role="combobox"
           aria-expanded="true"
           aria-controls="palette-results"
-          aria-activedescendant={results[activeIndex] ? `palette-${results[active].item.id}` : undefined}
+          aria-activedescendant={
+            results[activeIndex] ? `palette-${results[active].item.id}` : undefined
+          }
           autoComplete="off"
           spellCheck={false}
         />

@@ -46,6 +46,17 @@ export const person = {
   degree: "B.Tech, Artificial Intelligence and Data Science",
   github: "https://github.com/Git-ShivamPatil",
   linkedin: "https://www.linkedin.com/in/shivam--patil/",
+  /**
+   * Stored WITHOUT the `?hl=en` Instagram appends in a browser session. That
+   * parameter is a locale hint belonging to whoever copied the link, not part
+   * of the profile's address — shipping it would force English on every
+   * visitor who follows it, including the ones Instagram would otherwise serve
+   * in their own language.
+   */
+  instagram: "https://www.instagram.com/shivampatil.999/",
+  /** x.com, not twitter.com: the redirect still works, but the canonical host
+   *  is what `sameAs` should claim if it is claiming an identity. */
+  twitter: "https://x.com/shivamp_9",
 } as const;
 
 /**

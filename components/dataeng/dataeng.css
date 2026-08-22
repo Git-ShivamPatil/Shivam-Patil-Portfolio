@@ -18,7 +18,9 @@
   border-radius: 999px;
   background: transparent;
   color: var(--muted);
-  font: 500 12px var(--font-manrope), sans-serif;
+  font:
+    500 12px var(--font-manrope),
+    sans-serif;
   cursor: pointer;
   transition:
     color 0.2s,

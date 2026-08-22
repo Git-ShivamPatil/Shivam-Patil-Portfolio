@@ -10,7 +10,15 @@ export function OAuthButtons({ callbackUrl }: { callbackUrl?: string }) {
         onClick={() => signIn("google", { callbackUrl: callbackUrl ?? "/" })}
         className="border-app-line text-app-fg hover:border-app-fg flex items-center justify-center gap-2.5 rounded-full border px-4 py-2.5 text-sm font-semibold transition-colors"
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+        {/* The only colour left anywhere on this site, and deliberately.
+            This is Google's mark, not ours — the four hues are the thing a
+            visitor recognises at 16px, and a grey "G" on a sign-in row is
+            an identity provider nobody can pick out at a glance. The
+            monochrome rule is about the site's own palette; a third party's
+            logo is content. (GitHub's mark below is already monochrome by
+            its own brand guidance, so it inherits currentColor and flips
+            with the theme.) */}
+        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" data-brand-mark>
           <path
             fill="#4285F4"
             d="M23.52 12.27c0-.85-.08-1.67-.22-2.45H12v4.64h6.47a5.54 5.54 0 0 1-2.4 3.63v3h3.88c2.27-2.09 3.57-5.17 3.57-8.82Z"

@@ -29,8 +29,11 @@ export default function manifest(): MetadataRoute.Manifest {
     // the analytics and the ISR cache entry for the busiest page on the site.
     display: "standalone",
     orientation: "any",
-    background_color: "#fdf8f5",
-    theme_color: "#fdf8f5",
+    // --paper, the light theme's page ground. These paint the splash screen
+    // and the Android status bar of an installed copy, so a value from the
+    // retired palette would frame the app in a colour the app no longer has.
+    background_color: "#ffffff",
+    theme_color: "#ffffff",
     categories: ["business", "productivity"],
     icons: [
       {
