@@ -54,7 +54,7 @@ describe("cache headers", () => {
     // is a headline metric — so it must not be pinned in a visitor's own cache
     // for a year while the edge can still be purged.
     const cacheControl = headerValue(
-      ruleFor(await rules(), "/Shivam-Patil-SDE-II-Resume.pdf"),
+      ruleFor(await rules(), "/Shivam-Patil-SDE-Resume.pdf"),
       "Cache-Control",
     );
     expect(cacheControl).toMatch(/max-age=3600\b/);
