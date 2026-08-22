@@ -4,15 +4,52 @@
    of text in a large amount of space, so anything that does not serve that has
    been left out rather than tuned down. */
 
+/* ---- one screen, and actually one screen ----
+
+   The hero used to be `min-height: calc(100dvh - var(--header-h))`, which is
+   the obvious formula and is wrong by exactly the height of the footer. Header
+   plus hero already came to 100dvh, so the footer was pure overflow: measured
+   at 1280x900, 1440x800 and 1280x720, the page scrolled 96px every time — the
+   footer's 95px plus its 1px top border, the same number at every viewport
+   size, which is the signature of a constant being added rather than content
+   not fitting.
+
+   Subtracting a `--footer-h` token would fix the arithmetic and keep the
+   fragility: the footer's height is text, so it changes when the link row
+   wraps, and the hero would silently be wrong again at whatever width that
+   happens.
+
+   So the page is a sticky-footer flex column instead, and the hero takes what
+   is left rather than being told what is left. Scoped with `:has(.home)`
+   because only this page wants it — the pattern is already used a few rules
+   above for `body:has(.project-hero)`.
+
+   `min-height: 0` on the hero is load-bearing. A flex item's default minimum
+   is its content size, so a short viewport would push it back past `flex: 1`
+   and reintroduce the scroll this removes. */
+body:has(.home) {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+body:has(.home) main,
+/* The wrapper components/providers/page-transition.tsx renders around every
+   page. The chain has to be unbroken for `flex: 1` to reach the hero. */
+body:has(.home) main > div {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
 .home {
   display: flex;
   align-items: center;
-  /* Fills the viewport minus the header, without `100vh`.
-     `dvh` is the unit that accounts for mobile browser chrome collapsing on
-     scroll; `vh` measures the tallest state, so a `100vh` hero on a phone is
-     taller than the screen and pushes its own last line under the URL bar. */
-  min-height: calc(100dvh - var(--header-h));
-  padding: 40px 0 120px;
+  flex: 1;
+  min-height: 0;
+  /* Asymmetric on purpose, and much less so than the 40/120 it replaces: the
+     block sits a little above true centre, which is where the eye expects it,
+     but not so far that the space below reads as an empty region. */
+  padding: 32px 0 72px;
 }
 
 .home-inner {
@@ -120,8 +157,7 @@
 
 @media (max-width: 700px) {
   .home {
-    padding: 24px 0 80px;
-    min-height: calc(100dvh - var(--header-h));
+    padding: 20px 0 48px;
   }
   .home-inner {
     width: calc(100% - 44px);
