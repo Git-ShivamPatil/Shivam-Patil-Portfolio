@@ -15,13 +15,13 @@ that, **§33, §35 and §36 are the three sections that matter** — they invali
 much of what is written below, and the older sections have deliberately NOT
 been rewritten to match.
 
-|               |                                                                                                    |
-| ------------- | -------------------------------------------------------------------------------------------------- |
-| Live commit   | `ba3cd90` — verified in a real browser on production, not inferred from a deploy status            |
-| Production    | https://www.shivamsfolio.com                                                                       |
-| CI            | **run #47, all three jobs green** (#45, #46, #47 consecutive)                                      |
-| Local gate    | lint ✅ · typecheck ✅ · 385 unit ✅ · build ✅ · **53/53 E2E** ✅                                 |
-| Phases P1–P20 | **all deployed and reachable** — see §31 for what is fully live vs. switched off for want of a key |
+|               |                                                                                                                                |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Live commit   | `339f074` — P27 merged 21 Aug 20:54 UTC. Deploy confirmed by fetching `/llms.txt`, a route that did not exist before the merge |
+| Production    | https://www.shivamsfolio.com                                                                                                   |
+| CI            | **run #76 on main, all three jobs green** — build+unit, E2E, and Lighthouse                                                    |
+| Gate          | lint ✅ · typecheck ✅ · **716 unit** ✅ · build ✅ · **64 E2E** ✅                                                            |
+| Phases P1–P27 | **all deployed and reachable** — see §31 for P1–P20 and §56 for P27                                                            |
 
 **Read next, in this order:** §37 (what is left, and the four things that look
 broken and are not) → §36 (the motion layer, and the second §2z bug — found in
@@ -2926,10 +2926,16 @@ route registry and the footer directory.
 
 ## 56. P27 — the money path, the machine-readable surface, and metering
 
-Seven commits on `shivam/friendly-ride-nmnaj7`, PR #4. **All four CI jobs green
-on `efc129e`** — build/unit, E2E, Lighthouse and Vercel — which is only the
-second run in this project's history where Lighthouse passed alongside the rest
-(§54 was the first). Unit tests **592 → 683**.
+**Merged and live.** Twelve commits, PR #4, merged to `main` on 21 Aug at
+20:54 UTC as `339f074`. CI green on the merge commit across all three jobs.
+Unit tests **592 → 716**; E2E specs **51 → 64**.
+
+The deploy was confirmed by fetching `/llms.txt` — a route that did not exist
+before this merge, so a 200 there is proof the new code is serving rather than
+an inference from a green pipeline. That check had to be run by the repo owner:
+**the build environment's egress proxy denies CONNECT to
+`www.shivamsfolio.com`**, so nothing in this session could reach the live site
+(see §56h).
 
 **The DNS move is still blocked and was not attempted.** Wix's zone editor shows
 `NS records are not editable`, confirmed by screenshot. Everything below was
@@ -3149,6 +3155,8 @@ domains registered with them. Whether that screen is available here has not been
 verified, and it is the difference between "blocked" and "one setting".
 
 ## 57. Outstanding after P27
+
+P27 itself is shipped; everything below is what it did _not_ close.
 
 1. **E2E still covers none of P17–P25.** Unchanged from §47 item 1, and now
    larger again — P27 added `/llms.txt`, `/llms-full.txt`, the related-links
