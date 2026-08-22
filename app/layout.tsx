@@ -164,7 +164,21 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={fontVariables} suppressHydrationWarning>
+    // `data-theme="dark"` is rendered by the SERVER, and that is the whole
+    // point of it being here rather than only in the provider.
+    //
+    // next-themes sets this attribute from an inline script, which covers
+    // everyone whose JavaScript runs. Without a server-rendered value, anyone
+    // whose does not — a crawler, a text browser, a reader with scripting off,
+    // or simply the frames before that script executes — gets a document with
+    // no attribute at all, and the cascade falls through to the light `:root`
+    // block. The default would then be dark for most people and light for the
+    // rest, which is not a default.
+    //
+    // `suppressHydrationWarning` is what makes it safe: the script may rewrite
+    // this to "light" for someone with a stored preference, so the server and
+    // the first client render legitimately disagree about it.
+    <html lang="en" className={fontVariables} data-theme="dark" suppressHydrationWarning>
       <body>
         {/* Marks the document as JS-capable before the below-the-fold content
             paints, which is what arms the [data-reveal] start state. Without

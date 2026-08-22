@@ -84,6 +84,13 @@
      Light body text is --fg below, which is what actually switches per theme.
      Previously --fg aliased --ink; separating them is what lets --ink stay
      dark while light-theme copy goes pink. */
+  /* Tells the browser to paint ITS OWN surfaces light: scrollbars, form
+     controls, the overscroll gutter past the top and bottom of the page, and
+     the flash of background before the stylesheet applies. Nothing in this
+     file can reach those — they are the user agent's, and `color-scheme` is
+     the only way to ask. Without it, a dark page keeps a white scrollbar and
+     bounces against a white gutter on every rubber-band scroll. */
+  color-scheme: light;
   --ink: #0e0e0e;
   --paper: #ffffff;
   --bg: var(--paper);
@@ -199,6 +206,7 @@
      every text token clears AAA (7:1) against every surface, weakest 7.11:1.
      High contrast is the whole point of the look, so the accessible choice
      and the intended one agree here rather than fighting. */
+  color-scheme: dark;
   --bg: #0a0a0a;
   /* --ink means "always dark regardless of theme". It USED to need overriding
      here: the light theme's value was a pink-tinted near-black, which rendered
@@ -253,10 +261,21 @@
     0 0 44px rgba(194, 194, 194, 0.24);
   --neon-line: rgba(245, 245, 245, 0.16);
 }
-/* No-JS fallback for a visitor whose OS prefers dark. next-themes writes
-   data-theme before first paint, so with JS this never applies — the
-   :not([data-theme="light"]) guard is what stops it fighting the explicit
-   light default and causing a flash.
+/* Kept, and no longer the load-bearing no-JS path it was written to be.
+
+   It was the fallback for a visitor whose OS preferred dark while the document
+   carried no attribute. app/layout.tsx now server-renders `data-theme="dark"`,
+   so every document arrives with an explicit value and `:root[data-theme]`
+   above already matches — this block only ever restates what that one said.
+
+   It stays because it is still correct and costs nothing at runtime, and
+   because deleting it would mean re-proving that no path reaches a document
+   without the attribute (a stripped attribute, a reader mode, a future change
+   to how <html> is rendered). The `:not([data-theme="light"])` guard is what
+   keeps it from overriding someone who explicitly chose light on a dark OS.
+
+   If it is ever removed, remove it as its own change with that reasoning
+   written down, not as a side effect of something else.
 
    This MUST be kept in sync with :root[data-theme="dark"] above. It is a
    verbatim duplicate rather than a shared definition because custom
@@ -264,6 +283,7 @@
    selector without a wrapper element to hang them on. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
+    color-scheme: dark;
     --bg: #0a0a0a;
     /* --ink means "always dark regardless of theme". It USED to need overriding
        here: the light theme's value was a pink-tinted near-black, which rendered
@@ -2974,9 +2994,16 @@ h2 em {
     gap: 30px;
     padding-top: 87px;
   }
-  .about-photo-frame {
-    aspect-ratio: 16/9;
-  }
+  /* The portrait stays a PORTRAIT on phones.
+     This was `aspect-ratio: 16/9`, which is close to the worst possible frame
+     for the source: logo.jpeg is 720x1280, so `object-fit: cover` had to scale
+     it to the box's width and then discard about two thirds of its height,
+     leaving a horizontal band of torso with the head cropped off entirely.
+     Measured at 390px: a 358x201 frame holding a 0.56-ratio image.
+
+     4/5 is what the desktop layout already uses and what the crop was designed
+     around, so the mobile frame simply inherits it now rather than overriding
+     it with a shape the image cannot fill. */
   .about-page-story {
     grid-template-columns: 1fr;
     gap: 30px;
