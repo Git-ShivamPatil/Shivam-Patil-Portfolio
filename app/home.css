@@ -157,9 +157,22 @@ body:has(.home) main > div {
 
 @media (max-width: 700px) {
   .home {
-    padding: 20px 0 48px;
+    padding: 20px 0 40px;
   }
   .home-inner {
     width: calc(100% - 44px);
+  }
+}
+
+/* The smallest screens still worth supporting. At 320x568 the hero's own copy
+   is 300px tall and the header and footer take 150 between them, so the
+   padding is what has to give — 16/24 rather than 20/40 leaves the block
+   breathing room without pushing the page past the fold. */
+@media (max-width: 480px) {
+  .home {
+    padding: 16px 0 24px;
+  }
+  .home-inner {
+    width: calc(100% - 32px);
   }
 }

@@ -38,15 +38,14 @@ import { primaryRoutes } from "../lib/site-routes";
 export function Header() {
   return (
     <header className="site-header">
-      <div className="shell header-inner">
+      {/* NOT `.shell`. Every other block on the site is held inside a centred
+          1180px column, and the header used to be too — which put the wordmark
+          50px in from the left edge at 1280px and the actions 50px in from the
+          right. A top bar is chrome for the window, not content within it, so
+          it runs edge to edge with a small gutter and the two ends sit where a
+          browser toolbar's would. */}
+      <div className="header-inner">
         <div className="header-lead">
-          {/* First child, so the hamburger sits at the shell's left edge. It
-              ships with the panel it controls (components/nav/nav-drawer.tsx)
-              so the open state never crosses a component boundary and this file
-              can stay a server component — the photo below is a `priority`
-              image on every page, and it should not be waiting on a client
-              bundle. */}
-          <NavDrawer />
           <Link href="/" className="wordmark" aria-label="Shivam Patil home">
             {/* Rendered at 62px for a 31px slot so it stays sharp on 2x
                 displays, and `priority` because it sits in the header on every
@@ -87,8 +86,22 @@ export function Header() {
         </nav>
 
         <div className="header-actions">
-          <PaletteButton />
+          {/* The hamburger moved from the far left to here, and it had to: the
+              wordmark is the leftmost thing in the bar now, and nothing may sit
+              between it and the edge. It still ships with the panel it controls
+              (components/nav/nav-drawer.tsx) so the open state never crosses a
+              component boundary and this file stays a server component — the
+              photo above is a `priority` image on every page and should not be
+              waiting on a client bundle.
+
+              It stays visible at every width, not just below the nav's
+              breakpoint. The drawer is the only place left that lists all
+              twenty-nine routes with a sentence each, now that the footer
+              directory is gone. */}
+          <NavDrawer />
           <ThemeToggle />
+          {/* Last, so it is the rightmost control in the bar. */}
+          <PaletteButton />
         </div>
       </div>
     </header>

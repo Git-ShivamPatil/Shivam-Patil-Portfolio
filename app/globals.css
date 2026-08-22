@@ -645,6 +645,17 @@ h2 em {
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 16px;
+  /* Full bleed with a gutter, NOT `.shell`. See the note in
+     components/header.tsx: a top bar is chrome for the window rather than
+     content inside the column, so the wordmark sits at the left edge and the
+     palette chip at the right, the way a browser's own toolbar does.
+
+     The gutter is padding rather than margin so the grid's 1fr tracks still
+     measure the full width — with margins the centre track would be centred
+     on the reduced box, which is the same class of bug the `1fr auto 1fr`
+     above exists to avoid. */
+  width: 100%;
+  padding: 0 20px;
 }
 .header-lead {
   display: flex;
@@ -770,6 +781,20 @@ h2 em {
   }
   .header-nav {
     display: none;
+  }
+}
+/* Tighter gutter where every pixel of width is contested. Measured at 320px,
+   the narrowest viewport worth supporting: the bar carries the wordmark plus
+   three controls, and 20px each side is 40px the row would otherwise have.
+
+   Padding only. The 620px block further down already sets
+   `.header-actions { gap: 10px }` and is declared later, so a competing gap
+   here would lose silently — the kind of dead declaration that reads as intent
+   and does nothing. */
+@media (max-width: 480px) {
+  .header-inner {
+    padding: 0 14px;
+    gap: 10px;
   }
 }
 .hero {
@@ -1512,28 +1537,76 @@ h2 em {
 .footer-inner {
   display: flex;
   justify-content: center;
-  padding: 34px 0 40px;
+  /* Reduced from 34/40 by the 10px the links now carry themselves, so the row
+     occupies the same total height it did before the tap targets grew. */
+  padding: 24px 0 30px;
   color: var(--footer-fg);
   text-align: center;
 }
+
 .footer-inner-meta {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  /* Wide, because there is no separator between them. A `·` between each pair
-     would be five more marks on the quietest row of the page; 26px of space
-     says the same thing and says nothing else. */
-  gap: 26px;
+  /* Column gap is wide because there is no separator between the links — a `·`
+     between each pair would be four more marks on the quietest row of the page,
+     and 26px of space says the same thing while saying nothing else.
+
+     Row gap is 0 on purpose: the links carry 10px of vertical padding for the
+     tap target below, so a wrapped second line already has 20px of clear space
+     between it and the first. Adding a row gap on top of that would double it. */
+  column-gap: 26px;
+  row-gap: 0;
   font-size: 13px;
 }
 .footer-inner-meta a {
   color: var(--fg);
   text-decoration: none;
   transition: color 0.2s;
+  /* 10px top and bottom takes a 20px line box to a 40px target. Measured on a
+     touch profile before this: every link in this row was 20px tall — under
+     WCAG 2.5.8's 24px minimum, and far under what a thumb actually wants.
+     Padding rather than a min-height because these are the flex items, so the
+     padding grows the hit area without changing where the text sits. */
+  padding: 10px 0;
 }
 .footer-inner-meta a:hover {
   text-decoration: underline;
   text-underline-offset: 4px;
+}
+/* Phones, measured rather than guessed — and placed AFTER the rules it
+   overrides, which the first attempt was not. Declared above them it lost the
+   column-gap to an equal-specificity rule further down and silently did
+   nothing, which is the failure mode this file has hit before.
+
+   TWO separate problems, both found by driving real device profiles:
+
+   1. THE ROW WRAPPED AT 320px. The five links are 218px of text; with the 26px
+      gap they need 322px against 288px of available width, so "instagram" fell
+      to a second line and the footer stood at 140px. That was the last 6px of
+      the homepage's height budget — header 66 + hero 368 + footer 140 = 574
+      against a 568px viewport. A 16px gap brings the row to 282px, which fits
+      on one line at 320px.
+
+   2. THE CHAT LAUNCHER SAT ON TOP OF THE LAST LINK. It is `position: fixed` at
+      `right: 24px; bottom: 24px` and 54px across, so it owns the bottom-right
+      78x78 of the viewport — and on the homepage, which now fills the viewport
+      exactly, the footer is pinned directly under it. Measured at 390px: the
+      launcher covered x 312-366 while "instagram" ran 295-356, so half that
+      link opened a chat window instead.
+
+      Horizontal clearance cannot fix it. Keeping the centred row clear of the
+      corner needs its width under `viewport - 156`, which at 390px is 234px
+      against 218px of text before a single gap. So the clearance is vertical:
+      84px of bottom padding puts the row above the launcher's band with room
+      to spare, and the hero still has 24px of slack at 320x568. */
+@media (max-width: 480px) {
+  .footer-inner {
+    padding: 14px 0 84px;
+  }
+  .footer-inner-meta {
+    column-gap: 16px;
+  }
 }
 .project-hero {
   position: relative;
