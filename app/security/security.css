@@ -40,9 +40,7 @@
 .sec-verdict-head {
   margin: 10px 0 0;
   color: var(--muted);
-  font:
-    400 11.5px var(--font-dm-mono),
-    monospace;
+  font: 400 11.5px var(--font-label);
   overflow-wrap: anywhere;
 }
 
@@ -59,9 +57,7 @@
   padding: 8px 14px;
   border: 1px dashed var(--accent);
   border-radius: var(--radius);
-  font:
-    400 12px var(--font-dm-mono),
-    monospace;
+  font: 400 12px var(--font-label);
   color: var(--accent-strong);
 }
 
@@ -75,9 +71,8 @@
 .sec-table {
   width: 100%;
   border-collapse: collapse;
-  font:
-    400 12.5px var(--font-dm-mono),
-    monospace;
+  font: 400 12.5px var(--font-label);
+  font-variant-numeric: tabular-nums;
 }
 .sec-table th,
 .sec-table td {
@@ -120,9 +115,7 @@
 }
 .sec-note code,
 .sec-empty code {
-  font:
-    400 12.5px var(--font-dm-mono),
-    monospace;
+  font: 400 12.5px var(--font-code);
   color: var(--accent-strong);
 }
 .sec-empty {
@@ -167,9 +160,7 @@
 .sec-demo-verdict {
   margin: 0 0 12px;
   color: var(--accent-strong);
-  font:
-    600 12px var(--font-dm-mono),
-    monospace;
+  font: 600 12px var(--font-label);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -197,9 +188,7 @@
   place-items: center;
   border: 1px solid var(--line);
   border-radius: 4px;
-  font:
-    600 10px var(--font-dm-mono),
-    monospace;
+  font: 600 10px var(--font-label);
   color: var(--muted);
 }
 .sec-checks li[data-status="pass"] .sec-check-mark {
@@ -223,9 +212,7 @@
 .sec-check-detail {
   grid-column: 2;
   color: var(--muted);
-  font:
-    400 11.5px/1.6 var(--font-dm-mono),
-    monospace;
+  font: 400 11.5px/1.6 var(--font-label);
   overflow-wrap: anywhere;
 }
 
@@ -248,9 +235,8 @@
 .sec-figures dt {
   margin: 0 0 6px;
   color: var(--muted);
-  font:
-    500 11px var(--font-dm-mono),
-    monospace;
+  font: 500 11px var(--font-label);
+  font-variant-numeric: tabular-nums;
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -267,8 +253,7 @@
 }
 .sec-figures dd small {
   color: var(--muted);
-  font:
-    400 11px var(--font-dm-mono),
-    monospace;
+  font: 400 11px var(--font-label);
+  font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }

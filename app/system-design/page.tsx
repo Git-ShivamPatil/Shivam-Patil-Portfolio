@@ -45,6 +45,31 @@ export const metadata = pageMetadata({
 
 /* ---------- diagram 1: the request path ---------- */
 
+/**
+ * Vertical room reserved above every band for its layer caption.
+ *
+ * The captions used to sit *beside* the band: `x="700"` with
+ * `textAnchor="end"`, right-anchored to the edge of a 700-unit viewBox. That
+ * works only while every caption is narrower than the gap between the last
+ * node and the right edge — and on the two three-node rows ("Application",
+ * "Stores & third parties") that gap is 700 − 668 = 32 units.
+ *
+ * It held because the captions were set in DM Mono at 9px, and it stopped
+ * holding the moment the site went single-family: Manrope sets the same
+ * strings at 71 and 134 units. Both then extended left underneath the node
+ * rects — and because each caption is emitted BEFORE the nodes of its own
+ * layer, the rects (which are opaque, `fill: var(--bg)`) painted straight over
+ * them. Half of "Stores & third parties" simply vanished.
+ *
+ * Reserving a gutter and moving the captions above the band fixes the class of
+ * bug rather than this instance of it: a caption in the space between two rows
+ * has the full 700 units to grow into, so no future change of face, size or
+ * wording can put it back under a box. The rows themselves are untouched —
+ * every `y` in REQUEST_LAYERS and REQUEST_EDGES is still the original number,
+ * shifted once at render time by this constant.
+ */
+const LAYER_CAPTION_GUTTER = 26;
+
 const REQUEST_LAYERS = [
   {
     id: "client",
@@ -109,7 +134,7 @@ function RequestPathDiagram() {
   return (
     <svg
       className="sd-diagram"
-      viewBox="0 0 700 430"
+      viewBox="0 0 700 456"
       role="img"
       aria-labelledby="sd-req-title sd-req-desc"
     >
@@ -124,29 +149,37 @@ function RequestPathDiagram() {
         <path
           key={i}
           className="sd-edge"
-          d={`M ${e.from[0]} ${e.from[1]} C ${e.from[0]} ${(e.from[1] + e.to[1]) / 2}, ${e.to[0]} ${(e.from[1] + e.to[1]) / 2}, ${e.to[0]} ${e.to[1]}`}
+          // Same +GUTTER shift the bands get, applied here rather than in the
+          // data so REQUEST_EDGES keeps matching REQUEST_LAYERS by eye.
+          d={`M ${e.from[0]} ${e.from[1] + LAYER_CAPTION_GUTTER} C ${e.from[0]} ${(e.from[1] + e.to[1]) / 2 + LAYER_CAPTION_GUTTER}, ${e.to[0]} ${(e.from[1] + e.to[1]) / 2 + LAYER_CAPTION_GUTTER}, ${e.to[0]} ${e.to[1] + LAYER_CAPTION_GUTTER}`}
           style={{ ["--i" as string]: i }}
         />
       ))}
 
-      {REQUEST_LAYERS.map((layer) => (
-        <g key={layer.id}>
-          <text className="sd-layer-label" x="700" y={layer.y + 26} textAnchor="end">
-            {layer.label}
-          </text>
-          {layer.nodes.map((n) => (
-            <g key={n.title} className="sd-node">
-              <rect x={n.x} y={layer.y} width={n.w} height="46" rx="12" />
-              <text className="sd-node-title" x={n.x + 14} y={layer.y + 20}>
-                {n.title}
-              </text>
-              <text className="sd-node-sub" x={n.x + 14} y={layer.y + 36}>
-                {n.sub}
-              </text>
-            </g>
-          ))}
-        </g>
-      ))}
+      {REQUEST_LAYERS.map((layer) => {
+        const top = layer.y + LAYER_CAPTION_GUTTER;
+        return (
+          <g key={layer.id}>
+            {/* Left-anchored, in the gutter above the band. Starts at the same
+                x as the first node so the caption and the row it names share a
+                left edge. */}
+            <text className="sd-layer-label" x="20" y={top - 9}>
+              {layer.label}
+            </text>
+            {layer.nodes.map((n) => (
+              <g key={n.title} className="sd-node">
+                <rect x={n.x} y={top} width={n.w} height="46" rx="12" />
+                <text className="sd-node-title" x={n.x + 14} y={top + 20}>
+                  {n.title}
+                </text>
+                <text className="sd-node-sub" x={n.x + 14} y={top + 36}>
+                  {n.sub}
+                </text>
+              </g>
+            ))}
+          </g>
+        );
+      })}
     </svg>
   );
 }
@@ -189,23 +222,25 @@ function DataModelDiagram() {
         into heatmap cells rather than being stored as raw coordinates.
       </desc>
 
+      {/* Paths only. The labels are a separate pass below, AFTER the
+          entities.
+
+          A relation line SHOULD run under the boxes it connects — that is what
+          makes it read as passing behind them. Its label should not, and it
+          was: label and path were emitted together in one <g> before any
+          entity, so "referralRef" was painted and then covered by the Project
+          box 19 units later.
+
+          Splitting the two passes means the line keeps its correct z-order and
+          the label keeps its legibility, with no z-index and no reordering of
+          the data. */}
       {RELATIONS.map((r, i) => (
-        <g key={i}>
-          <path
-            className="sd-rel"
-            d={`M ${r.from[0]} ${r.from[1]} L ${r.to[0]} ${r.to[1]}`}
-            style={{ ["--i" as string]: i }}
-          />
-          {r.label ? (
-            <text
-              className="sd-rel-label"
-              x={(r.from[0] + r.to[0]) / 2 + 6}
-              y={(r.from[1] + r.to[1]) / 2 - 4}
-            >
-              {r.label}
-            </text>
-          ) : null}
-        </g>
+        <path
+          key={i}
+          className="sd-rel"
+          d={`M ${r.from[0]} ${r.from[1]} L ${r.to[0]} ${r.to[1]}`}
+          style={{ ["--i" as string]: i }}
+        />
       ))}
 
       {ENTITIES.map((e) => (
@@ -222,6 +257,30 @@ function DataModelDiagram() {
           ))}
         </g>
       ))}
+
+      {/* Relation labels, drawn last so they sit on top of the boxes.
+
+          `textAnchor="middle"` rather than the default `start`: the labels on
+          the vertical relations were nudged +6 off the line to clear it, which
+          on the ONE horizontal relation meant the string started at the middle
+          of a 50-unit gap and ran off the far side into the next entity.
+          Centring puts the same string symmetrically in the gap it belongs to,
+          and the +6 nudge is kept only where it is doing its original job —
+          holding a label clear of a vertical line. */}
+      {RELATIONS.filter((r) => r.label).map((r, i) => {
+        const isVertical = r.from[0] === r.to[0];
+        return (
+          <text
+            key={i}
+            className="sd-rel-label"
+            x={(r.from[0] + r.to[0]) / 2 + (isVertical ? 6 : 0)}
+            y={(r.from[1] + r.to[1]) / 2 - 4}
+            textAnchor={isVertical ? "start" : "middle"}
+          >
+            {r.label}
+          </text>
+        );
+      })}
     </svg>
   );
 }

@@ -19,12 +19,26 @@ export const experience: ExperienceEntry[] = [
     org: "Tata Consultancy Services",
     period: "Jan 2025 — Present",
     location: "India",
+    // Verb, object, number. Every bullet below carries the same three
+    // things and nothing else.
+    //
+    // The previous set averaged 168 characters and spent most of them on
+    // scaffolding — "Designed and developed", "ensuring reliability at
+    // scale", "upholding best practices for code quality, testability, and
+    // maintainability across the codebase". None of that is a claim; it is
+    // the connective tissue around a claim, and a recruiter scanning six
+    // roles reads past it to find the number. Putting the number in the
+    // sentence rather than at the end of it is the whole edit.
+    //
+    // No figure here is new. 13+, 10,000/day, 33%, 29% and 19% are the same
+    // five numbers the bullets already carried; /achievements reads them
+    // back from this file and would surface any drift.
     highlights: [
-      "Designed and developed 13+ REST APIs powering a high-traffic production system serving 10,000+ requests/day, reducing response latency by 33% through performance optimization.",
-      "Optimized SQL queries and data processing pipelines, improving application performance by 29% and ensuring reliability at scale.",
-      "Enhanced retrieval-augmented generation (RAG) quality for a production RBI chatbot — tuning vector search relevance and building automated evaluation frameworks that improved answer accuracy by 19%.",
-      "Collaborated with peer engineers through code reviews, upholding best practices for code quality, testability, and maintainability across the codebase.",
-      "Implemented authentication and authorization using secure access-control frameworks aligned with enterprise security standards.",
+      "Shipped 13+ production REST APIs behind a system serving 10,000+ requests/day. Response latency down 33%.",
+      "Rewrote hot-path SQL and data-processing pipelines: +29% application performance.",
+      "Raised RAG answer accuracy 19% on a production RBI chatbot — vector-search relevance tuning plus an automated evaluation harness.",
+      "Built authentication and role-based authorization against enterprise access-control standards.",
+      "Reviewed peer changes across the team's services, gating on testability and maintainability.",
     ],
   },
 ];

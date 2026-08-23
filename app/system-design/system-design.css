@@ -33,10 +33,7 @@
   border: 1px solid var(--surface-line);
   border-radius: 5px;
   background: var(--surface);
-  font:
-    500 0.88em var(--font-dm-mono),
-    "DM Mono",
-    monospace;
+  font: 500 0.88em var(--font-code);
 }
 
 /* ---- figures ---- */
@@ -83,19 +80,24 @@
 }
 .sd-node-sub {
   fill: var(--muted);
-  font:
-    500 10px var(--font-dm-mono),
-    "DM Mono",
-    monospace;
+  font: 500 10px var(--font-label);
 }
+/* Sits in the gutter above its band — see LAYER_CAPTION_GUTTER in page.tsx.
+   Two of the connector curves pass through that gutter, and the longest
+   caption ("Stores & third parties", 134 units) is wide enough to meet them.
+   `paint-order: stroke` draws the surface-coloured stroke first and the glyph
+   on top, so the dashes are knocked out behind the letters instead of running
+   through them. Without the paint-order the stroke would paint over the glyph
+   and the caption would just look bolded. */
 .sd-layer-label {
   fill: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  font:
-    500 9px var(--font-dm-mono),
-    "DM Mono",
-    monospace;
+  font: 500 9px var(--font-label);
+  paint-order: stroke;
+  stroke: var(--surface);
+  stroke-width: 3px;
+  stroke-linejoin: round;
 }
 .sd-edge {
   fill: none;
@@ -128,10 +130,7 @@
 }
 .sd-entity-field {
   fill: var(--prose-soft);
-  font:
-    400 10px var(--font-dm-mono),
-    "DM Mono",
-    monospace;
+  font: 400 10px var(--font-label);
 }
 .sd-rel {
   fill: none;
@@ -142,10 +141,7 @@
 }
 .sd-rel-label {
   fill: var(--muted);
-  font:
-    500 9px var(--font-dm-mono),
-    "DM Mono",
-    monospace;
+  font: 500 9px var(--font-label);
 }
 
 /* Dark theme gets the bloom the neon palette exists for. Light theme
@@ -210,10 +206,7 @@
 }
 .sd-phase-n {
   color: var(--accent);
-  font:
-    600 9.5px var(--font-dm-mono),
-    "DM Mono",
-    monospace;
+  font: 600 9.5px var(--font-label);
   letter-spacing: 0.1em;
 }
 .sd-phase-label {
@@ -243,10 +236,7 @@
   margin-top: auto;
   padding-top: 10px;
   color: var(--muted);
-  font:
-    500 9px var(--font-dm-mono),
-    "DM Mono",
-    monospace;
+  font: 500 9px var(--font-label);
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
@@ -320,10 +310,8 @@
 .sd-table thead th {
   background: var(--surface-2);
   color: var(--fg);
-  font:
-    500 10px var(--font-dm-mono),
-    "DM Mono",
-    monospace;
+  font: 500 10px var(--font-label);
+  font-variant-numeric: tabular-nums;
   text-transform: uppercase;
   letter-spacing: 0.12em;
 }

@@ -13,6 +13,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { DrawerAuth } from "./drawer-auth";
 import { ROUTE_GROUPS, routesInGroup } from "../../lib/site-routes";
+import { IconReveal } from "../icon-reveal";
+import type { BrandIconName } from "../icons";
 import { person } from "../../lib/seo/site";
 import "./nav.css";
 
@@ -57,9 +59,24 @@ import "./nav.css";
  *   directory you can read.
  */
 const EXTERNAL_LINKS = [
-  { href: person.github, label: "GitHub", blurb: "The source for all of this." },
-  { href: person.linkedin, label: "LinkedIn", blurb: "The professional version." },
-];
+  {
+    href: person.github,
+    label: "GitHub",
+    icon: "github",
+    blurb: "Source for this site and everything else.",
+  },
+  {
+    href: person.linkedin,
+    label: "LinkedIn",
+    icon: "linkedin",
+    blurb: "Roles, resume, referrals.",
+  },
+] as const satisfies readonly {
+  href: string;
+  label: string;
+  icon: BrandIconName;
+  blurb: string;
+}[];
 
 /* The client-only gate for the portal, as an external store rather than a
    `mounted` flag flipped in an effect. It reports false for the hydration
@@ -217,6 +234,7 @@ export function NavDrawer() {
                       aria-labelledby={`nav-label-${slug}`}
                       aria-describedby={`nav-blurb-${slug}`}
                       onClick={close}
+                      data-nudge
                     >
                       <span className="nav-drawer-link-label" id={`nav-label-${slug}`}>
                         {route.label}
@@ -250,9 +268,14 @@ export function NavDrawer() {
                 target="_blank"
                 rel="noreferrer noopener"
                 onClick={close}
+                data-nudge
               >
+                {/* The "↗" that used to trail every label said only
+                    "external", which target="_blank" and the blurb already
+                    say — and it said it identically for both links, so it
+                    distinguished nothing. The brand mark does. */}
                 <span className="nav-drawer-link-label">
-                  {link.label} <span aria-hidden="true">↗</span>
+                  <IconReveal label={link.label} icon={link.icon} />
                 </span>
                 <span className="nav-drawer-link-blurb">{link.blurb}</span>
               </a>

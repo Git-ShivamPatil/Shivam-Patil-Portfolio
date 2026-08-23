@@ -36,10 +36,8 @@
 .invoice-label {
   margin-bottom: 6px !important;
   color: var(--muted) !important;
-  font:
-    500 9px var(--font-dm-mono),
-    "DM Mono",
-    monospace !important;
+  font: 500 9px var(--font-label) !important;
+  font-variant-numeric: tabular-nums;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -52,10 +50,8 @@
   padding: 12px 10px;
   border-bottom: 1px solid var(--fg);
   color: var(--muted);
-  font:
-    500 9px var(--font-dm-mono),
-    "DM Mono",
-    monospace;
+  font: 500 9px var(--font-label);
+  font-variant-numeric: tabular-nums;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   text-align: right;
@@ -76,10 +72,8 @@
 .invoice-table tfoot td {
   border-bottom: none;
   color: var(--muted);
-  font:
-    500 12px var(--font-dm-mono),
-    "DM Mono",
-    monospace;
+  font: 500 12px var(--font-label);
+  font-variant-numeric: tabular-nums;
   padding: 8px 10px;
 }
 .invoice-table tfoot .invoice-total td {

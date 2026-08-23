@@ -74,8 +74,12 @@ export function Header() {
             for the server-rendered ones where a prefetch is a real render plus
             Neon queries nobody asked for. */}
         <nav className="header-nav" aria-label="Main navigation">
+          {/* data-underline draws a rule out from the left edge of the word on
+              hover and retracts it the way it came. It replaces a colour-only
+              hover, which announces "this is a link" only after the pointer has
+              already found it. See app/motion.css. */}
           {primaryRoutes().map((route) => (
-            <Link key={route.href} href={route.href} prefetch={route.prefetch}>
+            <Link key={route.href} href={route.href} prefetch={route.prefetch} data-underline>
               {/* `navLabel` where a route sets one — only /system-design does.
                   See the field's note in lib/site-routes.ts for why it is not
                   `technicalLabel`, which would have renamed two other items in

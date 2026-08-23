@@ -58,9 +58,7 @@
   align-items: center;
   margin-bottom: 12px;
   color: var(--muted);
-  font:
-    500 11px "DM Mono",
-    monospace;
+  font: 500 11px var(--font-label);
   text-transform: uppercase;
   letter-spacing: 0.07em;
 }
@@ -70,7 +68,7 @@
   background: var(--surface);
 }
 .log-entry__commit {
-  font-family: "DM Mono", monospace;
+  font-family: var(--font-label);
   text-transform: none;
   letter-spacing: 0;
 }
@@ -94,9 +92,8 @@
 .log-entry__body dt {
   margin: 0;
   color: var(--muted);
-  font:
-    500 11px "DM Mono",
-    monospace;
+  font: 500 11px var(--font-label);
+  font-variant-numeric: tabular-nums;
   text-transform: uppercase;
   letter-spacing: 0.07em;
   padding-top: 4px;

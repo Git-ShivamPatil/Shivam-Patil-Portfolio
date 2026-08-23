@@ -8,7 +8,7 @@ import { usePathname } from "next/navigation";
  *
  * Walks the *text nodes* of any `[data-split]` element rather than replacing
  * its innerHTML, so nested markup the design depends on — `<em>` for the
- * Playfair italics, `<br>` for the deliberate line breaks — survives intact.
+ * the <em> weight drop, `<br>` for the deliberate line breaks — survives intact.
  *
  * Accessibility: splitting a heading into one span per character makes screen
  * readers announce it letter by letter. Before splitting, the original text is

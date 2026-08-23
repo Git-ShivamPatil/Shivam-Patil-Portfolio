@@ -20,9 +20,7 @@
   border: 1px solid var(--line);
   border-radius: 999px;
   color: var(--muted);
-  font:
-    500 11px var(--font-dm-mono),
-    monospace;
+  font: 500 11px var(--font-label);
 }
 /* Availability is carried by border style and weight, not by red/green — two
    more hues would break the two-colour brief, and colour alone is not an
@@ -60,9 +58,8 @@
 }
 .compute-table thead th {
   color: var(--muted);
-  font:
-    600 10px var(--font-dm-mono),
-    monospace;
+  font: 600 10px var(--font-label);
+  font-variant-numeric: tabular-nums;
   letter-spacing: 0.07em;
   text-transform: uppercase;
 }

@@ -63,7 +63,7 @@
 
 .disclosure-hint {
   flex-shrink: 0;
-  font-family: var(--font-dm-mono), ui-monospace, monospace;
+  font-family: var(--font-label);
   font-size: 12px;
   font-weight: 400;
   letter-spacing: 0.04em;

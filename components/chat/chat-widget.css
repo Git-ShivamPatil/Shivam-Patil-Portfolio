@@ -48,10 +48,7 @@
   border-radius: 999px;
   background: var(--orange);
   color: var(--ink);
-  font:
-    600 10px var(--font-dm-mono),
-    "DM Mono",
-    monospace;
+  font: 600 10px var(--font-label);
   font-style: normal;
 }
 /* P11. "The owner is around" on the closed launcher. Ringed in --bg rather
@@ -128,10 +125,7 @@
   align-items: center;
   gap: 5px;
   color: var(--muted);
-  font:
-    500 9px var(--font-dm-mono),
-    "DM Mono",
-    monospace;
+  font: 500 9px var(--font-label);
   text-transform: uppercase;
   letter-spacing: 0.07em;
 }
@@ -190,10 +184,7 @@
   justify-content: flex-end;
   gap: 6px;
   margin-top: 5px;
-  font:
-    500 9px var(--font-dm-mono),
-    "DM Mono",
-    monospace;
+  font: 500 9px var(--font-label);
   opacity: 0.65;
 }
 .chat-bubble-visitor {

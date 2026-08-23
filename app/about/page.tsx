@@ -31,9 +31,8 @@ export default function AboutPage() {
             <em>systems-minded.</em>
           </h1>
           <p>
-            I&apos;m Shivam Patil — a software engineer based in Mumbai, India, with 1.5+ years of
-            experience designing high-throughput distributed systems and delivering production-grade
-            applications, currently working as an SDE at Tata Consultancy Services.
+            I&apos;m Shivam Patil — SDE at Tata Consultancy Services, Mumbai. 1.5+ years on
+            high-throughput distributed systems and production backends.
           </p>
         </div>
         <AboutPhoto />
@@ -43,17 +42,14 @@ export default function AboutPage() {
         <div data-reveal>
           <p className="eyebrow">How I got here</p>
           <p>
-            I studied Artificial Intelligence and Data Science at Pune University, and that
-            intersection — classical systems engineering meeting modern AI — is still where I do my
-            best work. In production, that&apos;s meant building the REST APIs and data pipelines a
-            high-traffic system depends on, and separately, tuning the retrieval and evaluation
-            layers behind a production RAG chatbot.
+            B.Tech in Artificial Intelligence and Data Science, Pune University. In production that
+            has meant two things: the REST APIs and data pipelines under a high-traffic system, and
+            the retrieval and evaluation layers behind a production RAG chatbot.
           </p>
           <p>
-            Outside of work, I build end-to-end systems that force me to reason about the same
-            trade-offs at a different scale: a rate limiter that has to stay correct under failure,
-            an inference server that has to stay fast under load, an agent runtime that has to stay
-            auditable under autonomy.
+            Outside work I chase the same trade-offs at a different scale — a rate limiter that
+            stays correct under failure, an inference server that stays fast under load, an agent
+            runtime that stays auditable under autonomy.
           </p>
         </div>
         <div data-reveal data-reveal-delay="2">
@@ -61,18 +57,18 @@ export default function AboutPage() {
           <div className="principles">
             <div>
               <span>01</span>
-              <strong>Build for the edge cases</strong>
-              <p>Graceful failures are part of the product, not an afterthought.</p>
+              <strong>Failure modes are features</strong>
+              <p>The degradation path ships with the happy path, not after it.</p>
             </div>
             <div>
               <span>02</span>
-              <strong>Make it observable</strong>
-              <p>If it isn&apos;t measured, it isn&apos;t known.</p>
+              <strong>Measure before claiming</strong>
+              <p>Unmeasured is unknown. Every number on this site has a source.</p>
             </div>
             <div>
               <span>03</span>
-              <strong>Keep the interface human</strong>
-              <p>Complex systems deserve calm, legible UX.</p>
+              <strong>Legible under load</strong>
+              <p>A system nobody can read is a system nobody can operate.</p>
             </div>
           </div>
         </div>

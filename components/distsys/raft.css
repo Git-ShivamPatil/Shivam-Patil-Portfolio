@@ -30,15 +30,13 @@
 }
 .raft-node .raft-id {
   fill: var(--fg);
-  font:
-    600 12px var(--font-dm-mono),
-    monospace;
+  font: 600 12px var(--font-label);
+  font-variant-numeric: tabular-nums;
 }
 .raft-node .raft-term {
   fill: var(--muted);
-  font:
-    500 9px var(--font-dm-mono),
-    monospace;
+  font: 500 9px var(--font-label);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Leader: filled with the accent. --ink for the label because the accent is a
@@ -83,9 +81,7 @@
   border-radius: 999px;
   background: transparent;
   color: var(--muted);
-  font:
-    500 11px var(--font-dm-mono),
-    monospace;
+  font: 500 11px var(--font-label);
   cursor: pointer;
   transition:
     color 0.2s,
@@ -103,9 +99,8 @@
 .raft-quorum {
   margin: 0 0 12px;
   color: var(--muted);
-  font:
-    500 11px var(--font-dm-mono),
-    monospace;
+  font: 500 11px var(--font-label);
+  font-variant-numeric: tabular-nums;
   line-height: 1.6;
 }
 .raft-quorum-lost {
@@ -134,7 +129,7 @@
 .raft-events span {
   flex-shrink: 0;
   color: var(--muted);
-  font-family: var(--font-dm-mono), monospace;
+  font-family: var(--font-label);
 }
 
 @media (max-width: 820px) {

@@ -37,17 +37,13 @@
 .terminal-title {
   margin-left: 10px;
   color: var(--muted);
-  font:
-    500 11px var(--font-dm-mono),
-    monospace;
+  font: 500 11px var(--font-label);
 }
 .terminal-screen {
   max-height: 460px;
   overflow-y: auto;
   padding: 18px 20px 20px;
-  font:
-    400 13px/1.75 var(--font-dm-mono),
-    monospace;
+  font: 400 13px/1.75 var(--font-code);
   cursor: text;
 }
 .terminal-line {
@@ -149,9 +145,7 @@
 }
 .palette-row-group {
   color: var(--muted);
-  font:
-    500 10px var(--font-dm-mono),
-    monospace;
+  font: 500 10px var(--font-label);
   text-transform: uppercase;
   letter-spacing: 0.07em;
 }
@@ -178,9 +172,7 @@
   padding: 0 4px;
   border: 1px solid var(--line);
   border-radius: 4px;
-  font:
-    500 10px var(--font-dm-mono),
-    monospace;
+  font: 500 10px var(--font-code);
 }
 .palette-toast {
   position: fixed;
@@ -237,9 +229,7 @@
   display: flex;
   justify-content: space-between;
   color: var(--muted);
-  font:
-    500 11px var(--font-dm-mono),
-    monospace;
+  font: 500 11px var(--font-label);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -312,15 +302,29 @@
   fill: var(--accent);
   stroke: var(--accent-strong);
 }
-.skill-graph-node text {
+/* Labels are a separate pass rendered after every disc — see the note in
+   skill-graph.tsx. These selectors moved off `.skill-graph-node text` with
+   them, because the labels are no longer inside that group. The styling is
+   otherwise unchanged.
+
+   The halo is what makes a label independent of whatever it lands on. In a
+   force-directed layout a label can sit over an edge, over its own disc, or
+   over a neighbour's, and the fill alone is legible against exactly one of
+   those. `paint-order: stroke` draws the stroke FIRST and the glyph over it, so
+   a 3px surface-coloured stroke reads as a knockout behind the text rather than
+   as an outline on it. Without the paint-order the same stroke would be drawn
+   on top and the letters would just look bolded and muddy. */
+.skill-graph-label {
   fill: var(--muted);
-  font:
-    500 10px var(--font-dm-mono),
-    monospace;
+  font: 500 10px var(--font-label);
   pointer-events: none;
+  paint-order: stroke;
+  stroke: var(--surface);
+  stroke-width: 3px;
+  stroke-linejoin: round;
   transition: fill 0.2s;
 }
-.skill-graph-project text {
+.skill-graph-project-label {
   fill: var(--fg);
   font-size: 11px;
   font-weight: 600;
@@ -328,9 +332,6 @@
 .skill-graph-node:hover circle {
   fill: var(--accent-strong);
   stroke: var(--accent-strong);
-}
-.skill-graph-node:hover text {
-  fill: var(--fg);
 }
 .skill-graph figcaption,
 .graph-empty {
@@ -371,9 +372,8 @@
 }
 .activity-figures dt {
   color: var(--muted);
-  font:
-    500 10px var(--font-dm-mono),
-    monospace;
+  font: 500 10px var(--font-label);
+  font-variant-numeric: tabular-nums;
   text-transform: uppercase;
   letter-spacing: 0.07em;
 }
@@ -435,7 +435,8 @@
   width: 10px;
 }
 .activity-types {
-  font-family: var(--font-dm-mono), monospace;
+  font-family: var(--font-label);
+  font-variant-numeric: tabular-nums;
 }
 .activity-stale {
   color: var(--accent-strong);

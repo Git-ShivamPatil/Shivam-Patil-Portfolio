@@ -59,7 +59,43 @@ interface StaticProject {
   steps: [string, string, string][];
 }
 
-// Transcribed verbatim from the original app/projects.ts static array.
+// Originally transcribed verbatim from the old app/projects.ts static array.
+//
+// The `summary`, `useCase` and three `outcome` strings have since been
+// rewritten; everything else — `implemented`, `architecture`, `steps`, `stack`
+// — is untouched, because those were already the dense part.
+//
+// What was wrong with the copy: each summary opened by naming its own genre
+// ("A fault-tolerant gateway that...", "A governed, multi-agent runtime
+// that...", "An enterprise knowledge assistant that..."), then described the
+// system in adjectives. A reader who already knows what a gateway is learns
+// nothing from being told this one is fault-tolerant; what they want is which
+// algorithms, which failure model, which store. The rewrites name mechanisms,
+// and every mechanism named below already appears in that project's own
+// `implemented` or `stack` array further down — nothing new is claimed here.
+//
+// Three `outcome` values were adjectives where the other three were numbers:
+// "Secure by design", "Secure · concurrent · resilient", "Grounded &
+// governed". Those render in the same chip as "45K req/s · <8ms p99", which
+// invites the reader to weigh them the same way. They now name the stack
+// decision that earns the claim instead of asserting the claim.
+//
+// NOTE: editing these strings does NOT change the live site, and it is worth
+// being explicit about why, because the obvious assumption is wrong.
+//
+// The project upsert below is `update: {}`. That is deliberate — once a row
+// exists, /admin/projects is its source of truth, and a seed that overwrote on
+// every run would silently discard anything edited through the UI. The
+// consequence is that this file only ever INSERTS. On a database that already
+// holds these six slugs, `pnpm db:seed` is a no-op for them.
+//
+// So the copy here is what a FRESH database gets. Pushing it to rows that
+// already exist is a separate, explicit step:
+//
+//     pnpm tsx scripts/backfill-project-copy.mts            # dry run
+//     pnpm tsx scripts/backfill-project-copy.mts --apply
+//
+// Keep the two files in sync when either changes.
 const staticProjects: StaticProject[] = [
   {
     slug: "distributed-rate-limiter-api-gateway",
@@ -68,12 +104,12 @@ const staticProjects: StaticProject[] = [
     title: "Distributed Rate Limiter & API Gateway",
     shortTitle: "Rate limiter",
     summary:
-      "A fault-tolerant gateway that enforces fair API usage at high throughput without becoming the bottleneck.",
+      "Multi-tenant API gateway: token-bucket and sliding-window quotas across a consistent-hash shard ring, with Raft election covering shard failure.",
     outcome: "45K req/s · <8ms p99",
     accent: "cyan",
     stack: ["Go", "gRPC / REST", "Redis", "PostgreSQL", "AKS", "Prometheus", "React"],
     useCase:
-      "Protect multi-tenant APIs from noisy neighbours while keeping quotas accurate across replicas, regions, and transient failures.",
+      "Keep per-tenant quotas accurate across replicas and regions while a noisy neighbour, a lost shard or a region blip is in progress.",
     implemented: [
       [
         "Dual limiting strategies",
@@ -125,7 +161,7 @@ const staticProjects: StaticProject[] = [
     title: "Agentic AI Orchestration Platform",
     shortTitle: "Agentic platform",
     summary:
-      "A governed, multi-agent runtime that plans, retrieves, acts, critiques, and explains every decision in real time.",
+      "Multi-agent runtime on a plan-retrieve-act-critique loop, emitting a full decision and tool-call trace on every run.",
     outcome: "87% success · 150 eval cases",
     accent: "violet",
     stack: [
@@ -138,7 +174,7 @@ const staticProjects: StaticProject[] = [
       "React",
     ],
     useCase:
-      "Turn complex knowledge-work requests into repeatable, auditable workflows without hiding the reasoning trace or tool activity.",
+      "Make knowledge-work requests repeatable and auditable — the reasoning trace and tool activity stay visible rather than collapsing into an answer.",
     implemented: [
       [
         "Specialised agent loop",
@@ -190,7 +226,7 @@ const staticProjects: StaticProject[] = [
     title: "High-Performance LLM Inference Server",
     shortTitle: "LLM inference",
     summary:
-      "A Rust inference runtime designed around continuous batching, KV-cache discipline, and transparent live performance signals.",
+      "Rust inference runtime built on continuous batching and explicit KV-cache management, with live throughput and tail-latency signals.",
     outcome: "+230% throughput · −42% p99",
     accent: "orange",
     stack: [
@@ -203,7 +239,7 @@ const staticProjects: StaticProject[] = [
       "React",
     ],
     useCase:
-      "Serve concurrent LLM requests efficiently by avoiding the throughput collapse and tail-latency spikes of single-request inference.",
+      "Serve concurrent LLM requests without the throughput collapse and p99 spikes that single-request inference hits under load.",
     implemented: [
       [
         "Continuous scheduler",
@@ -255,8 +291,8 @@ const staticProjects: StaticProject[] = [
     title: "Secure Banking System",
     shortTitle: "Secure banking",
     summary:
-      "A decentralised banking platform that combines tamper-evident transaction processing with scalable APIs and operational guardrails.",
-    outcome: "Secure by design",
+      "Banking platform on a Hyperledger Fabric ledger, with Kafka-decoupled transaction events and Vault-managed secrets behind OAuth2 Django APIs.",
+    outcome: "Fabric ledger · Kafka · Vault",
     accent: "lime",
     stack: [
       "Python",
@@ -269,7 +305,7 @@ const staticProjects: StaticProject[] = [
       "Grafana",
     ],
     useCase:
-      "Process sensitive financial operations with a verifiable ledger, controlled access, resilient asynchronous workflows, and production-grade monitoring.",
+      "Process financial operations against a verifiable ledger, with asynchronous enrichment that survives a downstream outage.",
     implemented: [
       [
         "Ledger-backed transactions",
@@ -321,12 +357,12 @@ const staticProjects: StaticProject[] = [
     title: "Online Examination System",
     shortTitle: "Exam platform",
     summary:
-      "A scalable test-taking platform built for secure sessions, high concurrency, dependable scoring, and low-latency delivery.",
-    outcome: "Secure · concurrent · resilient",
+      "Assessment platform: NGINX across FastAPI workers, Redis-held session and scoring state, JWT-scoped endpoints, server-side validation throughout.",
+    outcome: "NGINX → FastAPI · Redis · JWT",
     accent: "blue",
     stack: ["Python", "FastAPI", "PostgreSQL", "Redis", "Docker", "NGINX", "AWS", "JWT"],
     useCase:
-      "Provide a consistent, secure assessment experience when many candidates start, save, and submit at the same time.",
+      "Hold a consistent assessment session when hundreds of candidates start, autosave and submit inside the same few seconds.",
     implemented: [
       [
         "Fast, balanced API layer",
@@ -378,12 +414,12 @@ const staticProjects: StaticProject[] = [
     title: "Secure RAG with RBAC, Guardrails & Monitoring",
     shortTitle: "Secure RAG",
     summary:
-      "An enterprise knowledge assistant that makes retrieval both useful and defensible through access control, privacy guardrails, and evaluations.",
-    outcome: "Grounded & governed",
+      "Enterprise RAG with RBAC metadata pushed into the vector-search filter, PII masking before generation, and Ragas scoring on every change.",
+    outcome: "RBAC-filtered retrieval · Ragas",
     accent: "pink",
     stack: ["Python", "Qdrant / Milvus", "Streamlit", "Ragas", "Docling", "AWS", "RBAC", "LLMs"],
     useCase:
-      "Give teams answers from private knowledge while ensuring each person can retrieve only what they are authorised to see and prompts remain safe.",
+      "Answer from private corpora while guaranteeing a caller can retrieve only what their role permits — enforced at the retrieval filter, not the prompt.",
     implemented: [
       [
         "Permission-aware retrieval",

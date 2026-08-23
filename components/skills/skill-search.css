@@ -21,10 +21,7 @@
    content in it. */
 .skill-search-label {
   color: var(--muted);
-  font:
-    500 10px var(--font-dm-mono),
-    "DM Mono",
-    monospace;
+  font: 500 10px var(--font-label);
   text-transform: uppercase;
   letter-spacing: 0.09em;
 }
@@ -86,7 +83,7 @@
   color: var(--paper);
 }
 .skill-search-chips button span {
-  font-family: var(--font-dm-mono), ui-monospace, monospace;
+  font-family: var(--font-label);
   font-size: 11px;
   font-weight: 400;
   opacity: 0.7;

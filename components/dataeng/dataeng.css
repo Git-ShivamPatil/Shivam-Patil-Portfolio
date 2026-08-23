@@ -37,9 +37,7 @@
   border-radius: var(--radius);
   background: var(--surface);
   color: var(--fg);
-  font:
-    400 12.5px/1.7 var(--font-dm-mono),
-    monospace;
+  font: 400 12.5px/1.7 var(--font-code);
   resize: vertical;
 }
 .olap textarea:focus-visible {
@@ -61,9 +59,7 @@
 .olap-status {
   margin: 0;
   color: var(--accent-strong);
-  font:
-    500 12px var(--font-dm-mono),
-    monospace;
+  font: 500 12px var(--font-label);
 }
 .olap-table-wrap {
   overflow-x: auto;
@@ -84,9 +80,8 @@
 }
 .olap-result th {
   color: var(--muted);
-  font:
-    600 10px var(--font-dm-mono),
-    monospace;
+  font: 600 10px var(--font-label);
+  font-variant-numeric: tabular-nums;
   letter-spacing: 0.07em;
   text-transform: uppercase;
 }
@@ -154,9 +149,7 @@
   display: block;
   margin-top: 3px;
   color: var(--muted);
-  font:
-    400 10.5px var(--font-dm-mono),
-    monospace;
+  font: 400 10.5px var(--font-code);
   font-weight: 400;
 }
 .lineage-legend dd {

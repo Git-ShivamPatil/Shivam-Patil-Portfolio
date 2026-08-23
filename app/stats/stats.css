@@ -145,10 +145,8 @@
   align-items: center;
   gap: 6px;
   color: var(--fg);
-  font:
-    500 11px var(--font-dm-mono),
-    "DM Mono",
-    monospace;
+  font: 500 11px var(--font-label);
+  font-variant-numeric: tabular-nums;
   border-bottom: 1px solid transparent;
   transition: border-color 0.2s;
 }
@@ -175,10 +173,8 @@
 .stat-figures strong {
   display: block;
   color: var(--fg);
-  font:
-    500 32px/1 var(--font-dm-mono),
-    "DM Mono",
-    monospace;
+  font: 500 32px/1 var(--font-label);
+  font-variant-numeric: tabular-nums;
   letter-spacing: -0.06em;
 }
 .stat-figures span {
@@ -203,10 +199,8 @@
 .stat-subhead {
   margin: 0 0 12px;
   color: var(--muted);
-  font:
-    500 9px var(--font-dm-mono),
-    "DM Mono",
-    monospace;
+  font: 500 9px var(--font-label);
+  font-variant-numeric: tabular-nums;
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
@@ -269,10 +263,8 @@
 }
 .stat-bar-row b {
   color: var(--muted);
-  font:
-    500 11px var(--font-dm-mono),
-    "DM Mono",
-    monospace;
+  font: 500 11px var(--font-label);
+  font-variant-numeric: tabular-nums;
   text-align: right;
 }
 
@@ -336,10 +328,8 @@
 .chart-tick,
 .chart-bar-value {
   fill: var(--muted);
-  font:
-    500 9px var(--font-dm-mono),
-    "DM Mono",
-    monospace;
+  font: 500 9px var(--font-label);
+  font-variant-numeric: tabular-nums;
 }
 .chart-bar-value {
   font-size: 9.5px;
@@ -351,25 +341,19 @@
 }
 .chart-arc-label {
   fill: var(--chart-label);
-  font:
-    500 13px var(--font-dm-mono),
-    "DM Mono",
-    monospace;
+  font: 500 13px var(--font-label);
+  font-variant-numeric: tabular-nums;
 }
 .chart-centre-value {
   fill: var(--chart-label);
-  font:
-    500 22px var(--font-dm-mono),
-    "DM Mono",
-    monospace;
+  font: 500 22px var(--font-label);
+  font-variant-numeric: tabular-nums;
   letter-spacing: -0.05em;
 }
 .chart-centre-label {
   fill: var(--muted);
-  font:
-    500 7px var(--font-dm-mono),
-    "DM Mono",
-    monospace;
+  font: 500 7px var(--font-label);
+  font-variant-numeric: tabular-nums;
   letter-spacing: 0.12em;
 }
 
@@ -408,10 +392,8 @@
 .chart-legend-value {
   flex-shrink: 0;
   color: var(--muted);
-  font:
-    500 10px var(--font-dm-mono),
-    "DM Mono",
-    monospace;
+  font: 500 10px var(--font-label);
+  font-variant-numeric: tabular-nums;
 }
 /* The swatch repeats the SVG texture in CSS so the legend and the chart are
    matched by pattern, not only by a 1.2:1 colour step. Same --surface strokes,
@@ -476,10 +458,8 @@
 .stat-repos span {
   flex-shrink: 0;
   color: var(--muted);
-  font:
-    500 10px var(--font-dm-mono),
-    "DM Mono",
-    monospace;
+  font: 500 10px var(--font-label);
+  font-variant-numeric: tabular-nums;
 }
 .stat-footnote {
   margin: 0;
@@ -511,10 +491,8 @@
   padding-top: 18px;
   border-top: 1px solid var(--line);
   color: var(--muted);
-  font:
-    500 10px var(--font-dm-mono),
-    "DM Mono",
-    monospace;
+  font: 500 10px var(--font-label);
+  font-variant-numeric: tabular-nums;
 }
 /* Stale is signalled by weight and by a different mark, not by a warning hue.
    Light theme is a two-colour system so no warning hue exists — the --orange
@@ -545,10 +523,8 @@
   border-radius: 999px;
   background: transparent;
   color: var(--muted);
-  font:
-    500 10px var(--font-dm-mono),
-    "DM Mono",
-    monospace;
+  font: 500 10px var(--font-label);
+  font-variant-numeric: tabular-nums;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   cursor: pointer;

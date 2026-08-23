@@ -27,9 +27,8 @@
 .rel-figures dt {
   margin: 0 0 6px;
   color: var(--muted);
-  font:
-    500 11px var(--font-dm-mono),
-    monospace;
+  font: 500 11px var(--font-label);
+  font-variant-numeric: tabular-nums;
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -46,9 +45,8 @@
 }
 .rel-figures dd small {
   color: var(--muted);
-  font:
-    400 11px var(--font-dm-mono),
-    monospace;
+  font: 400 11px var(--font-label);
+  font-variant-numeric: tabular-nums;
 }
 /* An error rate above the budget gets weight and a rule under it, not a colour. */
 .rel-figures > div[data-bad] dd {
@@ -90,9 +88,8 @@
 .rel-table {
   width: 100%;
   border-collapse: collapse;
-  font:
-    400 12.5px var(--font-dm-mono),
-    monospace;
+  font: 400 12.5px var(--font-label);
+  font-variant-numeric: tabular-nums;
 }
 .rel-table th,
 .rel-table td {
@@ -167,9 +164,7 @@
 .rel-breaker h3 {
   margin: 0 0 10px;
   color: var(--muted);
-  font:
-    500 11px var(--font-dm-mono),
-    monospace;
+  font: 500 11px var(--font-label);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -185,9 +180,7 @@
 .rel-breaker-store {
   margin: 0;
   color: var(--muted);
-  font:
-    400 11.5px/1.6 var(--font-dm-mono),
-    monospace;
+  font: 400 11.5px/1.6 var(--font-label);
 }
 .rel-breaker-store {
   margin-top: 6px;
@@ -223,9 +216,7 @@
   gap: 10px;
   padding: 11px 16px;
   border-bottom: 1px solid var(--line);
-  font:
-    400 12px var(--font-dm-mono),
-    monospace;
+  font: 400 12px var(--font-label);
 }
 .rel-history li:last-child {
   border-bottom: none;
@@ -295,9 +286,8 @@
 }
 .chaos-seed-value {
   color: var(--fg);
-  font:
-    400 11px var(--font-dm-mono),
-    monospace;
+  font: 400 11px var(--font-label);
+  font-variant-numeric: tabular-nums;
   opacity: 0.7;
 }
 .chaos-blurb {
@@ -371,9 +361,7 @@
   padding: 0;
   list-style: none;
   color: var(--muted);
-  font:
-    400 11px var(--font-dm-mono),
-    monospace;
+  font: 400 11px var(--font-label);
 }
 .chaos-legend li {
   display: flex;
@@ -424,9 +412,8 @@
 .chaos-figures dt {
   margin: 0 0 5px;
   color: var(--muted);
-  font:
-    500 11px var(--font-dm-mono),
-    monospace;
+  font: 500 11px var(--font-label);
+  font-variant-numeric: tabular-nums;
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -443,16 +430,13 @@
 }
 .chaos-figures dd small {
   color: var(--muted);
-  font:
-    400 11px var(--font-dm-mono),
-    monospace;
+  font: 400 11px var(--font-label);
+  font-variant-numeric: tabular-nums;
 }
 
 .chaos-log summary {
   color: var(--muted);
-  font:
-    500 12px var(--font-dm-mono),
-    monospace;
+  font: 500 12px var(--font-label);
   cursor: pointer;
 }
 .chaos-log summary:hover {
@@ -470,9 +454,7 @@
   flex-wrap: wrap;
   gap: 10px;
   align-items: baseline;
-  font:
-    400 11.5px/1.6 var(--font-dm-mono),
-    monospace;
+  font: 400 11.5px/1.6 var(--font-label);
   color: var(--muted);
 }
 .chaos-log code {
@@ -511,9 +493,8 @@
   justify-content: space-between;
   gap: 12px;
   margin: 0 0 10px;
-  font:
-    400 11.5px var(--font-dm-mono),
-    monospace;
+  font: 400 11.5px var(--font-label);
+  font-variant-numeric: tabular-nums;
   color: var(--muted);
 }
 .rel-trace-spans {
@@ -528,9 +509,7 @@
   grid-template-columns: 1fr auto;
   align-items: center;
   gap: 10px;
-  font:
-    400 11.5px var(--font-dm-mono),
-    monospace;
+  font: 400 11.5px var(--font-label);
   color: var(--fg);
 }
 .rel-trace-bar {

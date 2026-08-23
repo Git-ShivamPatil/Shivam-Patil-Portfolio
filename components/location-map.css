@@ -94,10 +94,7 @@
   display: block;
   margin-top: 6px;
   color: var(--muted);
-  font:
-    500 10px var(--font-dm-mono),
-    "DM Mono",
-    monospace;
+  font: 500 10px var(--font-label);
   letter-spacing: 0.06em;
 }
 .location-map-cta {
@@ -129,10 +126,7 @@
   padding: 14px 18px;
   border-top: 1px solid var(--line);
   color: var(--muted);
-  font:
-    500 10px var(--font-dm-mono),
-    "DM Mono",
-    monospace;
+  font: 500 10px var(--font-label);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }

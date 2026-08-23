@@ -64,6 +64,24 @@ export function SkillGraph({ input }: { input: GraphInput }) {
           })}
         </g>
 
+        {/* Circles and labels are two passes, not one group per node.
+
+            SVG has no z-index: paint order IS document order. With circle and
+            label paired inside a per-node <g>, every node painted later covered
+            the labels of every node painted earlier — and in a force-directed
+            layout, nodes overlap by construction. Three project labels ("Rate
+            limiter", "Agentic platform", "LLM inference") were sitting entirely
+            underneath a neighbour's disc.
+
+            Worth being precise about the cause, because the single-font pass
+            landed at the same time and did NOT cause this: Manrope sets those
+            three strings at 61, 89 and 74 units against DM Mono's 79, 106 and
+            86, so the labels got *narrower* and the overlap predates both. It
+            was simply never visible enough to report until the diagram was
+            being looked at.
+
+            Splitting the passes puts every label above every disc. The halo in
+            terminal.css does the rest — see the note there. */}
         <g className="skill-graph-nodes">
           {layout.nodes.map((node) => (
             <g
@@ -75,10 +93,21 @@ export function SkillGraph({ input }: { input: GraphInput }) {
               data-kind={node.kind}
             >
               <circle cx={node.x} cy={node.y} r={nodeRadius(node)} />
-              <text x={node.x} y={node.y - nodeRadius(node) - 7} textAnchor="middle">
-                {node.label}
-              </text>
             </g>
+          ))}
+        </g>
+
+        <g className="skill-graph-labels">
+          {layout.nodes.map((node) => (
+            <text
+              key={node.id}
+              className={`skill-graph-label skill-graph-${node.kind}-label`}
+              x={node.x}
+              y={node.y - nodeRadius(node) - 7}
+              textAnchor="middle"
+            >
+              {node.label}
+            </text>
           ))}
         </g>
       </svg>

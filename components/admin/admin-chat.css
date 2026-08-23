@@ -47,10 +47,7 @@
 .admin-chat-list small,
 .admin-chat-list span {
   color: var(--muted);
-  font:
-    500 10px var(--font-dm-mono),
-    "DM Mono",
-    monospace;
+  font: 500 10px var(--font-label);
 }
 .admin-chat-list i {
   position: absolute;
@@ -63,10 +60,7 @@
   border-radius: 999px;
   background: var(--orange);
   color: var(--ink);
-  font:
-    600 10px var(--font-dm-mono),
-    "DM Mono",
-    monospace;
+  font: 600 10px var(--font-label);
   font-style: normal;
 }
 .admin-chat-thread {

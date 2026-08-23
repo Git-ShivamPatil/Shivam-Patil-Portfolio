@@ -1,3 +1,4 @@
+import { IconReveal } from "./icon-reveal";
 import { person } from "../lib/seo/site";
 import { mailtoHref } from "../lib/site-contact";
 
@@ -41,19 +42,38 @@ export function Footer() {
             for "another profile of the same person" — the same claim the
             Person JSON-LD makes with `sameAs`, in the form that reads without
             parsing a script tag. */}
+        {/* Each label becomes its own brand mark on hover and on focus.
+
+            This row is five words that all look alike — "email", "twitter",
+            "github", "linkedin", "instagram" — set at one size, one weight and
+            one colour, with nothing to tell them apart but reading them. Every
+            one of them has a mark that identifies it faster than its name does,
+            and <IconReveal> trades one for the other in place: the word slides
+            up out of a fixed slot and the glyph rises into the space it left.
+
+            The slot is sized by the label, so the row cannot reflow mid-hover —
+            which matters here more than usual, because these are flex items and
+            a width change on one would shift the four beside it.
+
+            The label stays in the DOM rather than being swapped out, so it is
+            still the link's accessible name, still selectable, and still found
+            by find-in-page. The mark is aria-hidden. See
+            components/icon-reveal.tsx. */}
         <nav className="footer-inner-meta" aria-label="Elsewhere">
-          <a href={mailtoHref()}>email</a>
-          <a href={person.twitter} rel="me noreferrer noopener" target="_blank">
-            twitter
+          <a href={mailtoHref()} data-underline>
+            <IconReveal label="email" icon="mail" />
           </a>
-          <a href={person.github} rel="me noreferrer noopener" target="_blank">
-            github
+          <a href={person.twitter} rel="me noreferrer noopener" target="_blank" data-underline>
+            <IconReveal label="twitter" icon="x" />
           </a>
-          <a href={person.linkedin} rel="me noreferrer noopener" target="_blank">
-            linkedin
+          <a href={person.github} rel="me noreferrer noopener" target="_blank" data-underline>
+            <IconReveal label="github" icon="github" />
           </a>
-          <a href={person.instagram} rel="me noreferrer noopener" target="_blank">
-            instagram
+          <a href={person.linkedin} rel="me noreferrer noopener" target="_blank" data-underline>
+            <IconReveal label="linkedin" icon="linkedin" />
+          </a>
+          <a href={person.instagram} rel="me noreferrer noopener" target="_blank" data-underline>
+            <IconReveal label="instagram" icon="instagram" />
           </a>
         </nav>
       </div>

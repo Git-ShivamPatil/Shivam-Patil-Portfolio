@@ -1,37 +1,12 @@
-/* ── MONOCHROME ─────────────────────────────────────────────────────────────
-   This theme carries NO hue. Every value below is a pure grey: R, G and B are
-   equal in every one. That is the whole rule, and it is checkable — a value
-   whose three channels are not identical does not belong here.
+/* Manrope is loaded by next/font in app/layout.tsx and exposed as
+   --font-manrope. It is the ONLY family on this site — see the token block in
+   :root below, and the long note in layout.tsx for why Playfair Display and DM
+   Mono were removed rather than kept "just for headings" and "just for labels".
 
-   It replaces the two-colour system §9 recorded as settled (pink + cream in
-   light, neon green + black in dark). That decision was overturned on purpose,
-   not forgotten: the brief became "plain theme, no bluff, no noise", and a
-   signature hue is the first thing that reads as noise.
-
-   The six decorative slots (--lime, --cyan, --violet, --orange, --blue,
-   --pink) keep their historical NAMES because ~40 rules reference them, and
-   renaming would be a large diff for no visual gain. They are now six steps of
-   grey. Anything relying on them to DIFFERENTIATE — chart series, project
-   cards, icon sets — still can, because they remain six distinct lightnesses.
-
-   Contrast is calculated, not eyeballed, exactly as the previous theme's note
-   insisted. Every text token clears WCAG AAA (7:1) against every surface it
-   can land on, not merely against the page background. The binding pairing is
-   --muted on --chip-bg, which is why --muted is #4e4e4e in light and #afafaf
-   in dark rather than the rounder #555/#999 — both of those measure 6.3:1 and
-   5.5:1, which is AA, and this project's floor is AAA.
-
-   --ink is still NOT a text token. It means "always near-black regardless of
-   theme" and is the BACKGROUND for the back-to-top button, chat launcher,
-   solid buttons and filled graphic nodes. §9 records it being broken twice by
-   treating it as a colour to restyle. It stays near-black here.
-   ───────────────────────────────────────────────────────────────────────── */
-/* Manrope, Playfair Display and DM Mono are loaded by next/font in
-   app/layout.tsx and exposed as --font-manrope / --font-playfair /
-   --font-dm-mono. They are deliberately NOT @import-ed from Google here: an
-   @import is invisible to the preload scanner, so it added two serial
-   cross-origin round trips to the critical path and pushed LCP from ~400ms to
-   ~830ms via the font swap repaint. See the comment in layout.tsx. */
+   It is deliberately NOT @import-ed from Google here: an @import is invisible
+   to the preload scanner, so it added two serial cross-origin round trips to
+   the critical path and pushed LCP from ~400ms to ~830ms via the font swap
+   repaint. See the comment in layout.tsx. */
 @import "tailwindcss";
 /* Motion/interaction layer lives in its own file — it is a self-contained
    concern driven by data-attributes, not part of the base design system. */
@@ -53,6 +28,36 @@
 @import "./graphics.css";
 
 :root {
+  /* ===== TYPOGRAPHY: one family, three instruments =====
+
+     Every `font-family` on this site resolves to --font-app. There is no
+     second typeface. Hierarchy is built from weight, size, tracking and case
+     instead, which is both cheaper (one file, not four) and more legible than
+     mixing a geometric sans with a display serif and a monospace at 10px.
+
+     The three tokens below are not three fonts. They are three *recipes* over
+     the same family:
+
+     --font-app    the family itself. Read it directly for body and headings.
+     --font-label  micro-type: 8-12px, uppercase, wide tracking. Same family;
+                   the token exists so the ~180 label rules across 23
+                   stylesheets say what they are rather than repeating a stack.
+     --font-code   the one genuine exception, and it is not a typeface choice.
+                   A terminal emulator, a JSON response viewer and a <pre> need
+                   a CHARACTER GRID — column alignment is load-bearing there,
+                   and proportional digits visibly break it. This is the
+                   platform's own monospace, so no second font file is
+                   downloaded and no second family is chosen: it is whatever
+                   the reader's OS already uses for code. */
+  --font-app: var(--font-manrope), Manrope, "Segoe UI", Arial, sans-serif;
+  --font-label: var(--font-app);
+  --font-code:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  /* Manrope's default figures are proportional; DM Mono's were not. Anything
+     that used to be monospace and holds numbers in a column gets this so the
+     columns still line up. Applied per-rule, not globally — proportional
+     figures are correct in prose. */
+
   /* --ink/--paper are intentionally NEVER overridden per theme: several
      components (the header CTA, proof strip, architecture section, contact
      banner) hardcode them to mean "always near-black" / "always near-white"
@@ -394,6 +399,20 @@
    Plain @theme just names the CSS variable — @theme inline would resolve the
    value at build time and break theme switching entirely. */
 @theme {
+  /* Both utilities point at the same family, on purpose.
+
+     `font-mono` is written in 38 places across the admin pages and a handful of
+     components, almost always as `font-mono text-[10px] tracking-wider
+     uppercase` — i.e. as a LABEL recipe, not because anything there is code.
+     Repointing the token converts all 38 to the single family without touching
+     a single .tsx file, and keeps the class meaningful for anyone who reads it
+     as "the small-caps label face".
+
+     Genuine code surfaces do not use this utility — they use --font-code in
+     their own stylesheet, which is the system monospace. */
+  --font-sans: var(--font-app);
+  --font-mono: var(--font-app);
+
   --color-app-bg: var(--bg);
   --color-app-fg: var(--fg);
   --color-app-ink: var(--ink);
@@ -419,7 +438,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--fg);
-  font-family: var(--font-manrope), Manrope, Arial, sans-serif;
+  font-family: var(--font-app);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   transition:
@@ -460,9 +479,7 @@ button {
   border-radius: 999px;
   background: var(--ink);
   color: var(--lime);
-  font:
-    500 12px "DM Mono",
-    monospace;
+  font: 500 12px var(--font-label);
   transition: top 0.2s;
 }
 .skip-link:focus-visible {
@@ -535,9 +552,7 @@ main,
   gap: 9px;
   margin: 0 0 18px;
   color: var(--muted);
-  font:
-    500 10px/1.1 "DM Mono",
-    monospace;
+  font: 500 10px/1.1 var(--font-label);
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -636,11 +651,24 @@ h2 {
   font-size: clamp(1.625rem, 0.67rem + 4.26vw, 72px);
   font-weight: 700;
 }
+/* The emphasis inside a heading.
+   This was a Playfair Display italic — a second family, loaded as two extra
+   font files, used by five rules in the whole codebase. The job it was doing
+   is "this half of the sentence is the point", and weight does that job
+   without a download: the heading around it is 700 at -0.055em, this drops to
+   400 and opens the tracking back toward 0. Lighter and looser against heavier
+   and tighter is a contrast the eye reads instantly, and it survives at any
+   size — which the 600-weight serif did not, going muddy below ~28px.
+   `font-style: normal` is explicit because <em> italicises by default and a
+   synthesised oblique on a geometric sans is the exact artefact this pass
+   exists to remove. */
 h1 em,
 h2 em {
-  font-family: var(--font-playfair), "Playfair Display", Georgia, serif;
-  font-weight: 600;
-  letter-spacing: -0.07em;
+  font-weight: 400;
+  font-style: normal;
+  letter-spacing: -0.03em;
+  /* Keeps the emphasis tied to the heading rather than floating off it. */
+  color: var(--accent);
 }
 .site-header {
   position: sticky;
@@ -763,9 +791,7 @@ h2 em {
   /* Explicit, never inherited — a chip inheriting nothing is how this project
      produced invisible dark-theme text three separate times (§9). */
   color: var(--muted);
-  font:
-    500 11px "DM Mono",
-    monospace;
+  font: 500 11px var(--font-code);
   line-height: 1;
 }
 .palette-button:hover kbd {
@@ -857,10 +883,30 @@ h2 em {
   padding: 14px 19px;
   font-size: 12px;
   font-weight: 800;
+  /* One easing across every interactive surface.
+     `transform 0.2s` with the default `ease` was the odd one out — the reveal
+     layer, the magnetic pull, the ripple and the shine sweep all run
+     cubic-bezier(0.22, 1, 0.36, 1). Two easings on the same button (the
+     magnetic transform from motion.css, this one) read as a stutter on the way
+     out, because the two curves disagree about where the element is halfway
+     through. */
   transition:
-    transform 0.2s,
-    background 0.2s,
-    color 0.2s;
+    transform 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+    background 0.24s ease-out,
+    border-color 0.24s ease-out,
+    color 0.24s ease-out;
+}
+/* The press. A button that only reacts to hover feels like a picture of a
+   button; the 1px settle plus the scale is the whole difference. 90ms, because
+   a press has to resolve inside the click rather than after it.
+
+   scale, not padding or font-size: scale is a compositor property, so this
+   costs no layout and no paint. It is also why the value is 0.985 rather than
+   something more dramatic — a scaled element resamples its text, and past about
+   2% the label visibly softens for the duration of the press. */
+.button:active {
+  transform: scale(0.985) translate3d(0, 1px, 0);
+  transition-duration: 0.09s;
 }
 .button:hover {
   transform: translateY(-2px);
@@ -885,10 +931,10 @@ h2 em {
 }
 .button-text span {
   font-size: 19px;
-  transition: transform 0.2s;
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.button-text:hover span {
-  transform: translateX(4px);
+.button-text:is(:hover, :focus-visible) span {
+  transform: translateX(6px);
 }
 /* The secondary button: a bordered surface rather than a filled pill.
    It was a --lime fill with --ink text, which is the pairing the decorative
@@ -906,6 +952,13 @@ h2 em {
 .arrow-icon {
   font-size: 18px;
   line-height: 0.7;
+}
+/* The brand marks from components/icons.tsx. `1em` sizing and
+   `fill: currentColor` are set on the element itself; this is only what cannot
+   be expressed there — how they sit against the text beside them. */
+.brand-icon {
+  display: block;
+  flex: none;
 }
 .copy-button {
   display: inline-flex;
@@ -1011,12 +1064,22 @@ h2 em {
      the category, the arrow, and the labels inside the card graphics. */
   color: var(--ink);
   transition:
-    transform 0.3s,
-    box-shadow 0.3s;
+    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.32s ease-out,
+    box-shadow 0.32s ease-out;
 }
-.project-card:hover {
+/* :focus-visible is in the selector, not just :hover. The card is a link, and
+   a keyboard user tabbing the grid got the focus ring and none of the
+   elevation — which is the part that says which card is active when six of them
+   are on screen. */
+.project-card:is(:hover, :focus-visible) {
   transform: translateY(-8px);
+  border-color: rgba(17, 17, 16, 0.42);
   box-shadow: 0 20px 40px rgba(17, 17, 16, 0.13);
+}
+.project-card:active {
+  transform: translateY(-2px) scale(0.994);
+  transition-duration: 0.09s;
 }
 /* `.offset-card` sat here: a translateY(52px) on every odd card, plus a 44px
    hover pair. It pushed half the grid out of its own row, so the last card in
@@ -1030,9 +1093,7 @@ h2 em {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font:
-    500 9px "DM Mono",
-    monospace;
+  font: 500 9px var(--font-label);
   text-transform: uppercase;
   letter-spacing: 0.07em;
 }
@@ -1064,9 +1125,16 @@ h2 em {
   font-size: 15px;
   transition: background 0.2s;
 }
-.project-card:hover .project-arrow {
+.project-card:is(:hover, :focus-visible) .project-arrow {
   background: var(--ink);
   color: white;
+  transform: translate(2px, -2px);
+}
+.project-arrow {
+  transition:
+    background 0.3s ease-out,
+    color 0.3s ease-out,
+    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .project-card-body {
   flex: 1;
@@ -1326,9 +1394,7 @@ h2 em {
   border: 1px solid rgba(17, 17, 16, 0.65);
   border-radius: 999px;
   background: #f2f2f2;
-  font:
-    500 8px "DM Mono",
-    monospace;
+  font: 500 8px var(--font-label);
 }
 .agent-graphic b:nth-child(1) {
   left: 2%;
@@ -1447,9 +1513,7 @@ h2 em {
   border: 1px solid var(--ink);
   border-radius: 50%;
   background: #ececec;
-  font:
-    500 8px "DM Mono",
-    monospace;
+  font: 500 8px var(--font-label);
   font-style: normal;
 }
 .exam-graphic b {
@@ -1529,9 +1593,7 @@ h2 em {
 }
 .principles span {
   color: var(--muted);
-  font:
-    500 9px "DM Mono",
-    monospace;
+  font: 500 9px var(--font-label);
 }
 .principles strong {
   font-size: 13px;
@@ -1590,9 +1652,36 @@ h2 em {
      padding grows the hit area without changing where the text sits. */
   padding: 10px 0;
 }
-.footer-inner-meta a:hover {
-  text-decoration: underline;
-  text-underline-offset: 4px;
+/* `text-decoration: underline` was correct and unanimatable — the property has
+   no interpolable value, so it appeared and vanished on a frame boundary while
+   everything else on the page eased.
+
+   These five links are also the clearest place on the site for the text-to-icon
+   reveal: they are literally the words "email", "twitter", "github",
+   "linkedin", "instagram", and every one of them has a mark that identifies it
+   faster than the word does. So the hover does both — the label gives way to
+   the brand mark (see .icon-reveal in motion.css) while a rule wipes in
+   underneath from the left. The underline is [data-underline]'s pseudo-element
+   rather than text-decoration, which is what makes it animatable.
+
+   The slot is inline-grid and the row is flex, so the anchor needs to stay a
+   flex item that sizes to its content — hence the explicit inline-flex here
+   rather than letting the grid child dictate the box. */
+.footer-inner-meta a {
+  display: inline-flex;
+  align-items: center;
+}
+.footer-inner-meta a:is(:hover, :focus-visible) {
+  color: var(--fg);
+}
+/* The reveal slot inherits the row's 13px; the mark reads better a shade
+   larger, and the slot is given the height so the taller glyph is not clipped
+   by a box sized to the smaller word. */
+.footer-inner-meta .icon-reveal {
+  min-height: 19px;
+}
+.footer-inner-meta .icon-reveal-glyph svg {
+  font-size: 1.15em;
 }
 /* Phones, measured rather than guessed — and placed AFTER the rules it
    overrides, which the first attempt was not. Declared above them it lost the
@@ -1675,9 +1764,7 @@ h2 em {
   display: inline-flex;
   margin-bottom: 72px;
   color: #464646;
-  font:
-    500 10px "DM Mono",
-    monospace;
+  font: 500 10px var(--font-label);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -1689,9 +1776,8 @@ h2 em {
   justify-content: space-between;
   margin-bottom: 24px;
   color: #545454;
-  font:
-    500 10px "DM Mono",
-    monospace;
+  font: 500 10px var(--font-label);
+  font-variant-numeric: tabular-nums;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -1723,9 +1809,7 @@ h2 em {
   padding: 6px 9px;
   border: 1px solid rgba(17, 17, 16, 0.34);
   border-radius: 999px;
-  font:
-    500 9px "DM Mono",
-    monospace;
+  font: 500 9px var(--font-label);
 }
 /* The outcome label and its metric are content, not decoration, and they used
    to be position:absolute at the hero's bottom-right corner, where they landed
@@ -1743,9 +1827,7 @@ h2 em {
 }
 .project-outcome span {
   color: #4e4e4e;
-  font:
-    500 9px "DM Mono",
-    monospace;
+  font: 500 9px var(--font-label);
   text-transform: uppercase;
   letter-spacing: 0.07em;
 }
@@ -1774,9 +1856,7 @@ h2 em {
 }
 .project-side-label {
   color: var(--muted);
-  font:
-    500 9px "DM Mono",
-    monospace;
+  font: 500 9px var(--font-label);
   letter-spacing: 0.06em;
 }
 .project-side-label span {
@@ -1810,9 +1890,7 @@ h2 em {
   border-bottom: 1px solid var(--line);
 }
 .implementation-list span {
-  font:
-    500 10px "DM Mono",
-    monospace;
+  font: 500 10px var(--font-label);
   color: var(--muted);
 }
 .implementation-list h3 {
@@ -1889,9 +1967,7 @@ h2 em {
 }
 .architecture-node span {
   margin-bottom: auto;
-  font:
-    500 8px "DM Mono",
-    monospace;
+  font: 500 8px var(--font-label);
 }
 .architecture-node strong {
   margin-top: 17px;
@@ -1903,9 +1979,7 @@ h2 em {
   display: block;
   margin-top: 6px;
   color: #b8b8b8;
-  font:
-    400 8px "DM Mono",
-    monospace;
+  font: 400 8px var(--font-label);
   line-height: 1.4;
 }
 .architecture-node.core small,
@@ -1930,9 +2004,7 @@ h2 em {
 .architecture-note {
   margin: 34px 0 0;
   color: #8c8c8c;
-  font:
-    400 9px "DM Mono",
-    monospace;
+  font: 400 9px var(--font-label);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -1960,9 +2032,8 @@ h2 em {
 }
 .step-index {
   color: var(--muted);
-  font:
-    500 10px "DM Mono",
-    monospace;
+  font: 500 10px var(--font-label);
+  font-variant-numeric: tabular-nums;
 }
 .step-copy h3 {
   margin: 0 0 7px;
@@ -1997,9 +2068,7 @@ h2 em {
   border-radius: 7px;
   background: #202020;
   color: #efefef;
-  font:
-    400 10px/1.65 "DM Mono",
-    monospace;
+  font: 400 10px/1.65 var(--font-code);
   white-space: pre-wrap;
 }
 .next-project {
@@ -2020,9 +2089,7 @@ h2 em {
 }
 .next-project > a span {
   color: var(--muted);
-  font:
-    500 10px "DM Mono",
-    monospace;
+  font: 500 10px var(--font-label);
   text-transform: uppercase;
   letter-spacing: 0.07em;
 }
@@ -2079,9 +2146,7 @@ h2 em {
 }
 .contact-callout p {
   margin: 0;
-  font:
-    500 10px "DM Mono",
-    monospace;
+  font: 500 10px var(--font-label);
   text-transform: uppercase;
   letter-spacing: 0.07em;
 }
@@ -2104,9 +2169,7 @@ h2 em {
 }
 .service-list span {
   color: var(--muted);
-  font:
-    500 9px "DM Mono",
-    monospace;
+  font: 500 9px var(--font-label);
 }
 .service-list h3 {
   margin: 0 0 7px;
@@ -2243,6 +2306,18 @@ h2 em {
   margin: 108px 0 96px;
   border-top: 1px solid var(--line);
 }
+/* The row used to animate `padding-inline` from 0 to 10px on hover.
+
+   That is a layout-triggering property: every frame re-runs layout for the row,
+   its four siblings and everything below them in the section, then repaints. It
+   also fought itself — `padding: 24px 0` and the hover's `padding-inline` are
+   longhands of the same shorthand, so the block padding was re-resolved on
+   every hover.
+
+   The indent now comes from [data-nudge] on the link inside (app/motion.css),
+   which is a compositor transform: no layout, no paint, and the row's
+   background stays put while its content steps toward the destination — which
+   is the effect the padding was reaching for anyway. */
 .channel-row {
   display: flex;
   align-items: center;
@@ -2250,11 +2325,14 @@ h2 em {
   gap: 20px;
   padding: 24px 0;
   border-bottom: 1px solid var(--line);
-  transition: padding 0.2s;
+  transition:
+    background 0.28s ease-out,
+    border-color 0.28s ease-out;
 }
-.channel-row:hover {
-  padding-inline: 10px;
+.channel-row:hover,
+.channel-row:focus-within {
   background: var(--warm);
+  border-bottom-color: var(--fg);
 }
 .channel-row-link {
   display: grid;
@@ -2277,17 +2355,29 @@ h2 em {
 .channel-row > span,
 .channel-row-link > span {
   color: var(--muted);
-  font:
-    500 10px "DM Mono",
-    monospace;
+  font: 500 10px var(--font-label);
+  font-variant-numeric: tabular-nums;
+}
+/* The ordinal is the reveal slot, and 10px is the size of the NUMBER, not of
+   the mark that replaces it. Raising the glyph to 17px would clip against a
+   slot sized by a 10px line box, so the slot is given its height explicitly and
+   the number re-centres inside it. Both children share the grid area, so this
+   sizes the box once for both. */
+.channel-row-link > span .icon-reveal {
+  min-height: 22px;
+  align-items: center;
+}
+.channel-row-link > span .icon-reveal-glyph svg {
+  font-size: 17px;
+}
+.channel-row-link:is(:hover, :focus-visible) > span .icon-reveal-glyph {
+  color: var(--accent);
 }
 .channel-row small {
   display: block;
   margin-bottom: 3px;
   color: var(--muted);
-  font:
-    500 9px "DM Mono",
-    monospace;
+  font: 500 9px var(--font-label);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -2643,9 +2733,7 @@ h2 em {
   height: 100%;
   place-items: center;
   background: var(--ink);
-  font:
-    500 64px "DM Mono",
-    monospace;
+  font: 500 64px var(--font-label);
   letter-spacing: -0.06em;
   color: var(--lime);
 }
@@ -2734,9 +2822,7 @@ h2 em {
   border: 1px solid var(--chip-line);
   border-radius: 999px;
   background: var(--chip-bg);
-  font:
-    500 11px "DM Mono",
-    monospace;
+  font: 500 11px var(--font-label);
   color: var(--chip-fg);
   transition:
     transform 0.18s ease,
@@ -2763,9 +2849,8 @@ h2 em {
 }
 .timeline-meta {
   color: var(--muted);
-  font:
-    500 10px "DM Mono",
-    monospace;
+  font: 500 10px var(--font-label);
+  font-variant-numeric: tabular-nums;
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -2864,9 +2949,8 @@ h2 em {
 }
 .cert-year {
   color: var(--muted);
-  font:
-    500 10px "DM Mono",
-    monospace;
+  font: 500 10px var(--font-label);
+  font-variant-numeric: tabular-nums;
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -2876,9 +2960,7 @@ h2 em {
   border-radius: 999px;
   background: var(--warm);
   color: #6c6c6c;
-  font:
-    500 9px "DM Mono",
-    monospace;
+  font: 500 9px var(--font-label);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -2888,9 +2970,7 @@ h2 em {
   border-radius: 999px;
   background: #eaeaea;
   color: #535353;
-  font:
-    500 9px "DM Mono",
-    monospace;
+  font: 500 9px var(--font-label);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -2913,9 +2993,7 @@ h2 em {
 .achievement-card strong {
   display: block;
   margin-bottom: 12px;
-  font:
-    500 32px "DM Mono",
-    monospace;
+  font: 500 32px var(--font-label);
   letter-spacing: -0.05em;
   color: var(--lime);
 }
@@ -2929,9 +3007,7 @@ h2 em {
   display: block;
   margin-top: 16px;
   color: #8c8c8c;
-  font:
-    500 9px "DM Mono",
-    monospace;
+  font: 500 9px var(--font-label);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -3075,9 +3151,7 @@ h2 em {
     border-color 0.15s ease;
 }
 .project-filter button span {
-  font:
-    500 10px "DM Mono",
-    monospace;
+  font: 500 10px var(--font-label);
   color: inherit;
   opacity: 0.7;
 }
@@ -3145,9 +3219,7 @@ h2 em {
 .image-gallery-caption {
   margin: 0;
   color: #d6d6d6;
-  font:
-    500 12px "DM Mono",
-    monospace;
+  font: 500 12px var(--font-label);
 }
 .image-gallery-close {
   position: absolute;
@@ -3214,9 +3286,8 @@ h2 em {
 }
 .blog-list-date {
   color: var(--muted);
-  font:
-    500 10px "DM Mono",
-    monospace;
+  font: 500 10px var(--font-label);
+  font-variant-numeric: tabular-nums;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -3302,9 +3373,7 @@ h2 em {
   border-radius: 999px;
   background: var(--warm);
   color: var(--muted);
-  font:
-    500 10px "DM Mono",
-    monospace;
+  font: 500 10px var(--font-label);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }

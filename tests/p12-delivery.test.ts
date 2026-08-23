@@ -85,14 +85,49 @@ describe("vendored fonts", () => {
 
   it("ships every face layout.tsx declares", () => {
     const files = new Set(readdirSync(fontDir));
-    for (const face of [
-      "manrope-variable.woff2",
-      "playfair-display-variable.woff2",
-      "playfair-display-variable-italic.woff2",
-      "dm-mono-400.woff2",
-      "dm-mono-500.woff2",
-    ]) {
+    for (const face of ["manrope-variable.woff2"]) {
       expect(files.has(face), `${face} is missing`).toBe(true);
+    }
+  });
+
+  it("ships exactly one family", () => {
+    // The site is single-family by design: hierarchy comes from weight, size,
+    // tracking and case, not from a second typeface. Playfair Display (two
+    // faces) and DM Mono (two weights) were deleted — 94.7KB of font payload
+    // that was buying an italic used by five CSS rules and a monospace used
+    // almost entirely for 10px uppercase labels.
+    //
+    // This asserts the DIRECTORY, not the CSS, because that is the check that
+    // cannot be satisfied by accident: a stray @font-face or a re-added
+    // localFont() needs a file, and the file would show up here.
+    const faces = readdirSync(fontDir).filter((file) => file.endsWith(".woff2"));
+    expect(faces).toEqual(["manrope-variable.woff2"]);
+  });
+
+  it("routes every stylesheet through the family tokens", () => {
+    // Every font declaration across the stylesheets was rewritten to
+    // var(--font-label) / var(--font-code). A literal family name reappearing
+    // in any of them is the regression this catches — it would still render,
+    // so nothing else would fail.
+    const sheets: string[] = [];
+    const walk = (dir: string) => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        if (["node_modules", ".next", ".git"].includes(entry.name)) continue;
+        const full = join(dir, entry.name);
+        if (entry.isDirectory()) walk(full);
+        else if (entry.name.endsWith(".css")) sheets.push(full);
+      }
+    };
+    walk(join(process.cwd(), "app"));
+    walk(join(process.cwd(), "components"));
+
+    for (const sheet of sheets) {
+      const css = readFileSync(sheet, "utf8");
+      // Comments record why these families left; declarations must not name them.
+      const declarations = css.replace(/\/\*[\s\S]*?\*\//g, "");
+      expect(declarations, `${sheet} still names a removed family`).not.toMatch(
+        /DM Mono|Playfair Display|--font-dm-mono|--font-playfair/,
+      );
     }
   });
 
@@ -111,8 +146,9 @@ describe("vendored fonts", () => {
   });
 
   it("carries no duplicate faces", () => {
-    // Manrope and Playfair are variable fonts: one file covers the whole weight
-    // range. Downloading them per weight yields five byte-identical copies.
+    // Manrope is a variable font: one file covers 400-800. Downloading it per
+    // weight would yield byte-identical copies. Trivially true at one file, and
+    // kept because it is the guard that fires if a per-weight src[] comes back.
     const sizes = readdirSync(fontDir)
       .filter((file) => file.endsWith(".woff2"))
       .map((file) => readFileSync(join(fontDir, file)).length);

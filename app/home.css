@@ -94,7 +94,14 @@ body:has(.home) main > div {
      underline is not decoration — it is the entire affordance. */
   text-decoration-thickness: 1px;
 }
-.home-role a:hover {
+/* `text-decoration-thickness` is a length, so it interpolates — the thickening
+   eases rather than snapping on a frame boundary. Worth stating because the
+   sibling property `text-decoration` does NOT interpolate, which is why the
+   footer row uses a pseudo-element instead of this. */
+.home-role a {
+  transition: text-decoration-thickness 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.home-role a:is(:hover, :focus-visible) {
   text-decoration-thickness: 2px;
 }
 
@@ -132,18 +139,32 @@ body:has(.home) main > div {
   /* Explicit, never inherited. A pale surface inheriting --fg is how this
      project produced invisible dark-theme text three separate times (§9). */
   color: var(--fg);
-  font:
-    500 12px "DM Mono",
-    monospace;
+  font: 500 12px var(--font-code);
   line-height: 1.5;
   text-align: center;
 }
 
 .palette-hint span {
-  transition: transform 0.2s;
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.palette-hint:hover span {
-  transform: translateX(4px);
+/* :focus-visible alongside :hover — this button IS the site's primary
+   navigation now that the homepage links nowhere else, so the keyboard path to
+   it cannot be the one without feedback. */
+.palette-hint:is(:hover, :focus-visible) span {
+  transform: translateX(6px);
+}
+/* The press. Scale only, on the compositor: no layout, no paint. */
+.palette-hint:active {
+  transform: scale(0.985);
+  transition: transform 0.09s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.palette-hint kbd {
+  transition:
+    border-color 0.22s ease-out,
+    background 0.22s ease-out;
+}
+.palette-hint:is(:hover, :focus-visible) kbd {
+  border-color: var(--fg);
 }
 
 @media (prefers-reduced-motion: reduce) {

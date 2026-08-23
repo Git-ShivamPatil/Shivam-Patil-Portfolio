@@ -39,18 +39,12 @@
   border-top: 1px solid var(--line);
 }
 .service-offer-foot strong {
-  font:
-    500 22px var(--font-dm-mono),
-    "DM Mono",
-    monospace;
+  font: 500 22px var(--font-label);
   letter-spacing: -0.05em;
 }
 .service-offer-foot span {
   color: var(--muted);
-  font:
-    500 10px var(--font-dm-mono),
-    "DM Mono",
-    monospace;
+  font: 500 10px var(--font-label);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -119,16 +113,10 @@
 }
 .booking-offering span {
   color: var(--muted);
-  font:
-    500 10px var(--font-dm-mono),
-    "DM Mono",
-    monospace;
+  font: 500 10px var(--font-label);
 }
 .booking-offering b {
-  font:
-    500 15px var(--font-dm-mono),
-    "DM Mono",
-    monospace;
+  font: 500 15px var(--font-label);
   letter-spacing: -0.04em;
 }
 .booking-note,
@@ -152,10 +140,8 @@
 }
 .booking-summary dt {
   color: var(--muted);
-  font:
-    500 9px var(--font-dm-mono),
-    "DM Mono",
-    monospace;
+  font: 500 9px var(--font-label);
+  font-variant-numeric: tabular-nums;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }

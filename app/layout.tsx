@@ -19,35 +19,52 @@ import { Analytics } from "@vercel/analytics/next";
 import { person, siteUrl } from "../lib/seo/site";
 
 /**
- * Fonts are vendored into the repo and loaded with `next/font/local`.
+ * One font. Manrope, vendored, variable, latin-only.
  *
- * The history matters, because two different things have been fixed here and
- * only the second one is visible in this file's imports.
+ * **This file used to load three families** — Manrope for body, Playfair
+ * Display for the italic `<em>` in headings, DM Mono for every eyebrow, chip
+ * and table cell. Four `.woff2` files, three `@font-face` blocks, three
+ * fallback metrics to keep in sync. They are gone, and the reasoning is worth
+ * keeping because it is not a taste argument:
+ *
+ * - **Playfair earned nothing.** It appeared in exactly five CSS rules, all of
+ *   them `h1 em` / `h2 em`. A serif italic inside a geometric sans heading is
+ *   a second voice competing with the first at the largest type size on the
+ *   page. The contrast it was providing is now carried by weight (700 against
+ *   400) and tracking (-0.055em against 0), which is contrast the reader
+ *   parses as hierarchy rather than as a different typeface.
+ *
+ * - **DM Mono was doing a job a monospace should not do.** 114 `--font-dm-mono`
+ *   references and 82 hardcoded `"DM Mono"` ones, and almost none of them were
+ *   code — they were 8-to-12px uppercase labels where the monospace was
+ *   standing in for letter-spacing. Uppercase at 10px with 0.1em tracking
+ *   reads as a label in *any* family; it did not need its own download.
+ *
+ * The three fixes recorded below still hold and still matter, so the history
+ * stays:
  *
  * **First (10 Aug): the `@import` had to go.** globals.css used to open with
- * `@import url(fonts.googleapis.com/...)`, which is the slowest possible way to
- * load a webfont. An `@import` is invisible to the preload scanner, so the
- * browser only found it *after* parsing globals.css and then made two more
- * serial cross-origin round trips — googleapis for the `@font-face` CSS,
- * gstatic for the files — each paying its own DNS and TLS handshake. Production
- * measured FCP at 396ms and LCP at ~830ms, because the hero paragraph painted
- * in the fallback face and then *repainted* when Manrope swapped in, which
+ * `@import url(fonts.googleapis.com/...)`, the slowest possible way to load a
+ * webfont. An `@import` is invisible to the preload scanner, so the browser
+ * only found it *after* parsing globals.css and then made two more serial
+ * cross-origin round trips — googleapis for the `@font-face` CSS, gstatic for
+ * the files — each paying its own DNS and TLS handshake. Production measured
+ * FCP at 396ms and LCP at ~830ms, because the hero paragraph painted in the
+ * fallback face and then *repainted* when Manrope swapped in, which
  * re-registers LCP at the swap.
  *
  * **Second (13 Aug): `next/font/google` had to go too.** It fixed the runtime
- * but kept a build-time dependency on Google, and that dependency broke: Google
- * began returning 404 for four of the Playfair Display files its own stylesheet
- * points at, and `next build` failed with "Module not found:
+ * but kept a build-time dependency on Google, and that dependency broke:
+ * Google began returning 404 for four of the Playfair Display files its own
+ * stylesheet points at, and `next build` failed with "Module not found:
  * @vercel/turbopack-next/internal/font/google/font". Reproducible, not
- * transient — every build failed the same four faces while the equivalent URLs
- * fetched by hand returned 200. A build that cannot run because a third party
- * is having a bad day is the same class of problem CI's missing database was
- * built to rule out.
+ * transient. A build that cannot run because a third party is having a bad day
+ * is the same class of problem CI's missing database was built to rule out.
  *
- * So the files live in `app/fonts/` and the build touches no network at all.
- * Manrope and Playfair are variable fonts — one file covers the whole weight
- * range, which is why there is no file per weight — and only the latin subset
- * is vendored, since nothing on this site renders cyrillic or vietnamese.
+ * **Third (this pass): two of the three files stopped being downloaded at
+ * all.** Playfair (two faces, roman and italic) and DM Mono (two weights — it
+ * is not variable, so it genuinely needed a file each) are deleted from
+ * `app/fonts/`. What ships is one variable file covering 400-800.
  *
  * `adjustFontFallback` still generates a metric-matched fallback from the font
  * file's own metrics, which is what protects the existing CLS of 0.
@@ -59,33 +76,6 @@ const manrope = localFont({
   adjustFontFallback: "Arial",
   fallback: ["Arial", "sans-serif"],
 });
-
-// Italic is vendored because `h1 em` / `h2 em` are the Playfair italics the
-// design leans on; without a real italic the browser synthesises an oblique.
-const playfair = localFont({
-  src: [
-    { path: "./fonts/playfair-display-variable.woff2", weight: "600 700", style: "normal" },
-    { path: "./fonts/playfair-display-variable-italic.woff2", weight: "600 700", style: "italic" },
-  ],
-  variable: "--font-playfair",
-  display: "swap",
-  adjustFontFallback: "Times New Roman",
-  fallback: ["Georgia", "serif"],
-});
-
-// DM Mono is not a variable font, so it genuinely needs a file per weight.
-const dmMono = localFont({
-  src: [
-    { path: "./fonts/dm-mono-400.woff2", weight: "400", style: "normal" },
-    { path: "./fonts/dm-mono-500.woff2", weight: "500", style: "normal" },
-  ],
-  variable: "--font-dm-mono",
-  display: "swap",
-  adjustFontFallback: "Arial",
-  fallback: ["ui-monospace", "monospace"],
-});
-
-const fontVariables = `${manrope.variable} ${playfair.variable} ${dmMono.variable}`;
 
 /**
  * Site-wide metadata defaults.
@@ -178,7 +168,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     // `suppressHydrationWarning` is what makes it safe: the script may rewrite
     // this to "light" for someone with a stored preference, so the server and
     // the first client render legitimately disagree about it.
-    <html lang="en" className={fontVariables} data-theme="dark" suppressHydrationWarning>
+    <html lang="en" className={manrope.variable} data-theme="dark" suppressHydrationWarning>
       <body>
         {/* Marks the document as JS-capable before the below-the-fold content
             paints, which is what arms the [data-reveal] start state. Without

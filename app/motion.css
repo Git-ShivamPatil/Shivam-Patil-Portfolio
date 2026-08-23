@@ -303,6 +303,167 @@ main {
   }
 }
 
+/* =========================================================================
+   TEXT-TO-ICON REVEAL
+
+   The mechanic: a link's label slides up out of a fixed slot while its brand
+   mark rises into the space it vacated. Markup is components/icon-reveal.tsx.
+
+   Four decisions are load-bearing here.
+
+   **One grid area, two children.** Both the label and the glyph are placed in
+   the same cell, so the slot is exactly as wide as the label and the swap
+   cannot reflow anything beside it. These live in the footer directory and in
+   /reach-out's channel rows — dense lists where a two-pixel width change per
+   row would ripple down the whole column.
+
+   **The trigger is the enclosing link, not the slot.** `:is(a, button):hover`
+   means pointing anywhere on the row fires the reveal, which is what makes it
+   feel like a property of the link rather than a hover target of its own.
+   `:focus-visible` is in the same selector so keyboard users get the identical
+   affordance — a hover-only reveal is a hover-only feature.
+
+   **transform and opacity only.** Both are compositor properties: they do not
+   trigger layout or paint, so the whole thing runs off the main thread and
+   stays smooth while React is busy. Nothing here animates width, height, top
+   or margin.
+
+   **No `will-change`.** It is tempting on a transform animation and wrong on
+   this one: these appear thirty-odd times in the footer alone, and a
+   persistent `will-change` on each promotes thirty layers that sit idle
+   forever. The compositor promotes on transition start by itself, which is the
+   behaviour that was wanted anyway.
+   ========================================================================= */
+.icon-reveal {
+  display: inline-grid;
+  /* Named so both children can claim it without `grid-row/column: 1`, which
+     reads as a coincidence rather than as "these are stacked on purpose". */
+  grid-template-areas: "slot";
+  align-items: center;
+  /* Clips the label on its way out and the glyph on its way in. The
+     line-height below keeps descenders — the "g" in Instagram — inside the
+     box, so the clip never cuts a resting letter. */
+  overflow: hidden;
+  vertical-align: bottom;
+}
+.icon-reveal-label,
+.icon-reveal-glyph {
+  grid-area: slot;
+  line-height: 1.35;
+  transition:
+    transform 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.24s linear;
+}
+.icon-reveal-glyph {
+  display: inline-flex;
+  align-items: center;
+  /* Left-aligned in a slot sized by the label, so the mark appears where the
+     word started rather than centred under it. */
+  justify-self: start;
+  /* 105%, not 100%: a full-height offset can leave a hairline of the glyph
+     visible at the clip edge on fractional device pixel ratios. */
+  transform: translate3d(0, 105%, 0);
+  opacity: 0;
+}
+.icon-reveal-glyph svg {
+  /* 1em against the label's own font-size, so the mark is the size of the word
+     it replaces at every call site without needing a size prop. */
+  font-size: 1.05em;
+}
+:is(a, button):is(:hover, :focus-visible) .icon-reveal-label {
+  transform: translate3d(0, -105%, 0);
+  opacity: 0;
+}
+:is(a, button):is(:hover, :focus-visible) .icon-reveal-glyph {
+  transform: translate3d(0, 0, 0);
+  opacity: 1;
+  /* The glyph arrives just after the word leaves rather than crossing it. A
+     simultaneous swap reads as a glitch; 70ms reads as a hand-off. */
+  transition-delay: 0.07s;
+}
+
+/* =========================================================================
+   TACTILE FEEDBACK PRIMITIVES
+
+   Three data-attributes any element can opt into. They are attributes rather
+   than classes because the same three behaviours were being re-typed as
+   bespoke `:hover` rules per component — the hub cards, the channel rows and
+   the project cards each had their own slightly different lift, with three
+   different durations and two different easings. That is why the site felt
+   inconsistent rather than wrong.
+
+   All three animate transform, opacity and colour only. None of them touches a
+   property that forces layout.
+   ========================================================================= */
+
+/* ---- [data-lift] — the element rises and its shadow deepens ----
+   The default distance is small on purpose. A card that jumps 12px reads as a
+   modal opening; 4-6px reads as the surface acknowledging the cursor. Tune per
+   call site with --lift. */
+[data-lift] {
+  transition:
+    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.32s ease-out,
+    background-color 0.32s ease-out,
+    box-shadow 0.32s ease-out;
+}
+[data-lift]:is(:hover, :focus-visible) {
+  transform: translate3d(0, calc(var(--lift, 5px) * -1), 0);
+}
+[data-lift]:active {
+  /* The press. Landing slightly BELOW the resting position — not merely back
+     at it — is what makes a click feel like it hit something. 90ms so it
+     tracks the finger rather than trailing it. */
+  transform: translate3d(0, 1px, 0);
+  transition-duration: 0.09s;
+}
+
+/* ---- [data-underline] — a rule that wipes in from the left ----
+   Replaces the colour-only hover on the header nav. A colour change tells you
+   a link is interactive after you have already found it; a rule that draws
+   itself tells you where you are. */
+[data-underline] {
+  position: relative;
+  transition: color 0.2s ease-out;
+}
+[data-underline]::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -4px;
+  width: 100%;
+  height: 1.5px;
+  background: currentColor;
+  border-radius: 2px;
+  /* Scaled from the left edge and collapsed to zero, so the line grows out of
+     the start of the word. The origin flips on the way out (below) so it
+     retreats the way it came instead of snapping back. */
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+}
+[data-underline]:is(:hover, :focus-visible)::after {
+  transform: scaleX(1);
+}
+[data-underline]:not(:hover)::after {
+  transform-origin: right;
+}
+
+/* ---- [data-nudge] — the row slides toward its destination ----
+   For list rows whose whole surface is the link. The indent is the row saying
+   "this way", and every call site pairs it with a border or colour shift so
+   the feedback is not carried by motion alone — a reader with reduced motion
+   on loses the indent and needs something left. */
+[data-nudge] {
+  transition:
+    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.3s ease-out,
+    color 0.3s ease-out;
+}
+[data-nudge]:is(:hover, :focus-visible) {
+  transform: translate3d(var(--nudge, 6px), 0, 0);
+}
+
 @media (prefers-reduced-motion: reduce) {
   [data-reveal-ready="true"] [data-reveal] {
     opacity: 1 !important;
@@ -317,5 +478,39 @@ main {
   .button-light::after,
   .ripple-ink {
     display: none;
+  }
+  /* The reveal degrades to an instant swap rather than to nothing. The global
+     rule in globals.css already collapses transition-duration to 0.001ms,
+     which handles the timing; what it does NOT handle is the translate, and a
+     105% offset with no transition still parks the glyph outside the clip. */
+  .icon-reveal-label,
+  .icon-reveal-glyph {
+    transform: none !important;
+    transition: none !important;
+  }
+  :is(a, button):is(:hover, :focus-visible) .icon-reveal-label {
+    opacity: 0;
+  }
+  :is(a, button):is(:hover, :focus-visible) .icon-reveal-glyph {
+    opacity: 1;
+  }
+  /* Lift and nudge lose their travel; the colour and border shifts they are
+     paired with carry the feedback instead. This is why every [data-lift] and
+     [data-nudge] call site also changes a border or a background — so there is
+     something left when the motion goes. */
+  [data-lift]:is(:hover, :focus-visible),
+  [data-lift]:active,
+  [data-nudge]:is(:hover, :focus-visible) {
+    transform: none !important;
+  }
+  /* The underline cannot wipe, so it fades. Pinned to scaleX(1) because the
+     collapsed default plus a cancelled transition would leave nothing at all. */
+  [data-underline]::after {
+    transform: scaleX(1) !important;
+    opacity: 0;
+    transition: opacity 0.001ms !important;
+  }
+  [data-underline]:is(:hover, :focus-visible)::after {
+    opacity: 1;
   }
 }

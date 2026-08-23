@@ -1,5 +1,7 @@
 import { pageMetadata } from "../../lib/seo/metadata";
 import { ArrowUpRight } from "../../components/icons";
+import type { BrandIconName } from "../../components/icons";
+import { IconReveal } from "../../components/icon-reveal";
 import { CopyButton } from "../../components/copy-button";
 import { LocationMap } from "../../components/location-map";
 import { downloadHref } from "../../lib/analytics/downloads";
@@ -16,43 +18,59 @@ interface ContactChannel {
   value: string;
   href: string;
   note: string;
+  /**
+   * The brand mark the row's ordinal reveals on hover. Five rows that all
+   * looked alike now identify themselves before the label is read — see the
+   * ordinal slot in the markup below and `.icon-reveal` in app/motion.css.
+   */
+  icon: BrandIconName;
   /** Present only for channels worth copying (email, phone numbers). */
   copyValue?: string;
 }
 
+/**
+ * Ordered by how fast a reply comes back, not by how important the channel
+ * sounds. A contact list sorted by the owner's preference makes the reader
+ * guess; sorted by latency it answers the only question they have.
+ */
 const contactChannels: ContactChannel[] = [
   {
     label: "Email",
     value: "shivampatilinfo@gmail.com",
     href: "mailto:shivampatilinfo@gmail.com",
-    note: "Best for roles & collaborations",
+    note: "Roles, contracts, long questions",
+    icon: "mail",
     copyValue: "shivampatilinfo@gmail.com",
   },
   {
     label: "LinkedIn",
     value: "linkedin.com/in/shivam--patil",
     href: "https://www.linkedin.com/in/shivam--patil/",
-    note: "Professional network",
+    note: "Recruiters, referrals, InMail",
+    icon: "linkedin",
   },
   {
     label: "WhatsApp",
     value: "+91 70385 73273",
     href: "https://wa.me/917038573273",
-    note: "Quick message",
+    note: "Short questions, fastest reply",
+    icon: "whatsapp",
     copyValue: "+91 70385 73273",
   },
   {
     label: "Phone",
     value: "+91 70385 73273",
     href: "tel:+917038573273",
-    note: "Mumbai, India · IST",
+    note: "IST, 10:00-20:00",
+    icon: "phone",
     copyValue: "+91 70385 73273",
   },
   {
     label: "GitHub",
     value: "github.com/Git-ShivamPatil",
     href: "https://github.com/Git-ShivamPatil",
-    note: "Code and experiments",
+    note: "Source, issues, PRs",
+    icon: "github",
   },
 ];
 
@@ -67,8 +85,8 @@ export default function ReachOutPage() {
           <em>right channel.</em>
         </h1>
         <p>
-          Whether it&apos;s a role, a technical conversation, or an idea worth prototyping —
-          I&apos;d be glad to hear from you.
+          Five channels, ordered by how fast I answer. Every one reaches me directly — no queue, no
+          assistant, no form that goes nowhere.
         </p>
       </div>
       <div className="channel-list" data-stagger>
@@ -79,8 +97,22 @@ export default function ReachOutPage() {
               target={channel.href.startsWith("http") ? "_blank" : undefined}
               rel={channel.href.startsWith("http") ? "noreferrer" : undefined}
               className="channel-row-link"
+              data-nudge
             >
-              <span>{String(index + 1).padStart(2, "0")}</span>
+              {/* The ordinal is the reveal slot.
+                  It is the right place for it rather than the <small> label
+                  beside it, for two reasons: the label renders at 9px, where a
+                  brand mark is a smudge, and the ordinal is the one string in
+                  the row that carries no information the reader needs — it
+                  numbers five items they can already count. Trading it for the
+                  mark that identifies the channel is a strict gain, and the
+                  58px column it sits in is already reserved, so nothing moves.
+
+                  It stays in the DOM (translated, not removed), so the row's
+                  accessible name is unchanged. */}
+              <span>
+                <IconReveal label={String(index + 1).padStart(2, "0")} icon={channel.icon} />
+              </span>
               <div>
                 <small>{channel.label}</small>
                 <strong>{channel.value}</strong>
@@ -112,10 +144,7 @@ export default function ReachOutPage() {
             <br />
             <em>remote-friendly.</em>
           </h2>
-          <p>
-            I work IST hours and overlap comfortably with Europe most of the day, and with US East
-            for a few hours each evening.
-          </p>
+          <p>IST, UTC+5:30. Full working overlap with Europe; evening overlap with US East.</p>
         </div>
         <LocationMap />
       </div>
@@ -134,6 +163,7 @@ export default function ReachOutPage() {
           target="_blank"
           className="button button-solid"
           data-magnetic
+          data-lift
           data-analytics-id="resume-reach-out"
           data-analytics-id-label="Résumé — from /reach-out"
         >
