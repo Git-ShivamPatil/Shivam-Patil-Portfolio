@@ -135,10 +135,17 @@ describe("the route registry is the only route list", () => {
   });
 
   it("keeps the top-bar nav small enough to fit beside the actions", () => {
-    // FIVE, and the media query in app/globals.css was re-measured to match:
-    // the bar needs about 1001px of viewport for five links, so the nav now
-    // hides at 1040px rather than 820px. Both numbers are in that rule's
-    // comment, with the arithmetic.
+    // SIX now — /resume was added, and the arithmetic was re-run rather than
+    // assumed. A centred six-link bar needs 974px of viewport: 138px side
+    // tracks either side of the 626px nav, plus 32px of gap and 40px of
+    // padding. The nav still hides at 1040px, so there is 66px of headroom and
+    // the breakpoint did not have to move.
+    //
+    // Note that the nav's width is now --content-w, so every link added widens
+    // the CONTENT COLUMN too — see the token's note in app/globals.css. That is
+    // deliberate coupling, and it is the reason this cap matters more than it
+    // used to: a seventh link does not just crowd the bar, it re-measures the
+    // whole site.
     //
     // The cap is what keeps them in step. Adding a sixth link without
     // re-measuring is the failure this catches: nothing overflows on a desktop
@@ -147,7 +154,7 @@ describe("the route registry is the only route list", () => {
     // 900px before this was raised.
     const primary = SITE_ROUTES.filter((route) => route.primary);
     expect(primary.length).toBeGreaterThan(0);
-    expect(primary.length).toBeLessThanOrEqual(5);
+    expect(primary.length).toBeLessThanOrEqual(6);
   });
 
   it("orders the top bar explicitly rather than by declaration order", () => {
@@ -156,7 +163,14 @@ describe("the route registry is the only route list", () => {
     // inherits file position and puts it third, which is both wrong and
     // impossible to read the intent of from the code.
     const order = primaryRoutes().map((route) => route.href);
-    expect(order).toEqual(["/about", "/projects", "/skills", "/reach-out", "/system-design"]);
+    expect(order).toEqual([
+      "/about",
+      "/resume",
+      "/projects",
+      "/skills",
+      "/reach-out",
+      "/system-design",
+    ]);
 
     // Every primary route reaches the bar. A route flagged `primary` but left
     // out of PRIMARY_ORDER must be appended, never dropped.

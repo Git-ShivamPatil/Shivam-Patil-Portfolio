@@ -122,7 +122,7 @@
    ========================================================================= */
 .provenance {
   display: grid;
-  gap: 48px;
+  gap: 32px;
   padding-bottom: 12px;
 }
 .provenance-head h2 {

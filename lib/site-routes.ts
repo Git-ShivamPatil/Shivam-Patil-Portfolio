@@ -130,11 +130,17 @@ export const SITE_ROUTES: SiteRoute[] = [
   {
     href: "/resume",
     label: "My résumé",
+    /* `navLabel` because the header sets its links in uppercase with wide
+       tracking, and "MY RÉSUMÉ" carries a possessive the bar does not need —
+       every other item there is a bare noun. The full label stays for the
+       drawer and the footer, where the first person reads correctly. */
+    navLabel: "Résumé",
     blurb: "One page. Download it as a PDF.",
     technicalLabel: "CV",
     group: "start",
     priority: 0.9,
     changeFrequency: "monthly",
+    primary: true,
   },
   {
     href: "/contact",
@@ -415,7 +421,14 @@ export function routesInGroup(group: RouteGroupId): SiteRoute[] {
  * Membership is still the `primary` flag on each route; this only orders them.
  * The assertion below is what keeps the two from drifting apart.
  */
-const PRIMARY_ORDER = ["/about", "/projects", "/skills", "/reach-out", "/system-design"];
+/* Résumé sits second, straight after About.
+   
+   The order is the reading order a stranger actually wants: who is this, what
+   is the one-page summary, what has he built, what does he know, how do I
+   reach him, and then the deep technical page for whoever is still going. A
+   recruiter's second click is almost always the CV, and it was previously not
+   in the bar at all. */
+const PRIMARY_ORDER = ["/about", "/resume", "/projects", "/skills", "/reach-out", "/system-design"];
 
 export function primaryRoutes(): SiteRoute[] {
   const primary = SITE_ROUTES.filter((route) => route.primary);

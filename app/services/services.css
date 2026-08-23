@@ -9,7 +9,7 @@
   /* Was repeat(3, …), sized for the old 1180px column. See --content-w. */
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 18px;
-  padding: 30px 0 60px;
+  padding: 30px 0 32px;
 }
 .service-offer-card {
   display: flex;
@@ -50,7 +50,7 @@
 .booking-section {
   display: grid;
   grid-template-columns: 0.9fr 1.1fr;
-  gap: 70px;
+  gap: 46px;
   padding-bottom: 110px;
 }
 .booking-heading h2 {
@@ -150,7 +150,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 40px;
+  gap: 26px;
   margin-bottom: 120px;
   padding: 48px;
   border-radius: var(--radius);

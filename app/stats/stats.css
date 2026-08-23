@@ -131,7 +131,7 @@
      to one panel per row and each chart gets the full width it was drawn for. */
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 22px;
-  padding: 40px 0 132px;
+  padding: 40px 0 72px;
 }
 .stat-panel {
   display: flex;

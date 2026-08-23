@@ -22,7 +22,7 @@
 }
 
 .path-hero {
-  padding: clamp(56px, 9vw, 104px) 0 clamp(28px, 4vw, 44px);
+  padding: clamp(32px, 9vw, 58px) 0 clamp(28px, 4vw, 44px);
 }
 .path-hero h1 {
   margin: 10px 0 16px;

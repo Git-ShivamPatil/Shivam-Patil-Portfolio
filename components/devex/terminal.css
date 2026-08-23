@@ -284,11 +284,9 @@
   width: 100%;
   height: auto;
   overflow: visible;
-  /* The force simulation is run to completion on the server into a 900-unit
-     viewBox, and the node positions it produces assume that much room. Scaled
-     into a 548px column its forty labels rendered at 6.1px. This holds the
-     graph at the width it was laid out for. */
-  min-width: 900px;
+  /* No min-width. The simulation now runs at the column's own width (see
+     WIDTH in lib/devex/graph.ts), so the graph renders at 1:1 in the column
+     and there is nothing to hold it open against. */
 }
 .skill-graph-edges line {
   stroke: var(--line);

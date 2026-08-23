@@ -157,10 +157,14 @@
      column's left edge and the last ends at its right. Change it here and both
      move together. A test asserts they still match.
 
-     At 548px this is roughly 75 characters at 15px — a comfortable measure for
-     prose, and the reason the number is worth keeping even though it is narrow
-     on a 1920px display. */
-  --content-w: 548px;
+     626px is the measured natural width of the six-item bar: 496px of label
+     text plus five 26px gaps. It was 548px while the bar held five items;
+     adding the résumé link widened the nav, so the column widened with it. That
+     coupling is the point — the number is not chosen, it is read off the nav.
+
+     Re-measure and update if the bar's labels ever change. The test in
+     tests/p28-layout.test.ts fails if the two drift. */
+  --content-w: 626px;
   --header-h: 56px;
   /* P17 — the theme customiser writes these two on <html>. Declared here so
      they always resolve: a var() with no fallback and no definition collapses
@@ -823,7 +827,22 @@ h2 em {
 
      `gap` stays as a floor for the case where labels grow. */
   justify-content: space-between;
-  width: min(var(--content-w), calc(100% - 64px));
+  /* Plain `var(--content-w)`, NOT `min(..., calc(100% - 64px))`.
+
+     The min() was copied from `.shell`, where the `100%` resolves against a
+     full-width parent and is exactly right. Here the parent is the `auto`
+     middle track of `.header-inner`'s grid — and that track is sized BY this
+     element, so `100%` resolves against a basis this rule is itself deciding.
+     Measured at a 1042px viewport: the box came out 561.6px while its own
+     links spanned 626px and overflowed it. The links still landed correctly,
+     so the alignment looked fine and the box was wrong — the kind of thing
+     that stays invisible until something else depends on the box.
+
+     There is no need for the fallback anyway: the nav is display:none below
+     1040px (see the media query), and a centred six-link bar needs 974px —
+     138px side tracks either side of 626px, plus 32px of gap and 40px of
+     padding. 66px of headroom, measured. */
+  width: var(--content-w);
   gap: 26px;
 }
 /* Small, uppercase and widely tracked — the one piece of type on the site that
@@ -920,8 +939,8 @@ h2 em {
   }
 }
 .hero {
-  min-height: 720px;
-  padding: 112px 0 80px;
+  min-height: 446px;
+  padding: 62px 0 44px;
   display: grid;
   /* minmax(0, …) rather than a bare fr, and it is not decoration.
      `1.05fr` means `minmax(auto, 1.05fr)`, so the track grows past its share
@@ -933,7 +952,7 @@ h2 em {
      it. See components/providers/split-text.tsx for the measurement. */
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
   align-items: center;
-  gap: 56px;
+  gap: 36px;
 }
 .hero-copy {
   position: relative;
@@ -1073,7 +1092,7 @@ h2 em {
   box-shadow: 0 0 10px 2px rgba(255, 255, 255, 0.65);
 }
 .section {
-  padding: 136px 0;
+  padding: 74px 0;
 }
 /* `.work-section` was the homepage's two-column `360px 1fr` grid, with the
    heading in the narrow track and the project list in the wide one. The list
@@ -1121,7 +1140,7 @@ h2 em {
   justify-content: center;
 }
 .project-card {
-  min-height: 376px;
+  min-height: 234px;
   display: flex;
   flex-direction: column;
   padding: 20px;
@@ -1220,7 +1239,7 @@ h2 em {
 .project-card-graphic {
   position: relative;
   flex: 1;
-  min-height: 150px;
+  min-height: 92px;
   margin-bottom: 20px;
   overflow: hidden;
 }
@@ -1777,7 +1796,7 @@ h2 em {
       to spare, and the hero still has 24px of slack at 320x568. */
 @media (max-width: 480px) {
   .footer-inner {
-    padding: 14px 0 84px;
+    padding: 14px 0 46px;
   }
   .footer-inner-meta {
     column-gap: 16px;
@@ -1786,7 +1805,7 @@ h2 em {
 .project-hero {
   position: relative;
   overflow: hidden;
-  padding: 62px 0 76px;
+  padding: 34px 0 42px;
   background: #e5e5e5;
 }
 /* Same treatment as the cards, for the same reason: `body:has(.project-hero)`
@@ -1919,7 +1938,7 @@ h2 em {
 .project-content {
   display: grid;
   grid-template-columns: 175px 1fr;
-  gap: 40px;
+  gap: 26px;
   padding-block: 118px;
 }
 .project-side-label {
@@ -1970,7 +1989,7 @@ h2 em {
   line-height: 1.7;
 }
 .architecture-section {
-  padding: 108px 0;
+  padding: 60px 0;
   background: var(--ink);
   color: #fff;
 }
@@ -1978,7 +1997,7 @@ h2 em {
   display: flex;
   justify-content: space-between;
   align-items: end;
-  gap: 40px;
+  gap: 26px;
 }
 .architecture-heading .eyebrow {
   color: #a9a9a9;
@@ -2008,7 +2027,7 @@ h2 em {
 }
 .architecture-node {
   width: 148px;
-  min-height: 126px;
+  min-height: 78px;
   display: flex;
   flex-direction: column;
   padding: 13px;
@@ -2145,7 +2164,7 @@ h2 em {
 .next-project > a {
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 10px 40px;
+  gap: 10px 26px;
   width: 100%;
   align-items: end;
 }
@@ -2171,7 +2190,7 @@ h2 em {
   transform: translate(4px, -4px);
 }
 .contact-hero {
-  padding: 121px 0 104px;
+  padding: 66px 0 58px;
 }
 .contact-hero h1 {
   margin: 0 0 28px;
@@ -2198,7 +2217,7 @@ h2 em {
   color: #616161;
 }
 .contact-body {
-  padding: 70px 0 132px;
+  padding: 38px 0 72px;
 }
 .contact-callout {
   display: flex;
@@ -2215,7 +2234,7 @@ h2 em {
 .contact-grid-large {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 90px;
+  gap: 58px;
 }
 .contact-grid-large h2 {
   margin: 0;
@@ -2244,7 +2263,7 @@ h2 em {
   display: flex;
   align-items: end;
   justify-content: space-between;
-  gap: 40px;
+  gap: 26px;
   margin-bottom: 124px;
   padding: 49px;
   border-radius: var(--radius);
@@ -2300,7 +2319,7 @@ h2 em {
 
 /* ===== contact form ===== */
 .contact-form-section {
-  padding: 0 0 132px;
+  padding: 0 0 72px;
 }
 .contact-form {
   display: flex;
@@ -2338,12 +2357,12 @@ h2 em {
   pointer-events: none;
 }
 .reach-page {
-  padding: 112px 0 128px;
+  padding: 62px 0 70px;
 }
 .reach-intro {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 40px;
+  gap: 26px;
 }
 .reach-intro .eyebrow {
   grid-column: 1/-1;
@@ -2360,7 +2379,7 @@ h2 em {
   line-height: 1.7;
 }
 .channel-list {
-  margin: 108px 0 96px;
+  margin: 60px 0 52px;
 }
 /* The row used to animate `padding-inline` from 0 to 10px on hover.
 
@@ -2452,7 +2471,7 @@ h2 em {
   display: flex;
   align-items: end;
   justify-content: space-between;
-  gap: 40px;
+  gap: 26px;
   padding: 48px;
   border-radius: var(--radius);
 }
@@ -2571,7 +2590,7 @@ h2 em {
   }
   .hero {
     min-height: 0;
-    padding: 66px 0 48px;
+    padding: 36px 0 48px;
   }
   /* `.hero h1 { font-size: clamp(51px, 16vw, 74px) }` and
      `.hero-intro { font-size: 15px }` were here. Both are covered by the base
@@ -2583,13 +2602,13 @@ h2 em {
     gap: 11px;
   }
   .section {
-    padding: 85px 0;
+    padding: 46px 0;
   }
   .section-heading > p:last-child {
     font-size: 13px;
   }
   .project-card {
-    min-height: 348px;
+    min-height: 216px;
   }
   .project-hero {
     padding-top: 33px;
@@ -2625,7 +2644,7 @@ h2 em {
     gap: 10px;
   }
   .architecture-section {
-    padding: 76px 0;
+    padding: 42px 0;
   }
   .architecture-heading {
     display: block;
@@ -2640,7 +2659,7 @@ h2 em {
   }
   .architecture-node {
     width: 143px;
-    min-height: 117px;
+    min-height: 72px;
   }
   .build-section {
     padding-bottom: 78px;
@@ -2670,7 +2689,7 @@ h2 em {
      could not move with the base h2 ramp, and the reason this heading was
      unchanged at 620px and at 360px. Same for .resume-download h2 below. */
   .contact-hero {
-    padding: 76px 0;
+    padding: 42px 0;
   }
   .contact-hero > p {
     font-size: 15px;
@@ -2680,7 +2699,7 @@ h2 em {
     font-size: 20px;
   }
   .contact-body {
-    padding: 50px 0 83px;
+    padding: 50px 0 46px;
   }
   .contact-form-row {
     grid-template-columns: 1fr;
@@ -2690,7 +2709,7 @@ h2 em {
   }
   .contact-grid-large {
     grid-template-columns: 1fr;
-    gap: 43px;
+    gap: 28px;
   }
   .contact-quick {
     align-items: start;
@@ -2699,7 +2718,7 @@ h2 em {
     padding: 31px 25px;
   }
   .reach-page {
-    padding: 76px 0;
+    padding: 42px 0;
   }
   .reach-intro {
     grid-template-columns: 1fr;
@@ -2709,7 +2728,7 @@ h2 em {
     margin-bottom: 2px;
   }
   .channel-list {
-    margin: 70px 0;
+    margin: 38px 0;
   }
   .channel-row {
     gap: 11px;
@@ -2735,7 +2754,7 @@ h2 em {
 
 /* ===== shared secondary-page hero ===== */
 .page-hero {
-  padding: 121px 0 60px;
+  padding: 66px 0 32px;
 }
 .page-hero h1 {
   margin: 0 0 24px;
@@ -2754,8 +2773,8 @@ h2 em {
   /* The grid this was measured on — see the note on `.hero` above. */
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
   align-items: center;
-  gap: 56px;
-  padding: 96px 0 60px;
+  gap: 36px;
+  padding: 52px 0 32px;
 }
 .about-hero h1 {
   margin: 0 0 24px;
@@ -2792,7 +2811,7 @@ h2 em {
 .about-page-story {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 60px;
+  gap: 40px;
   padding-bottom: 90px;
   padding-top: 70px;
 }
@@ -2845,7 +2864,7 @@ h2 em {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 22px;
-  padding: 70px 0 132px;
+  padding: 38px 0 72px;
   margin-top: 8px;
 }
 .skill-group {
@@ -2884,7 +2903,7 @@ h2 em {
 
 /* ===== experience page ===== */
 .timeline {
-  padding: 70px 0 20px;
+  padding: 38px 0 20px;
   margin-top: 8px;
 }
 .timeline-item {
@@ -2935,7 +2954,7 @@ h2 em {
   background: var(--lime);
 }
 .education-block {
-  padding: 40px 0 132px;
+  padding: 40px 0 72px;
 }
 .education-block h2 {
   margin: 0 0 24px;
@@ -2961,7 +2980,7 @@ h2 em {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 22px;
-  padding: 70px 0 132px;
+  padding: 38px 0 72px;
   margin-top: 8px;
 }
 .cert-card {
@@ -3023,7 +3042,7 @@ h2 em {
   /* Was repeat(3, …), sized for the old 1180px column. See --content-w. */
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 18px;
-  padding: 70px 0 132px;
+  padding: 38px 0 72px;
   margin-top: 8px;
 }
 .achievement-card {
@@ -3056,7 +3075,7 @@ h2 em {
 
 /* ===== resume page ===== */
 .resume-page-embed {
-  padding: 70px 0 132px;
+  padding: 38px 0 72px;
   margin-top: 8px;
 }
 .resume-frame-wrap {
@@ -3088,7 +3107,7 @@ h2 em {
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  padding: 80px 0;
+  padding: 44px 0;
 }
 .error-page .eyebrow {
   margin-bottom: 18px;
@@ -3142,7 +3161,7 @@ h2 em {
 
 @media (max-width: 620px) {
   .page-hero {
-    padding: 76px 0 40px;
+    padding: 42px 0 40px;
   }
   .skill-groups,
   .cert-grid {
@@ -3295,7 +3314,7 @@ h2 em {
 
 /* ===== blog ===== */
 .blog-list {
-  margin: 40px 0 96px;
+  margin: 40px 0 52px;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -3340,14 +3359,14 @@ h2 em {
   color: var(--muted);
 }
 .blog-empty {
-  padding: 60px 0;
+  padding: 32px 0;
   text-align: center;
   color: var(--muted);
 }
 .blog-post {
   max-width: 720px;
   margin: 0 auto;
-  padding: 121px 0 96px;
+  padding: 66px 0 52px;
 }
 .blog-post h1 {
   margin: 10px 0 20px;
@@ -3383,7 +3402,7 @@ h2 em {
   border-color: var(--fg);
 }
 .search-results {
-  margin: 20px 0 96px;
+  margin: 20px 0 52px;
   display: flex;
   flex-direction: column;
   gap: 14px;

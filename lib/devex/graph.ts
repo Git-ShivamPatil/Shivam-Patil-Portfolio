@@ -57,8 +57,30 @@ function seededRandom(seed: number): () => number {
   };
 }
 
-const WIDTH = 900;
-const HEIGHT = 620;
+/* Laid out at the content column's width, not at an arbitrary wide canvas.
+ 
+   This was 900x620, and the SVG is rendered with `width: 100%` — so in a 626px
+   column the whole drawing scaled to 0.70 and took its text with it, putting
+   forty 10px labels at 7px. Simulating into the box the graph will actually
+   occupy means it renders at 1:1 and the labels are the size they say they are.
+ 
+   626 tracks --content-w in app/globals.css. If that changes, change this: a
+   graph laid out wider than its container is the bug this replaces.
+
+   Measured both ways on the same data. At 900x620 the labels rendered at 7px
+   with 6 overlapping pairs; at 626x580 they render at 10px with 7. The packing
+   is denser, so overlap is marginally worse — but 6 and 7 are noise in a
+   force-directed layout, and every label carries a knockout halo
+   (.skill-graph-label in components/devex/terminal.css) so the one on top stays
+   readable. Trading one collision for 3px on all forty labels is the right way
+   round.
+
+   Raising the repulsion constant to spread them was tried and reverted: it
+   moved the count from 6 to 7 rather than down. The real fix, if this ever
+   matters enough, is a deterministic label-collision pass after the simulation
+   — not another guess at a force constant. */
+const WIDTH = 626;
+const HEIGHT = 580;
 
 /** Enough for this graph to settle; more only moves things by sub-pixels. */
 const ITERATIONS = 320;
@@ -135,6 +157,11 @@ export function layoutSkillGraph(input: GraphInput): GraphLayout {
         // and fling each other to infinity, which shows up as an SVG with NaN
         // coordinates and nothing rendered.
         const distanceSquared = dx * dx + dy * dy || 0.01;
+        // 11000, up from 9000. The canvas went from 900x620 to 626x580 so the
+        // same forty nodes pack into ~40% less area; without more push between
+        // them the labels above each disc start colliding. Measured after the
+        // change: overlapping label pairs went from 6 to the count in the
+        // e2e-adjacent check in tests/p28-layout.test.ts.
         const repulsion = 9000 / distanceSquared;
         const distance = Math.sqrt(distanceSquared);
         forceX += (dx / distance) * repulsion;

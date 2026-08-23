@@ -13,11 +13,11 @@
   /* .page-hero already carries 60px of bottom padding, so this only needs the
      gap under the lede — matching .stat-grid, the other page that sits a grid
      directly beneath a page-hero. */
-  padding: 40px 0 132px;
+  padding: 40px 0 72px;
 }
 
 .projects-empty {
-  padding: 60px 0;
+  padding: 32px 0;
   text-align: center;
   color: var(--muted);
 }

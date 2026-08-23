@@ -34,7 +34,7 @@
   align-items: center;
   gap: 3px 12px;
   /* Comfortably past the 44px touch floor. */
-  min-height: 92px;
+  min-height: 58px;
   padding: 18px 20px;
   border-radius: calc(var(--radius) * 0.7);
   background: var(--surface, var(--bg));

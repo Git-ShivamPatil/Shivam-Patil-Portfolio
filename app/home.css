@@ -49,7 +49,7 @@ body:has(.home) main > div {
   /* Asymmetric on purpose, and much less so than the 40/120 it replaces: the
      block sits a little above true centre, which is where the eye expects it,
      but not so far that the space below reads as an empty region. */
-  padding: 32px 0 72px;
+  padding: 32px 0 40px;
 }
 
 .home-inner {

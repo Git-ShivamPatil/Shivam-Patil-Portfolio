@@ -14,7 +14,7 @@
    ========================================================================= */
 
 .sd-section {
-  padding: 56px 0;
+  padding: 32px 0;
 }
 /* The measure now comes from the global .section-heading cap; the narrower one
    that used to be here was left over from when this heading sat in a sidebar
@@ -61,20 +61,29 @@
   width: 100%;
   height: auto;
   overflow: visible;
-  /* THE FLOOR.
+  /* No min-width, deliberately.
 
-     `width: 100%` alone means the viewBox scales to whatever box it is given,
-     and SVG text scales with the drawing — so once the content column became
-     548px, 13px node titles rendered at 9.4px and the 10px sub-labels at
-     6.5px. Measured, not estimated. Below its natural width the diagram stops
-     being readable rather than merely being smaller.
-
-     700 units is the width it was laid out at. At or above that it fills the
-     column exactly as before; below it, .sd-figure scrolls. */
-  min-width: 700px;
+     A 700px floor in a 626px column meant a permanent horizontal scrollbar on
+     the page's main illustration, which is worse than a slightly smaller
+     drawing. The diagram scales to the figure's 582px instead — 0.83 — and the
+     type inside is sized up below to compensate, so the rendered result is the
+     same ~11px/9px it was before rather than the 9.4px/6.5px that scaling
+     alone produced. */
 }
 
-/* ---- diagram: nodes and edges ---- */
+/* ---- diagram: nodes and edges ----
+
+   EVERY font-size below is ~2px larger than the value it renders at.
+
+   The SVG has a 700-unit viewBox and `width: 100%`, and the content column is
+   626px (582px inside .sd-figure's padding) — so the whole drawing renders at
+   about 0.83, and SVG text scales with it. 15px here lands at ~12.5px on
+   screen; 12px lands at ~10px.
+
+   Sized here rather than by shrinking the viewBox because the node coordinates
+   in page.tsx are hand-placed, and rather than by a min-width floor because
+   that put a permanent horizontal scrollbar under the page's main
+   illustration. */
 .sd-node rect {
   fill: var(--bg);
   stroke: var(--line);
@@ -86,13 +95,13 @@
 .sd-node-title {
   fill: var(--fg);
   font:
-    600 13px var(--font-manrope),
+    600 15px var(--font-manrope),
     Manrope,
     sans-serif;
 }
 .sd-node-sub {
   fill: var(--muted);
-  font: 500 10px var(--font-label);
+  font: 500 12px var(--font-label);
 }
 /* Sits in the gutter above its band — see LAYER_CAPTION_GUTTER in page.tsx.
    Two of the connector curves pass through that gutter, and the longest
@@ -105,7 +114,7 @@
   fill: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  font: 500 9px var(--font-label);
+  font: 500 11px var(--font-label);
   paint-order: stroke;
   stroke: var(--surface);
   stroke-width: 3px;
@@ -136,13 +145,13 @@
 .sd-entity-name {
   fill: var(--fg);
   font:
-    700 12px var(--font-manrope),
+    700 14px var(--font-manrope),
     Manrope,
     sans-serif;
 }
 .sd-entity-field {
   fill: var(--prose-soft);
-  font: 400 10px var(--font-label);
+  font: 400 12px var(--font-label);
 }
 .sd-rel {
   fill: none;
@@ -153,7 +162,7 @@
 }
 .sd-rel-label {
   fill: var(--muted);
-  font: 500 9px var(--font-label);
+  font: 500 11px var(--font-label);
 }
 
 /* Dark theme gets the bloom the neon palette exists for. Light theme
