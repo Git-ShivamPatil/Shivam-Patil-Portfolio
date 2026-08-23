@@ -11,7 +11,6 @@
 }
 
 .disclosure {
-  border: 1px solid var(--line);
   border-radius: 14px;
   background: var(--surface, var(--bg));
   overflow: hidden;
@@ -21,12 +20,17 @@
   transition: border-color 0.2s ease;
 }
 
+.disclosure {
+  transition: background 0.24s ease-out;
+}
 .disclosure:hover {
-  border-color: var(--muted);
+  background: var(--surface-2);
 }
 
+/* Open state was a border-colour change. It is a background step now —
+   the panel reads as raised rather than as outlined. */
 .disclosure[open] {
-  border-color: var(--muted);
+  background: var(--surface-2);
 }
 
 .disclosure-summary {

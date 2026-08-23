@@ -1,3 +1,4 @@
+import { emphasise, stripEmphasis } from "../../lib/emphasis";
 import { pageMetadata } from "../../lib/seo/metadata";
 import { education, experience } from "../experience";
 import { JsonLd } from "../../components/seo/json-ld";
@@ -40,7 +41,16 @@ export default function ExperiencePage() {
               </p>
               <ul className="timeline-highlights">
                 {entry.highlights.map((highlight) => (
-                  <li key={highlight}>{highlight}</li>
+                  // `**marked**` runs become <strong>. See lib/emphasis.tsx —
+                  // the markers live in the data so app/experience.ts can stay
+                  // a plain string[] that the JSON-LD and corpus builders can
+                  // still consume.
+                  // Key is the STRIPPED text. `highlight` still carries its
+                  // `**` markers, and a key is serialised into the RSC payload
+                  // verbatim — so keying on the raw string shipped the authoring
+                  // syntax to the browser in every bullet. Stripped, it is still
+                  // stable and still unique.
+                  <li key={stripEmphasis(highlight)}>{emphasise(highlight)}</li>
                 ))}
               </ul>
             </div>

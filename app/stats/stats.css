@@ -126,7 +126,6 @@
   flex-direction: column;
   gap: 22px;
   padding: 30px;
-  border: 1px solid var(--surface-line);
   border-radius: var(--radius);
   background: var(--surface);
 }
@@ -147,11 +146,13 @@
   color: var(--fg);
   font: 500 11px var(--font-label);
   font-variant-numeric: tabular-nums;
-  border-bottom: 1px solid transparent;
   transition: border-color 0.2s;
 }
-.stat-panel-link:hover {
-  border-bottom-color: var(--fg);
+.stat-panel-link {
+  transition: color 0.24s ease-out;
+}
+.stat-panel-link:is(:hover, :focus-visible) {
+  color: var(--fg);
 }
 .stat-panel-empty {
   margin: 0;
@@ -168,7 +169,6 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
   padding-bottom: 22px;
-  border-bottom: 1px solid var(--line);
 }
 .stat-figures strong {
   display: block;
@@ -430,7 +430,6 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  border-top: 1px solid var(--line);
 }
 .stat-repos li a {
   display: flex;
@@ -438,7 +437,6 @@
   justify-content: space-between;
   gap: 16px;
   padding: 13px 0;
-  border-bottom: 1px solid var(--line);
   transition: padding-inline 0.2s;
 }
 .stat-repos li a:hover {
@@ -477,7 +475,6 @@
      of different heights in the same grid row still line their footers up. */
   margin-top: auto;
   padding-top: 18px;
-  border-top: 1px solid var(--line);
 }
 .stat-live-foot .stat-provenance {
   padding-top: 0;
@@ -489,7 +486,6 @@
   gap: 8px;
   margin: 0;
   padding-top: 18px;
-  border-top: 1px solid var(--line);
   color: var(--muted);
   font: 500 10px var(--font-label);
   font-variant-numeric: tabular-nums;
@@ -519,7 +515,6 @@
   align-items: center;
   gap: 6px;
   padding: 5px 10px;
-  border: 1px solid var(--surface-line);
   border-radius: 999px;
   background: transparent;
   color: var(--muted);
@@ -534,7 +529,6 @@
 }
 .stat-refresh:hover:not(:disabled) {
   color: var(--fg);
-  border-color: var(--fg);
 }
 .stat-refresh:disabled {
   cursor: progress;
@@ -660,7 +654,6 @@
 }
 .stat-skeleton .stat-repos li {
   padding: 13px 0;
-  border-bottom: 1px solid var(--line);
 }
 /* The heatmap lives in components/devex/terminal.css and is not styled from
    here, so this is the one skeleton block sized by measurement rather than by
@@ -672,7 +665,6 @@
 }
 .stat-skeleton[data-shape="activity"] {
   padding: 26px;
-  border-color: var(--line);
   background: transparent;
 }
 

@@ -10,16 +10,11 @@
 
 .sec-verdict {
   padding: 20px 22px;
-  border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
 }
 /* A failed verification gets a dashed edge and an accent rule — legible
    without a red, and distinguishable in greyscale. */
-.sec-verdict[data-ok="false"] {
-  border-style: dashed;
-  border-color: var(--accent);
-}
 .sec-verdict-state {
   margin: 0 0 6px;
   color: var(--fg);
@@ -55,7 +50,6 @@
   display: flex;
   gap: 10px;
   padding: 8px 14px;
-  border: 1px dashed var(--accent);
   border-radius: var(--radius);
   font: 400 12px var(--font-label);
   color: var(--accent-strong);
@@ -64,7 +58,6 @@
 .sec-table-wrap {
   margin-top: 16px;
   overflow-x: auto;
-  border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
 }
@@ -79,7 +72,6 @@
   padding: 11px 14px;
   text-align: left;
   white-space: nowrap;
-  border-bottom: 1px solid var(--line);
   color: var(--fg);
 }
 .sec-table thead th {
@@ -120,7 +112,6 @@
 }
 .sec-empty {
   padding: 18px 20px;
-  border: 1px dashed var(--line);
   border-radius: var(--radius);
 }
 
@@ -133,16 +124,15 @@
 }
 .sec-demo {
   padding: 20px 22px;
-  border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
 }
-/* Rejected is the *desired* outcome for three of the four demos, so a dashed
-   edge here means "the defence fired", not "something is broken". The verdict
-   line says which in words. */
-.sec-demo[data-ok="false"] {
-  border-style: dashed;
-}
+/* Rejected is the *desired* outcome for three of the four demos, so this
+   must not read as "something is broken". It used to carry a dashed edge
+   saying so; with the lines gone, the verdict line carries it alone — in
+   words, which is the version that reaches a screen reader anyway. No rule
+   here, deliberately: an extra plate would re-introduce exactly the
+   "failure" reading the dash existed to avoid. */
 .sec-demo h3 {
   margin: 0 0 8px;
   color: var(--fg);
@@ -186,22 +176,22 @@
   height: 16px;
   display: grid;
   place-items: center;
-  border: 1px solid var(--line);
   border-radius: 4px;
   font: 600 10px var(--font-label);
   color: var(--muted);
 }
 .sec-checks li[data-status="pass"] .sec-check-mark {
-  border-color: var(--accent);
   color: var(--accent-strong);
 }
 .sec-checks li[data-status="fail"] .sec-check-mark {
-  border-color: var(--fg);
   background: var(--fg);
   color: var(--bg);
 }
+/* Skipped sits between pass (accent mark) and fail (inverted plate): it is
+   present but not asserting anything. Dimming it is the greyscale-legible
+   third value now that the dashed edge is gone. */
 .sec-checks li[data-status="skipped"] .sec-check-mark {
-  border-style: dashed;
+  opacity: 0.45;
 }
 .sec-check-label {
   color: var(--fg);
@@ -223,7 +213,6 @@
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 1px;
   margin: 0;
-  border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--line);
   overflow: hidden;

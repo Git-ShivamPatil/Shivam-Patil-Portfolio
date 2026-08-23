@@ -1,3 +1,6 @@
+// Résumé bullets carry `**` emphasis markers for the DOM; the index must
+// never see them, or a search for a marked phrase misses.
+import { stripEmphasis } from "../emphasis";
 import { createHash } from "node:crypto";
 import { prisma } from "../prisma";
 import { tokenize } from "./embed";
@@ -265,7 +268,7 @@ function staticChunks(): Chunk[] {
             // because the passage began with a job title and the question asks
             // about employment. One clause fixes the vocabulary mismatch.
             heading: role.org,
-            content: `Where Shivam Patil has worked. ${role.role} at ${role.org}, ${role.period}, ${role.location}. ${role.highlights.join(" ")}`,
+            content: `Where Shivam Patil has worked. ${role.role} at ${role.org}, ${role.period}, ${role.location}. ${role.highlights.map(stripEmphasis).join(" ")}`,
           },
         ],
       ),

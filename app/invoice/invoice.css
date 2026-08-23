@@ -15,11 +15,11 @@
   justify-content: space-between;
   gap: 24px;
   padding-bottom: 28px;
-  border-bottom: 2px solid var(--fg);
 }
 .invoice-head h1 {
   margin: 0;
-  font-size: clamp(34px, 5vw, 54px);
+  /* An invoice is a document, not a landing page. */
+  font-size: clamp(28px, 2.4vw, 36px);
 }
 .invoice-meta {
   display: grid;
@@ -48,7 +48,6 @@
 }
 .invoice-table th {
   padding: 12px 10px;
-  border-bottom: 1px solid var(--fg);
   color: var(--muted);
   font: 500 9px var(--font-label);
   font-variant-numeric: tabular-nums;
@@ -62,7 +61,6 @@
 }
 .invoice-table td {
   padding: 16px 10px;
-  border-bottom: 1px solid var(--line);
   font-size: 14px;
   text-align: right;
 }
@@ -78,7 +76,6 @@
 }
 .invoice-table tfoot .invoice-total td {
   padding-top: 16px;
-  border-top: 1px solid var(--fg);
   color: var(--fg);
   font-size: 16px;
   font-weight: 600;

@@ -85,8 +85,8 @@ export default function ReachOutPage() {
           <em>right channel.</em>
         </h1>
         <p>
-          Five channels, ordered by how fast I answer. Every one reaches me directly — no queue, no
-          assistant, no form that goes nowhere.
+          Five channels, <strong>ordered by how fast I answer</strong>. Every one{" "}
+          <strong>reaches me directly</strong> — no queue, no assistant, no form that goes nowhere.
         </p>
       </div>
       <div className="channel-list" data-stagger>
@@ -144,7 +144,10 @@ export default function ReachOutPage() {
             <br />
             <em>remote-friendly.</em>
           </h2>
-          <p>IST, UTC+5:30. Full working overlap with Europe; evening overlap with US East.</p>
+          <p>
+            <strong>IST, UTC+5:30.</strong> Full working overlap with Europe; evening overlap with
+            US East.
+          </p>
         </div>
         <LocationMap />
       </div>

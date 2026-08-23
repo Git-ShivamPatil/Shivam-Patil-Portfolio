@@ -78,7 +78,6 @@
 }
 .newsletter-done {
   padding: 20px 24px;
-  border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--warm);
 }

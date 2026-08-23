@@ -13,7 +13,6 @@
 
 /* ---------- terminal ---------- */
 .terminal {
-  border: 1px solid var(--line);
   border-radius: var(--radius);
   overflow: hidden;
   background: var(--surface);
@@ -25,7 +24,6 @@
   align-items: center;
   gap: 7px;
   padding: 11px 16px;
-  border-bottom: 1px solid var(--line);
   background: var(--paper-soft, var(--surface));
 }
 .terminal-dot {
@@ -59,10 +57,13 @@
 }
 .terminal-line a {
   color: var(--accent-strong);
-  border-bottom: 1px solid transparent;
 }
+/* A terminal link had an underline-on-hover drawn as a border-bottom.
+   text-decoration is the same mark without being a border, and it is
+   what a link in a terminal should have had in the first place. */
 .terminal-line a:hover {
-  border-bottom-color: currentColor;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 .terminal-prompt {
   margin-right: 9px;
@@ -99,7 +100,6 @@
 }
 .palette {
   width: min(560px, 100%);
-  border: 1px solid var(--line);
   border-radius: var(--radius);
   overflow: hidden;
   background: var(--bg);
@@ -159,7 +159,6 @@
   display: flex;
   gap: 16px;
   padding: 10px 18px;
-  border-top: 1px solid var(--line);
   color: var(--muted);
   font-size: 11px;
 }
@@ -199,7 +198,6 @@
   display: grid;
   gap: 16px;
   padding: 20px;
-  border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--bg);
   color: var(--fg);
@@ -267,7 +265,6 @@
 }
 .customizer-reset {
   padding: 9px;
-  border: 1px solid var(--line);
   border-radius: 999px;
   background: transparent;
   color: var(--fg);
@@ -344,7 +341,6 @@
 /* ---------- activity heatmap ---------- */
 .activity-panel {
   padding: 26px;
-  border: 1px solid var(--line);
   border-radius: var(--radius);
 }
 .activity-head {

@@ -88,7 +88,6 @@
   height: min(520px, calc(100vh - 160px));
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid var(--line);
   border-radius: 18px;
   background: var(--bg);
   box-shadow: 0 24px 60px rgba(17, 17, 16, 0.28);
@@ -105,7 +104,6 @@
   align-items: center;
   justify-content: space-between;
   padding: 14px 16px;
-  border-bottom: 1px solid var(--line);
   background: var(--warm);
 }
 .chat-panel-head strong {
@@ -196,7 +194,6 @@
 .chat-bubble-owner,
 .chat-bubble-system {
   align-self: flex-start;
-  border: 1px solid var(--line);
   background: var(--warm);
   color: var(--fg);
   border-bottom-left-radius: 4px;
@@ -213,7 +210,6 @@
   display: flex;
   gap: 4px;
   padding: 11px 13px;
-  border: 1px solid var(--line);
   border-radius: 14px;
   background: var(--warm);
 }

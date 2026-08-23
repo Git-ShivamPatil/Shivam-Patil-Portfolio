@@ -36,7 +36,6 @@
 
 .path-section {
   padding: clamp(28px, 4vw, 44px) 0;
-  border-top: 1px solid var(--surface-line);
 }
 .path-section > h2 {
   margin: 0 0 6px;
@@ -66,7 +65,6 @@
   align-items: center;
   gap: 16px;
   padding: 16px 18px;
-  border: 1px solid var(--surface-line);
   border-radius: calc(var(--radius) * 0.7);
   background: var(--surface);
   transition:
@@ -74,7 +72,6 @@
     transform 0.2s;
 }
 .link-row:hover {
-  border-color: var(--fg);
   transform: translateY(-2px);
 }
 .link-row-name {
@@ -101,7 +98,6 @@
   display: inline-block;
   margin-top: 8px;
   padding: 3px 8px;
-  border: 1px dashed var(--surface-line);
   border-radius: 6px;
   font: 500 11px var(--font-code);
   letter-spacing: 0.06em;
@@ -128,7 +124,6 @@
 .path-card {
   display: block;
   padding: 20px;
-  border: 1px solid var(--surface-line);
   border-radius: calc(var(--radius) * 0.7);
   background: var(--surface);
   transition:
@@ -136,7 +131,6 @@
     transform 0.2s;
 }
 .path-card:hover {
-  border-color: var(--fg);
   transform: translateY(-2px);
 }
 .path-card h3 {
@@ -171,7 +165,6 @@
 /* ---- invite card ---- */
 .invite-card {
   padding: 22px;
-  border: 1px solid var(--surface-line);
   border-radius: var(--radius);
   background: var(--surface);
 }
@@ -202,7 +195,6 @@
   display: grid;
   place-items: center;
   padding: clamp(24px, 5vw, 48px);
-  border: 1px solid var(--surface-line);
   border-radius: var(--radius);
   background: var(--surface);
   text-align: center;
@@ -229,7 +221,6 @@
   max-width: var(--path-measure);
   margin: 0 0 22px;
   padding-left: 18px;
-  border-left: 2px solid var(--accent);
   color: var(--fg);
   font-family: var(--font-app);
   font-size: clamp(1.05rem, 0.9rem + 0.8vw, 1.5rem);
@@ -255,7 +246,6 @@
   gap: 10px;
   align-items: baseline;
   padding: 12px 14px;
-  border: 1px solid var(--surface-line);
   border-radius: 10px;
   background: var(--surface);
   font-size: 13.5px;

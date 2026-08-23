@@ -14,7 +14,7 @@
 }
 .reach-map-copy h2 {
   margin: 0 0 18px;
-  font-size: clamp(28px, 3.4vw, 44px);
+  font-size: clamp(1.625rem, 1.48rem + 0.4vw, 32px);
 }
 .reach-map-copy p {
   max-width: 340px;
@@ -26,7 +26,6 @@
 .location-map {
   position: relative;
   overflow: hidden;
-  border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--warm);
 }
@@ -102,7 +101,6 @@
   top: 16px;
   right: 16px;
   padding: 9px 15px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 999px;
   background: rgba(17, 17, 16, 0.72);
   backdrop-filter: blur(8px);
@@ -124,7 +122,6 @@
   gap: 9px;
   margin: 0;
   padding: 14px 18px;
-  border-top: 1px solid var(--line);
   color: var(--muted);
   font: 500 10px var(--font-label);
   text-transform: uppercase;
@@ -133,14 +130,12 @@
 .location-map-caption a {
   margin-left: auto;
   color: var(--muted);
-  border-bottom: 1px solid transparent;
   transition:
     color 0.2s,
     border-color 0.2s;
 }
 .location-map-caption a:hover {
   color: var(--fg);
-  border-bottom-color: var(--fg);
 }
 
 /* ---------- responsive ---------- */

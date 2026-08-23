@@ -18,7 +18,6 @@
   align-items: center;
   gap: 8px;
   padding: 7px 14px;
-  border: 1px solid var(--line);
   border-radius: 999px;
   background: transparent;
   color: var(--muted);
@@ -30,11 +29,9 @@
 }
 .api-operation:hover {
   color: var(--fg);
-  border-color: var(--fg);
 }
 .api-operation[data-active="true"] {
   color: var(--accent-strong);
-  border-color: var(--accent);
   font-weight: 600;
 }
 .api-method {
@@ -106,16 +103,16 @@
 }
 
 .api-result {
-  border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
   overflow: hidden;
 }
-/* A non-2xx is dashed rather than coloured — the two-colour palette has no red,
-   and in a console a 404 is often the expected answer anyway. */
+/* A non-2xx is not coloured — the palette has no red, and in a console a 404
+   is often the expected answer anyway. It used to be a dashed edge; with
+   the lines gone it is a recessed plate instead. Same message ("this one
+   is different, not broken"), no rule. */
 .api-result[data-ok="false"] {
-  border-style: dashed;
-  border-color: var(--accent);
+  background: var(--surface-2);
 }
 .api-result-meta {
   display: flex;
@@ -123,7 +120,6 @@
   gap: 16px;
   margin: 0;
   padding: 11px 16px;
-  border-bottom: 1px solid var(--line);
   color: var(--muted);
   font: 400 11.5px var(--font-label);
   font-variant-numeric: tabular-nums;
@@ -149,7 +145,6 @@
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 1px;
   margin: 0 0 16px;
-  border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--line);
   overflow: hidden;
@@ -199,7 +194,6 @@
   padding: 16px 18px;
   max-height: 420px;
   overflow: auto;
-  border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
   color: var(--fg);
@@ -208,6 +202,5 @@
 
 .api-panel {
   padding: 18px 20px;
-  border: 1px dashed var(--line);
   border-radius: var(--radius);
 }

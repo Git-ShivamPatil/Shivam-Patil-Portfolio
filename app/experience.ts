@@ -13,6 +13,16 @@ export interface EducationEntry {
   detail: string;
 }
 
+/**
+ * `**double asterisks**` mark the phrase worth catching in a scan — see
+ * lib/emphasis.tsx. The markers stay in the data so the strings remain
+ * strings: /experience renders them through `emphasise()`, and the AI
+ * corpus strips them with `stripEmphasis()` so the index never sees them.
+ *
+ * Mark the claim, not the sentence. A bullet with half of it bold has no
+ * emphasis at all — the eye needs the unmarked text to measure the marked
+ * text against.
+ */
 export const experience: ExperienceEntry[] = [
   {
     role: "Software Development Engineer (SDE)",
@@ -34,11 +44,11 @@ export const experience: ExperienceEntry[] = [
     // five numbers the bullets already carried; /achievements reads them
     // back from this file and would surface any drift.
     highlights: [
-      "Shipped 13+ production REST APIs behind a system serving 10,000+ requests/day. Response latency down 33%.",
-      "Rewrote hot-path SQL and data-processing pipelines: +29% application performance.",
-      "Raised RAG answer accuracy 19% on a production RBI chatbot — vector-search relevance tuning plus an automated evaluation harness.",
-      "Built authentication and role-based authorization against enterprise access-control standards.",
-      "Reviewed peer changes across the team's services, gating on testability and maintainability.",
+      "Shipped **13+ production REST APIs** behind a system serving 10,000+ requests/day. **Response latency down 33%.**",
+      "Rewrote hot-path SQL and data-processing pipelines: **+29% application performance**.",
+      "Raised **RAG answer accuracy 19%** on a production RBI chatbot — vector-search relevance tuning plus an automated evaluation harness.",
+      "Built **authentication and role-based authorization** against enterprise access-control standards.",
+      "Reviewed peer changes across the team's services, gating on **testability and maintainability**.",
     ],
   },
 ];

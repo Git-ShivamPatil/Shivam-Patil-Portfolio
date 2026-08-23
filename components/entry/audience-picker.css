@@ -36,7 +36,6 @@
   /* Comfortably past the 44px touch floor. */
   min-height: 92px;
   padding: 18px 20px;
-  border: 1px solid var(--surface-line, var(--line));
   border-radius: calc(var(--radius) * 0.7);
   background: var(--surface, var(--bg));
   color: var(--fg);

@@ -20,7 +20,6 @@
   max-width: 62ch;
   margin: 28px 0 0;
   padding-top: 20px;
-  border-top: 1px solid var(--line);
   color: var(--muted);
   font-size: 15px;
   line-height: 1.6;
@@ -109,7 +108,6 @@
 .log-entry__hypothesis dd,
 .log-entry__measurement dd {
   padding-left: 18px;
-  border-left: 2px solid var(--accent);
 }
 .log-entry__hypothesis dt {
   color: var(--accent);
@@ -119,7 +117,6 @@
   max-width: 68ch;
   margin: 28px 0 0;
   padding-top: 22px;
-  border-top: 1px solid var(--line);
   font-size: 15px;
   font-style: italic;
   line-height: 1.7;

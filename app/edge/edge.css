@@ -5,15 +5,17 @@
 
 .edge-panel {
   padding: 20px 22px;
-  border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
 }
 /* An unsupported API is not a failure — it is the majority outcome for
-   WebUSB, and the dashed edge says "absent" rather than "broken". */
+   WebUSB, and this has to say "absent" rather than "broken". The dashed
+   edge that used to say it is gone with the rest of the lines; a dimmed
+   plate says the same thing. Opacity rather than a muted colour so every
+   child recedes together, including the state label. */
 .edge-panel[data-state="unsupported"],
 .edge-panel[data-state="partial"] {
-  border-style: dashed;
+  opacity: 0.62;
 }
 .edge-panel-state {
   margin: 0 0 8px;
@@ -97,7 +99,6 @@
 }
 .edge-devices li {
   padding: 14px 16px;
-  border: 1px solid var(--line);
   border-radius: var(--radius);
 }
 .edge-device-name {

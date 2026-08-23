@@ -15,7 +15,6 @@
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 1px;
   margin: 0 0 18px;
-  border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--line);
   overflow: hidden;
@@ -81,7 +80,6 @@
 
 .rel-table-wrap {
   overflow-x: auto;
-  border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
 }
@@ -96,7 +94,6 @@
   padding: 11px 14px;
   text-align: right;
   white-space: nowrap;
-  border-bottom: 1px solid var(--line);
 }
 .rel-table thead th {
   color: var(--muted);
@@ -127,7 +124,6 @@
 }
 .rel-method {
   padding: 2px 7px;
-  border: 1px solid var(--line);
   border-radius: 999px;
   color: var(--muted);
   font-size: 10px;
@@ -144,7 +140,6 @@
 }
 .rel-empty {
   padding: 18px 20px;
-  border: 1px dashed var(--line);
   border-radius: var(--radius);
 }
 
@@ -157,7 +152,6 @@
 }
 .rel-breaker {
   padding: 18px 20px;
-  border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
 }
@@ -186,25 +180,38 @@
   margin-top: 6px;
   opacity: 0.75;
 }
-/* Open: a dashed edge and an accent rule, so "this one is not serving" is
-   legible without a red. Half-open gets the dash without the fill — mid-way
-   between the two, which is what the state is. */
+/* Three states, three plate values, no lines and no red.
+
+   Closed is the default --surface. Half-open steps to --surface-2. Open
+   steps again and inverts its state text, because open is the one a reader
+   scanning the page has to catch first — it is the state where the circuit
+   is refusing traffic.
+
+   This replaces a dashed edge plus an accent rule. The accent on the state
+   TEXT survives below and still does half the work; what changed is that
+   the "not serving" signal is now a surface rather than a border, so it
+   holds in greyscale without depending on the line style the rest of this
+   pass removed. */
 .rel-breaker[data-state="open"] {
-  border-style: dashed;
-  border-color: var(--accent);
+  background: var(--chip-bg);
 }
 .rel-breaker[data-state="open"] .rel-breaker-state {
   color: var(--accent-strong);
 }
+/* Half-open was a dashed border — the state's whole visual signal, and
+   deliberately greyscale-legible so it did not depend on a red. A dashed
+   line is exactly what this pass removes, so the signal moves to the
+   surface: half-open is a lighter plate than closed, open is lighter
+   still via its own state text. Still greyscale-legible, still not a
+   colour-only distinction. */
 .rel-breaker[data-state="half-open"] {
-  border-style: dashed;
+  background: var(--surface-2);
 }
 
 .rel-history {
   margin: 16px 0 0;
   padding: 0;
   list-style: none;
-  border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
   overflow: hidden;
@@ -215,7 +222,6 @@
   align-items: baseline;
   gap: 10px;
   padding: 11px 16px;
-  border-bottom: 1px solid var(--line);
   font: 400 12px var(--font-label);
 }
 .rel-history li:last-child {
@@ -255,7 +261,6 @@
 .chaos-scenario,
 .chaos-reseed {
   padding: 7px 14px;
-  border: 1px solid var(--line);
   border-radius: 999px;
   background: transparent;
   color: var(--muted);
@@ -270,11 +275,9 @@
 .chaos-scenario:hover,
 .chaos-reseed:hover {
   color: var(--fg);
-  border-color: var(--fg);
 }
 .chaos-scenario[data-active="true"] {
   color: var(--accent-strong);
-  border-color: var(--accent);
   /* Selected state carries a second signal beyond colour, for the same reason
      the strip below does. */
   font-weight: 600;
@@ -305,7 +308,6 @@
   margin: 0;
   padding: 14px;
   list-style: none;
-  border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
 }
@@ -313,7 +315,6 @@
   width: 13px;
   height: 22px;
   border-radius: 3px;
-  border: 1px solid var(--line);
 }
 /* Four states, four distinct fills.
 
@@ -327,21 +328,18 @@
    Every cell also has a tooltip with the same information as text. */
 .chaos-cell[data-result="ok"] {
   background: var(--accent);
-  border-color: var(--accent);
   opacity: 0.4;
 }
 .chaos-cell[data-result="error"] {
   background: var(--fg);
-  border-color: var(--fg);
 }
 .chaos-cell[data-result="timeout"] {
-  border-color: var(--fg);
   background: repeating-linear-gradient(45deg, var(--fg) 0 2px, transparent 2px 5px);
 }
 .chaos-cell[data-result="rejected"] {
-  border-style: dashed;
-  border-color: var(--muted);
-  background: transparent;
+  /* Matches the legend swatch above — see the note there. */
+  background: var(--fg);
+  opacity: 0.14;
 }
 /* The moment the circuit moved. A detached ring rather than an inset rule: an
    inset mark in --fg disappears entirely on the solid --fg fill of a failed
@@ -373,26 +371,30 @@
   width: 12px;
   height: 12px;
   border-radius: 3px;
-  border: 1px solid var(--line);
 }
 /* Kept in lockstep with the cell rules above — a legend that disagrees with the
    thing it labels is worse than no legend. */
 .chaos-legend li[data-result="ok"]::before {
   background: var(--accent);
-  border-color: var(--accent);
   opacity: 0.4;
 }
 .chaos-legend li[data-result="error"]::before {
   background: var(--fg);
-  border-color: var(--fg);
 }
 .chaos-legend li[data-result="timeout"]::before {
-  border-color: var(--fg);
   background: repeating-linear-gradient(45deg, var(--fg) 0 2px, transparent 2px 5px);
 }
+/* The rejected swatch was `background: transparent` plus a dashed border
+   — so with the border gone it was an invisible chip beside a label,
+   which reads as a rendering bug rather than as a state.
+
+   A low-opacity fill of the same --fg the other swatches use keeps it in
+   the same visual family and still separates it from `ok` (0.4 accent),
+   `error` (solid --fg) and `timeout` (a 45deg hatch). Four distinct
+   values, none of them a line, all legible in greyscale. */
 .chaos-legend li[data-result="rejected"]::before {
-  border-style: dashed;
-  border-color: var(--muted);
+  background: var(--fg);
+  opacity: 0.14;
 }
 
 .chaos-figures {
@@ -400,7 +402,6 @@
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 1px;
   margin: 0;
-  border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--line);
   overflow: hidden;
@@ -484,7 +485,6 @@
 }
 .rel-traces > li {
   padding: 14px 16px;
-  border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
 }

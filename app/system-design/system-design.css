@@ -30,7 +30,6 @@
 }
 .sd-section code {
   padding: 1px 5px;
-  border: 1px solid var(--surface-line);
   border-radius: 5px;
   background: var(--surface);
   font: 500 0.88em var(--font-code);
@@ -40,7 +39,6 @@
 .sd-figure {
   margin: 0;
   padding: 22px;
-  border: 1px solid var(--surface-line);
   border-radius: var(--radius);
   background: var(--surface);
   box-shadow: var(--elev-1);
@@ -48,7 +46,6 @@
 .sd-figure figcaption {
   margin-top: 16px;
   padding-top: 14px;
-  border-top: 1px solid var(--surface-line);
   color: var(--prose-soft);
   font-size: 13px;
   line-height: 1.6;
@@ -153,7 +150,6 @@
 }
 :root[data-theme="dark"] .sd-figure {
   box-shadow: none;
-  border-color: var(--surface-line);
 }
 
 /* ---- draw-in ---- */
@@ -189,7 +185,6 @@
   flex-direction: column;
   gap: 3px;
   padding: 13px 13px 11px;
-  border: 1px solid var(--surface-line);
   border-radius: 12px;
   background: var(--surface);
   transition:
@@ -201,7 +196,6 @@
    the shadow say "this one" without anything leaving the flow it was laid out
    in. */
 .sd-phase:hover {
-  border-color: var(--accent);
   box-shadow: var(--elev-1);
 }
 .sd-phase-n {
@@ -222,13 +216,14 @@
 }
 
 /* Every phase is deployed; five keep one feature switched off until a credential
-   exists (HANDOFF §31). That distinction is carried three ways — the word
+   exists (HANDOFF §31). That distinction was carried three ways — the word
    itself, a dashed border, and a hollow marker — because a reader who cannot
    separate --accent from --muted still has to be able to separate the states,
-   and the word is the one that reaches a screen reader. */
-.sd-phase[data-state="keyed"] {
-  border-style: dashed;
-}
+   and the word is the one that reaches a screen reader.
+
+   The dashed border is gone with the rest of the partition lines. Two of the
+   three signals remain, and they are the two that were doing the work: the
+   word, and the hollow marker. */
 .sd-phase-state {
   display: flex;
   align-items: center;
@@ -245,12 +240,10 @@
   flex: none;
   width: 7px;
   height: 7px;
-  border: 1.5px solid var(--accent);
   border-radius: 50%;
   background: var(--accent);
 }
 .sd-phase[data-state="keyed"] .sd-phase-state::before {
-  border-color: var(--muted);
   background: none;
 }
 
@@ -293,7 +286,6 @@
 /* ---- spec vs reality ---- */
 .sd-table-wrap {
   overflow-x: auto;
-  border: 1px solid var(--surface-line);
   border-radius: var(--radius);
 }
 .sd-table {
@@ -305,7 +297,6 @@
 .sd-table td {
   padding: 13px 16px;
   text-align: left;
-  border-bottom: 1px solid var(--surface-line);
 }
 .sd-table thead th {
   background: var(--surface-2);

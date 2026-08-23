@@ -101,7 +101,6 @@
 }
 .ask-answer {
   padding: 28px;
-  border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
 }
@@ -180,7 +179,6 @@
 /* ---------- local model ---------- */
 .ask-local {
   padding: 24px 28px;
-  border: 1px dashed var(--line);
   border-radius: var(--radius);
 }
 .ask-local .button {
@@ -264,13 +262,12 @@
   align-items: baseline;
   gap: 14px;
   padding: 22px 26px;
-  border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
 }
 .jd-score strong {
   color: var(--accent-strong);
-  font-size: 40px;
+  font-size: 30px;
   line-height: 1;
   letter-spacing: -0.02em;
 }
@@ -289,7 +286,6 @@
 }
 .jd-chips-missing li {
   opacity: 0.72;
-  border-style: dashed;
 }
 
 .jd-list ul {
@@ -308,7 +304,6 @@
 .jd-list blockquote {
   margin: 8px 0 0;
   padding: 12px 16px;
-  border-left: 2px solid var(--accent);
   border-radius: 0 8px 8px 0;
   background: var(--surface);
   color: var(--prose-soft);
@@ -337,7 +332,6 @@
 }
 .ask-how-grid article {
   padding: 24px;
-  border: 1px solid var(--line);
   border-radius: var(--radius);
 }
 .ask-how-grid h3 {

@@ -31,8 +31,9 @@ export default function AboutPage() {
             <em>systems-minded.</em>
           </h1>
           <p>
-            I&apos;m Shivam Patil — SDE at Tata Consultancy Services, Mumbai. 1.5+ years on
-            high-throughput distributed systems and production backends.
+            I&apos;m Shivam Patil — <strong>SDE at Tata Consultancy Services</strong>, Mumbai.{" "}
+            <strong>1.5+ years</strong> on high-throughput distributed systems and production
+            backends.
           </p>
         </div>
         <AboutPhoto />
@@ -42,14 +43,16 @@ export default function AboutPage() {
         <div data-reveal>
           <p className="eyebrow">How I got here</p>
           <p>
-            B.Tech in Artificial Intelligence and Data Science, Pune University. In production that
-            has meant two things: the REST APIs and data pipelines under a high-traffic system, and
-            the retrieval and evaluation layers behind a production RAG chatbot.
+            <strong>B.Tech in Artificial Intelligence and Data Science</strong>, Pune University. In
+            production that has meant two things: the <strong>REST APIs and data pipelines</strong>{" "}
+            under a high-traffic system, and the <strong>retrieval and evaluation layers</strong>{" "}
+            behind a production RAG chatbot.
           </p>
           <p>
             Outside work I chase the same trade-offs at a different scale — a rate limiter that
-            stays correct under failure, an inference server that stays fast under load, an agent
-            runtime that stays auditable under autonomy.
+            stays <strong>correct under failure</strong>, an inference server that stays{" "}
+            <strong>fast under load</strong>, an agent runtime that stays{" "}
+            <strong>auditable under autonomy</strong>.
           </p>
         </div>
         <div data-reveal data-reveal-delay="2">

@@ -139,7 +139,10 @@
   /* The sticky header's height, as a token because two places need to agree on
      it: .header-inner sets it, and the homepage subtracts it to fill exactly
      the remaining viewport. A literal in both is a literal that drifts. */
-  --header-h: 76px;
+  /* 76px was a marketing-site header. At this type scale the bar only has to
+     clear a 28px avatar and a 12px nav label, and 56px does that with room
+     left — it reads as chrome rather than as a section of the page. */
+  --header-h: 56px;
   /* P17 — the theme customiser writes these two on <html>. Declared here so
      they always resolve: a var() with no fallback and no definition collapses
      the whole declaration, which would drop the radius entirely for anyone who
@@ -452,6 +455,33 @@ a {
   color: inherit;
   text-decoration: none;
 }
+/* EMPHASIS IN PROSE.
+
+   Body copy runs at --prose-soft, one step down from --fg, because a wall
+   of full-contrast text is harder to read than it looks. That leaves a step
+   free above it, and this is what spends it: <strong> goes UP to --fg and
+   to 600, so the marked phrase is the brightest thing in the paragraph.
+
+   Two levels rather than one is the whole mechanism. Bold alone against
+   body text of the same colour is a weak signal at 15px — the stems thicken
+   and little else changes. Bold plus a lift in value reads instantly, and it
+   is the pattern the reference design uses: muted sentence, bright phrase,
+   muted sentence.
+
+   Scoped to prose containers rather than set on the bare element, because
+   <strong> is also used inside cards, chips and stat readouts that set their
+   own colour deliberately — several of them on always-dark plates where
+   --fg is the wrong value. Those keep their own rules. */
+:is(p, li, dd, blockquote, figcaption) strong {
+  /* --accent-strong, not --fg. --fg is #f5f5f5 against prose at #e0e0e0 — a
+     21-point step that the eye reads as "possibly bold" rather than as an
+     emphasis. --accent-strong is pure #fff in dark and pure #000 in light, one
+     step further from the page in whichever direction "further" means, which is
+     what makes the marked phrase separate at a glance instead of on inspection.
+     It is the same token the solid button hover uses, for the same reason. */
+  color: var(--accent-strong);
+  font-weight: 600;
+}
 button {
   font: inherit;
 }
@@ -622,33 +652,46 @@ p {
 }
 h1,
 h2 {
-  letter-spacing: -0.055em;
-  line-height: 0.96;
+  /* See the scale note below: -0.055em was a 108px value. */
+  letter-spacing: -0.03em;
+  /* 0.96 was also a large-type value — sub-1 leading only works when the type
+     is big enough that the lines still clear each other. At 32-48px it needs
+     to come back above 1. */
+  line-height: 1.08;
 }
-/* Two-point slopes rather than a bare vw middle term.
+/* THE TYPE SCALE, compressed.
 
-   The old ramps were clamp(52px, 7.4vw, 108px) and clamp(40px, 5vw, 72px).
-   7.4vw only reaches 52px at a 703px viewport, so on every phone the floor
-   was the whole rule: "Build systems that hold up." rendered at a flat 52px
-   in a 328px-wide shell and broke after two words. The @media(max-width:620px)
-   override that was supposed to rescue it made it worse — clamp(51px, 16vw,
-   74px) resolves to 74px at 620px against the base's 52px, so the mobile rule
-   was 22px LARGER than the desktop rule at the same width and the floor never
-   dropped anywhere. Those overrides are deleted; this pair covers the range.
+   The ceilings were 108px for h1 and 72px for h2, against body copy at 15-17px
+   — a 6.4:1 jump from the smallest text on a page to the largest. That is
+   poster typography, and it has two costs on a page of prose. The obvious one
+   is that a heading at 108px and a paragraph at 16px do not read as two levels
+   of the same document; they read as two documents. The subtler one is
+   rhythm: every section opened with a shout and then dropped to a whisper, so
+   the eye reset at every boundary instead of moving down the page.
 
-   Each slope is solved between two named viewports — h1 runs 32px at 360px to
-   108px at 1440px, h2 runs 26px to 72px across the same span — so the size
-   moves continuously instead of snapping at a breakpoint.
+   The ratios below hold to roughly 3:1 top to bottom, which is the span the
+   reference design uses and about as far as one family can stretch before the
+   heading stops looking related to the text under it:
 
-   The rem term is load-bearing, not decoration: a middle term of pure vw
-   ignores the user's browser font size entirely, which fails WCAG 1.4.4 at
-   200% zoom. calc(rem + vw) keeps the text responding to both. */
+       h1   34 → 48px      h2   26 → 32px
+       h3   19 → 21px      body 15 → 17px
+
+   The two-point slope construction is unchanged and still matters. A bare `vw`
+   middle term ignores the user's browser font size entirely, which fails WCAG
+   1.4.4 at 200% zoom; `calc(rem + vw)` keeps the text responding to both. Each
+   slope is still solved between two named viewports — h1 runs 34px at 360px to
+   48px at 1440px — so the size moves continuously rather than snapping at a
+   breakpoint. §54's e2e assertion checks exactly that.
+
+   Tracking loosens as the sizes come down. -0.055em was tuned for 108px, where
+   it stops large type looking gappy; at 48px the same value closes the letters
+   up and reads as cramped. -0.03em is the equivalent at this scale. */
 h1 {
-  font-size: clamp(2rem, 0.42rem + 7.04vw, 108px);
+  font-size: clamp(2.125rem, 1.79rem + 0.93vw, 48px);
   font-weight: 700;
 }
 h2 {
-  font-size: clamp(1.625rem, 0.67rem + 4.26vw, 72px);
+  font-size: clamp(1.625rem, 1.48rem + 0.4vw, 32px);
   font-weight: 700;
 }
 /* The emphasis inside a heading.
@@ -666,7 +709,10 @@ h1 em,
 h2 em {
   font-weight: 400;
   font-style: normal;
-  letter-spacing: -0.03em;
+  /* Still one step looser than the heading around it — the pairing is what
+     carries the emphasis now that there is no second family. The heading moved
+     from -0.055em to -0.03em with the scale, so this moves with it. */
+  letter-spacing: -0.01em;
   /* Keeps the emphasis tied to the heading rather than floating off it. */
   color: var(--accent);
 }
@@ -674,7 +720,6 @@ h2 em {
   position: sticky;
   top: 0;
   z-index: 20;
-  border-bottom: 1px solid var(--header-border);
   background: var(--header-bg);
   backdrop-filter: blur(14px);
 }
@@ -1050,7 +1095,6 @@ h2 em {
   flex-direction: column;
   padding: 20px;
   overflow: hidden;
-  border: 1px solid rgba(17, 17, 16, 0.17);
   border-radius: var(--radius);
   background: #e8e8e8;
   /* --ink, not --fg. The accent backgrounds below (.project-cyan and friends)
@@ -1164,7 +1208,6 @@ h2 em {
 .project-card-bottom {
   margin-top: 22px;
   padding-top: 13px;
-  border-top: 1px solid rgba(17, 17, 16, 0.15);
   color: #626262;
 }
 .project-card-bottom span:last-child {
@@ -1281,11 +1324,9 @@ h2 em {
       transparent 68%
     ),
     var(--surface);
-  border-color: rgba(var(--card-accent, 77, 255, 106), 0.4);
   color: var(--fg);
 }
 :root[data-theme="dark"] .project-card:hover {
-  border-color: rgba(var(--card-accent, 77, 255, 106), 0.75);
   box-shadow:
     0 0 0 1px rgba(var(--card-accent, 77, 255, 106), 0.25),
     0 18px 44px rgba(0, 0, 0, 0.55),
@@ -1297,7 +1338,6 @@ h2 em {
   color: var(--prose-soft);
 }
 :root[data-theme="dark"] .project-card-bottom {
-  border-top-color: rgba(var(--card-accent, 77, 255, 106), 0.22);
   color: var(--muted);
 }
 :root[data-theme="dark"] .project-card-bottom span:last-child {
@@ -1583,13 +1623,11 @@ h2 em {
    to the page instead. `.principles` below stays: /about still renders it. */
 .principles {
   margin-top: 50px;
-  border-top: 1px solid var(--line);
 }
 .principles > div {
   display: grid;
   grid-template-columns: 50px 1fr;
   padding: 20px 0;
-  border-bottom: 1px solid var(--line);
 }
 .principles span {
   color: var(--muted);
@@ -1603,9 +1641,6 @@ h2 em {
   margin: 7px 0 0;
   color: var(--muted);
   font-size: 12px;
-}
-.site-footer {
-  border-top: 1px solid var(--line);
 }
 /* The last thing on every page, and now the only thing in the footer: one
    centred row of lowercase links. Lowercase and centred on purpose — it reads as the end of a document rather
@@ -1790,7 +1825,11 @@ h2 em {
 .project-hero h1 {
   max-width: 900px;
   margin: 0 0 24px;
-  font-size: clamp(2.125rem, 0.5rem + 7.22vw, 112px);
+  /* Was capped at 112px, from the old ramp. Case-study titles are the
+     longest headings on the site — several run past forty characters — so
+     this is the page where an oversized h1 cost the most lines. Tracks the
+     base h1 ceiling now. */
+  font-size: clamp(2.125rem, 1.79rem + 0.93vw, 48px);
 }
 .project-hero > div > p {
   max-width: 720px;
@@ -1807,7 +1846,6 @@ h2 em {
 }
 .project-tags span {
   padding: 6px 9px;
-  border: 1px solid rgba(17, 17, 16, 0.34);
   border-radius: 999px;
   font: 500 9px var(--font-label);
 }
@@ -1842,7 +1880,6 @@ h2 em {
   right: -9vw;
   top: -10vw;
   border-radius: 50%;
-  border: 1px solid rgba(17, 17, 16, 0.15);
   box-shadow:
     0 0 0 42px rgba(17, 17, 16, 0.04),
     0 0 0 94px rgba(17, 17, 16, 0.03),
@@ -1879,15 +1916,11 @@ h2 em {
 .implementation-section {
   padding-top: 0;
 }
-.implementation-list {
-  border-top: 1px solid var(--line);
-}
 .implementation-list article {
   display: grid;
   grid-template-columns: 74px 1fr;
   gap: 18px;
   padding: 28px 0;
-  border-bottom: 1px solid var(--line);
 }
 .implementation-list span {
   font: 500 10px var(--font-label);
@@ -2021,14 +2054,12 @@ h2 em {
   margin: 46px 0 0;
   padding: 0;
   list-style: none;
-  border-top: 1px solid var(--line);
 }
 .build-steps li {
   display: grid;
   grid-template-columns: 55px minmax(160px, 1fr) minmax(270px, 1.1fr);
   gap: 22px;
   padding: 23px 0;
-  border-bottom: 1px solid var(--line);
 }
 .step-index {
   color: var(--muted);
@@ -2102,7 +2133,7 @@ h2 em {
   align-self: end;
   grid-row: 2;
   grid-column: 2;
-  font-size: 36px;
+  font-size: 26px;
   transition: transform 0.2s;
 }
 .next-project a:hover .arrow-icon {
@@ -2125,18 +2156,18 @@ h2 em {
   align-items: center;
   gap: 18px;
   margin-top: 37px;
-  border-bottom: 2px solid var(--fg);
   padding-bottom: 8px;
-  font-size: clamp(20px, 3vw, 36px);
+  /* An email address set at 36px was competing with the h1 above it, and
+     -0.055em on an address makes the dots and @ crowd. */
+  font-size: clamp(18px, 1.6vw, 24px);
   font-weight: 700;
-  letter-spacing: -0.055em;
+  letter-spacing: -0.02em;
 }
 .email-display:hover {
   color: #616161;
 }
 .contact-body {
   padding: 70px 0 132px;
-  border-top: 1px solid var(--line);
 }
 .contact-callout {
   display: flex;
@@ -2158,14 +2189,10 @@ h2 em {
 .contact-grid-large h2 {
   margin: 0;
 }
-.service-list {
-  border-top: 1px solid var(--line);
-}
 .service-list article {
   display: grid;
   grid-template-columns: 46px 1fr;
   padding: 21px 0;
-  border-bottom: 1px solid var(--line);
 }
 .service-list span {
   color: var(--muted);
@@ -2260,7 +2287,6 @@ h2 em {
 }
 .contact-form-success {
   padding: 40px;
-  border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--warm);
 }
@@ -2304,7 +2330,6 @@ h2 em {
 }
 .channel-list {
   margin: 108px 0 96px;
-  border-top: 1px solid var(--line);
 }
 /* The row used to animate `padding-inline` from 0 to 10px on hover.
 
@@ -2324,7 +2349,6 @@ h2 em {
   justify-content: space-between;
   gap: 20px;
   padding: 24px 0;
-  border-bottom: 1px solid var(--line);
   transition:
     background 0.28s ease-out,
     border-color 0.28s ease-out;
@@ -2399,7 +2423,6 @@ h2 em {
   justify-content: space-between;
   gap: 40px;
   padding: 48px;
-  border: 1px solid var(--fg);
   border-radius: var(--radius);
 }
 .resume-download h2 {
@@ -2558,7 +2581,6 @@ h2 em {
     padding-block: 76px;
   }
   .project-side-label {
-    border-bottom: 1px solid var(--line);
     padding-bottom: 11px;
   }
   .project-lede {
@@ -2718,7 +2740,6 @@ h2 em {
   position: relative;
   aspect-ratio: 4/5;
   overflow: hidden;
-  border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--warm);
 }
@@ -2733,7 +2754,7 @@ h2 em {
   height: 100%;
   place-items: center;
   background: var(--ink);
-  font: 500 64px var(--font-label);
+  font: 500 40px var(--font-label);
   letter-spacing: -0.06em;
   color: var(--lime);
 }
@@ -2742,7 +2763,6 @@ h2 em {
   grid-template-columns: 1fr 1fr;
   gap: 60px;
   padding-bottom: 90px;
-  border-top: 1px solid var(--line);
   padding-top: 70px;
 }
 .about-page-story p {
@@ -2767,7 +2787,7 @@ h2 em {
 }
 .about-page-cta h2 {
   margin: 0;
-  font-size: clamp(26px, 3vw, 34px);
+  font-size: clamp(1.625rem, 1.48rem + 0.4vw, 32px);
 }
 .about-page-cta h2 em {
   color: var(--lime);
@@ -2795,12 +2815,10 @@ h2 em {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 22px;
   padding: 70px 0 132px;
-  border-top: 1px solid var(--line);
   margin-top: 8px;
 }
 .skill-group {
   padding: 28px;
-  border: 1px solid var(--surface-line);
   border-radius: var(--radius);
   background: var(--surface);
 }
@@ -2819,7 +2837,6 @@ h2 em {
 }
 .skill-chip-list li {
   padding: 7px 12px;
-  border: 1px solid var(--chip-line);
   border-radius: 999px;
   background: var(--chip-bg);
   font: 500 11px var(--font-label);
@@ -2831,14 +2848,12 @@ h2 em {
 }
 .skill-chip-list li:hover {
   transform: translateY(-2px);
-  border-color: var(--fg);
   background: var(--warm);
 }
 
 /* ===== experience page ===== */
 .timeline {
   padding: 70px 0 20px;
-  border-top: 1px solid var(--line);
   margin-top: 8px;
 }
 .timeline-item {
@@ -2890,7 +2905,6 @@ h2 em {
 }
 .education-block {
   padding: 40px 0 132px;
-  border-top: 1px solid var(--line);
 }
 .education-block h2 {
   margin: 0 0 24px;
@@ -2917,7 +2931,6 @@ h2 em {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 22px;
   padding: 70px 0 132px;
-  border-top: 1px solid var(--line);
   margin-top: 8px;
 }
 .cert-card {
@@ -2925,7 +2938,6 @@ h2 em {
   flex-direction: column;
   gap: 14px;
   padding: 28px;
-  border: 1px solid var(--surface-line);
   border-radius: var(--radius);
   background: var(--surface);
   transition:
@@ -2935,7 +2947,6 @@ h2 em {
 }
 .cert-card:hover {
   transform: translateY(-4px);
-  border-color: var(--fg);
   box-shadow: 0 16px 32px rgba(17, 17, 16, 0.12);
 }
 .cert-card h2 {
@@ -2981,7 +2992,6 @@ h2 em {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 18px;
   padding: 70px 0 132px;
-  border-top: 1px solid var(--line);
   margin-top: 8px;
 }
 .achievement-card {
@@ -3015,13 +3025,11 @@ h2 em {
 /* ===== resume page ===== */
 .resume-page-embed {
   padding: 70px 0 132px;
-  border-top: 1px solid var(--line);
   margin-top: 8px;
 }
 .resume-frame-wrap {
   overflow: hidden;
   margin-bottom: 24px;
-  border: 1px solid var(--line);
   border-radius: var(--radius);
   background: #fff;
 }
@@ -3176,7 +3184,6 @@ h2 em {
   position: relative;
   aspect-ratio: 4 / 3;
   overflow: hidden;
-  border: 1px solid var(--line);
   border-radius: calc(var(--radius) * 0.5);
   padding: 0;
   cursor: zoom-in;
@@ -3267,12 +3274,16 @@ h2 em {
   justify-content: space-between;
   gap: 24px;
   padding: 28px;
-  border: 1px solid var(--line);
   border-radius: var(--radius);
   color: var(--fg);
 }
-.blog-list-item:hover {
-  border-color: var(--fg);
+/* Was a border-colour shift, which is the one thing this pass removes.
+   A background lift says the same thing and is not a line. */
+.blog-list-item {
+  transition: background 0.28s ease-out;
+}
+.blog-list-item:is(:hover, :focus-within) {
+  background: var(--surface);
 }
 .blog-list-item h2 {
   margin: 6px 0 8px;
@@ -3350,12 +3361,14 @@ h2 em {
   align-items: flex-start;
   gap: 16px;
   padding: 22px 24px;
-  border: 1px solid var(--line);
   border-radius: var(--radius);
   color: var(--fg);
 }
-.search-result-item:hover {
-  border-color: var(--fg);
+.search-result-item {
+  transition: background 0.28s ease-out;
+}
+.search-result-item:is(:hover, :focus-within) {
+  background: var(--surface);
 }
 .search-result-item h2 {
   margin: 0 0 6px;
