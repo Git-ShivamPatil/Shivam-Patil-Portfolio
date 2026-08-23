@@ -15,8 +15,8 @@
 }
 
 .newsletter-page h1 {
-  margin: 0 0 20px;
-  font-size: clamp(2.125rem, 1.79rem + 0.93vw, 48px);
+  margin: 0 0 14px;
+  font-size: clamp(1.75rem, 1.53rem + 0.62vw, 40px);
   line-height: 1.08;
   letter-spacing: -0.03em;
 }
@@ -24,8 +24,8 @@
 .newsletter-page-copy {
   margin: 0 0 36px;
   color: var(--prose-fg);
-  font-size: 17px;
-  line-height: 1.65;
+  font-size: 15.5px;
+  line-height: 1.52;
 }
 
 .newsletter-page-actions {
@@ -35,10 +35,10 @@
 }
 
 .newsletter-page-note {
-  margin: 28px 0 0;
+  margin: 20px 0 0;
   color: var(--prose-soft);
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 @media (max-width: 700px) {

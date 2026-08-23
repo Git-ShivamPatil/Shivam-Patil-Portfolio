@@ -25,13 +25,13 @@
   padding: clamp(32px, 9vw, 58px) 0 clamp(28px, 4vw, 44px);
 }
 .path-hero h1 {
-  margin: 10px 0 16px;
+  margin: 7px 0 12px;
 }
 .path-hero > p {
   max-width: var(--path-measure);
   color: var(--prose-soft);
-  font-size: clamp(15px, 0.9rem + 0.3vw, 18px);
-  line-height: 1.68;
+  font-size: clamp(14px, 0.85rem + 0.2vw, 16px);
+  line-height: 1.52;
 }
 
 .path-section {
@@ -43,10 +43,10 @@
 }
 .path-section > p {
   max-width: var(--path-measure);
-  margin: 0 0 22px;
+  margin: 0 0 16px;
   color: var(--prose-soft);
-  font-size: 14.5px;
-  line-height: 1.65;
+  font-size: 13.5px;
+  line-height: 1.52;
 }
 
 /* ---- stacked link rows, each with its own code ---- */
@@ -76,7 +76,7 @@
 }
 .link-row-name {
   display: block;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
   letter-spacing: -0.02em;
 }
@@ -92,7 +92,7 @@
   max-width: 52ch;
   color: var(--prose-soft);
   font-size: 12.5px;
-  line-height: 1.55;
+  line-height: 1.48;
 }
 .link-row-code {
   display: inline-block;
@@ -135,14 +135,14 @@
 }
 .path-card h3 {
   margin: 0 0 6px;
-  font-size: 17px;
+  font-size: 15.5px;
   letter-spacing: -0.03em;
 }
 .path-card p {
-  margin: 0 0 12px;
+  margin: 0 0 9px;
   color: var(--prose-soft);
-  font-size: 13px;
-  line-height: 1.6;
+  font-size: 12.5px;
+  line-height: 1.5;
 }
 .path-card-links {
   display: flex;
@@ -172,7 +172,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  margin-top: 14px;
+  margin-top: 10px;
 }
 .invite-form input {
   flex: 1 1 220px;
@@ -183,7 +183,7 @@
   background: var(--bg);
   color: var(--fg);
   font: inherit;
-  font-size: 15px;
+  font-size: 14px;
 }
 .invite-form input:focus-visible {
   outline: 2px solid var(--fg);
@@ -197,14 +197,14 @@
   padding: clamp(24px, 5vw, 48px);
   border-radius: var(--radius);
   background: var(--surface);
-  text-align: center;
+  text-align: left;
 }
 .ai-plate svg {
   width: min(340px, 100%);
   height: auto;
 }
 .ai-caption {
-  margin: 22px 0 6px;
+  margin: 16px 0 6px;
   font-family: var(--font-app);
   font-size: clamp(1.25rem, 0.9rem + 1.6vw, 2rem);
   font-style: italic;
@@ -219,13 +219,13 @@
 /* ---- theelderbrother ---- */
 .tebro-quote {
   max-width: var(--path-measure);
-  margin: 0 0 22px;
+  margin: 0 0 16px;
   padding-left: 18px;
   color: var(--fg);
   font-family: var(--font-app);
   font-size: clamp(1.05rem, 0.9rem + 0.8vw, 1.5rem);
   font-style: italic;
-  line-height: 1.5;
+  line-height: 1.45;
 }
 .tebro-topics {
   display: grid;
@@ -248,7 +248,7 @@
   padding: 12px 14px;
   border-radius: 10px;
   background: var(--surface);
-  font-size: 13.5px;
+  font-size: 13px;
 }
 .tebro-topics span {
   color: var(--accent);

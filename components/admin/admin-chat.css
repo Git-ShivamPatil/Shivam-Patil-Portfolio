@@ -42,7 +42,7 @@
   border-color: var(--fg);
 }
 .admin-chat-list strong {
-  font-size: 13px;
+  font-size: 12.5px;
 }
 .admin-chat-list small,
 .admin-chat-list span {

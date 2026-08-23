@@ -94,11 +94,11 @@
 .disclosure-body {
   padding: 0 18px 18px;
   color: var(--prose-soft, var(--muted));
-  line-height: 1.65;
+  line-height: 1.52;
 }
 
 .disclosure-body > * + * {
-  margin-top: 12px;
+  margin-top: 9px;
 }
 
 .disclosure-body ul,

@@ -33,14 +33,14 @@
     sans-serif;
 }
 .sec-verdict-head {
-  margin: 10px 0 0;
+  margin: 7px 0 0;
   color: var(--muted);
   font: 400 11.5px var(--font-label);
   overflow-wrap: anywhere;
 }
 
 .sec-faults {
-  margin: 12px 0 0;
+  margin: 9px 0 0;
   padding: 0;
   list-style: none;
   display: grid;
@@ -56,7 +56,7 @@
 }
 
 .sec-table-wrap {
-  margin-top: 16px;
+  margin-top: 12px;
   overflow-x: auto;
   border-radius: var(--radius);
   background: var(--surface);
@@ -95,7 +95,7 @@
 
 .sec-note,
 .sec-empty {
-  margin: 16px 0 0;
+  margin: 12px 0 0;
   color: var(--muted);
   font:
     400 13.5px/1.75 var(--font-manrope),
@@ -141,14 +141,14 @@
     sans-serif;
 }
 .sec-demo-blurb {
-  margin: 0 0 12px;
+  margin: 0 0 9px;
   color: var(--muted);
   font:
     400 13px/1.7 var(--font-manrope),
     sans-serif;
 }
 .sec-demo-verdict {
-  margin: 0 0 12px;
+  margin: 0 0 9px;
   color: var(--accent-strong);
   font: 600 12px var(--font-label);
   text-transform: uppercase;

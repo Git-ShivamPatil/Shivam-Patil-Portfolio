@@ -28,7 +28,7 @@
   background: var(--bg);
   color: var(--fg);
   font: inherit;
-  font-size: 14px;
+  font-size: 13px;
   outline: none;
   transition:
     border-color 0.2s,
@@ -84,12 +84,12 @@
 .newsletter-done strong {
   display: block;
   margin-bottom: 6px;
-  font-size: 16px;
+  font-size: 15px;
 }
 .newsletter-done p {
   margin: 0;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12.5px;
 }
 .push-toggle {
   display: inline-flex;

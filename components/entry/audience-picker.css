@@ -54,7 +54,7 @@
 
 .audience-picker-label {
   grid-area: label;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
   letter-spacing: -0.02em;
 }
@@ -62,11 +62,11 @@
   grid-area: blurb;
   color: var(--prose-soft, var(--muted));
   font-size: 12.5px;
-  line-height: 1.5;
+  line-height: 1.45;
 }
 .audience-picker-arrow {
   grid-area: arrow;
-  font-size: 18px;
+  font-size: 16px;
   color: var(--muted);
   transition: transform 0.2s;
 }

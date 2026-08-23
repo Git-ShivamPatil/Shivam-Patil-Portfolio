@@ -76,6 +76,16 @@
   text-align: left;
   white-space: nowrap;
 }
+/* A query result's column types are only known at runtime, so the numeric
+   cells are marked by the component from the VALUE's type — not guessed from
+   its rendered text, which would right-align a string that happens to look
+   like a number. See olap-console.tsx.
+
+   After the rule above, so it overrides the shared left default. */
+.olap-result td.is-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
 .olap-result th {
   color: var(--muted);
   font: 600 10px var(--font-label);

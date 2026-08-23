@@ -37,10 +37,10 @@
 .compute-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 12.5px;
 }
 .compute-table caption {
-  margin-bottom: 12px;
+  margin-bottom: 9px;
   color: var(--prose-soft);
   font-size: 12px;
   text-align: left;
@@ -49,6 +49,20 @@
 .compute-table td {
   padding: 11px 12px;
   text-align: left;
+}
+/* Columns two and three are Time and "vs JS" — numbers meant to be compared
+   down the column, so they align on their right edge. One (Backend), four
+   (Pixels match) and five (Notes) are words and stay left, headers included:
+   a header belongs over its own column, not over the table's default.
+
+   Placed AFTER the `th, td` rule above rather than merged into it, because
+   these are the exceptions to that rule and have to win on order. */
+.compute-table thead th:nth-child(2),
+.compute-table thead th:nth-child(3),
+.compute-table td:nth-child(2),
+.compute-table td:nth-child(3) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 .compute-table thead th {
   color: var(--muted);
@@ -72,7 +86,7 @@
   margin: 0;
   color: var(--prose-soft);
   font-size: 12px;
-  line-height: 1.7;
+  line-height: 1.55;
 }
 
 .compute-canvas {

@@ -8,21 +8,21 @@
 }
 .log-hero h1 {
   max-width: 16ch;
-  margin: 0 0 32px;
+  margin: 0 0 23px;
 }
 .log-lede {
   max-width: 62ch;
-  margin: 0 0 18px;
-  font-size: 18px;
-  line-height: 1.65;
+  margin: 0 0 13px;
+  font-size: 16px;
+  line-height: 1.52;
 }
 .log-note {
   max-width: 62ch;
-  margin: 28px 0 0;
+  margin: 20px 0 0;
   padding-top: 20px;
   color: var(--muted);
-  font-size: 15px;
-  line-height: 1.6;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .log-list {
@@ -36,7 +36,7 @@
 }
 
 .log-entry {
-  margin: 0 0 20px;
+  margin: 0 0 14px;
   padding: 40px 44px;
   border-radius: var(--radius);
   /* Explicit colour on a pale surface. Inheriting --fg here has produced
@@ -48,14 +48,14 @@
 }
 
 .log-entry__head {
-  margin-bottom: 28px;
+  margin-bottom: 20px;
 }
 .log-entry__meta {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 9px;
   color: var(--muted);
   font: 500 11px var(--font-label);
   text-transform: uppercase;
@@ -115,7 +115,7 @@
 
 .log-entry__lesson {
   max-width: 68ch;
-  margin: 28px 0 0;
+  margin: 20px 0 0;
   padding-top: 22px;
   font-size: 15px;
   font-style: italic;

@@ -465,7 +465,7 @@ body {
   background: var(--bg);
   color: var(--fg);
   font-family: var(--font-app);
-  line-height: 1.5;
+  line-height: 1.45;
   -webkit-font-smoothing: antialiased;
   transition:
     background 0.2s,
@@ -554,7 +554,7 @@ button {
   border-radius: 50%;
   background: var(--ink);
   color: var(--lime);
-  font-size: 18px;
+  font-size: 16px;
   box-shadow: 0 8px 20px rgba(17, 17, 16, 0.25);
   transition: transform 0.2s;
 }
@@ -606,7 +606,7 @@ main,
   display: flex;
   align-items: center;
   gap: 9px;
-  margin: 0 0 18px;
+  margin: 0 0 13px;
   color: var(--muted);
   font: 500 10px/1.1 var(--font-label);
   letter-spacing: 0.1em;
@@ -699,8 +699,11 @@ h2 {
    reference design uses and about as far as one family can stretch before the
    heading stops looking related to the text under it:
 
-       h1   34 → 48px      h2   26 → 32px
-       h3   19 → 21px      body 15 → 17px
+       h1   28 → 40px      h2   22 → 27px
+       h3   17 → 19px      body 13 → 15px
+
+   Brought down a second time on the same reasoning: at a 626px column a 48px
+   heading is still shouting across a measure only 75 characters wide.
 
    The two-point slope construction is unchanged and still matters. A bare `vw`
    middle term ignores the user's browser font size entirely, which fails WCAG
@@ -713,11 +716,11 @@ h2 {
    it stops large type looking gappy; at 48px the same value closes the letters
    up and reads as cramped. -0.03em is the equivalent at this scale. */
 h1 {
-  font-size: clamp(2.125rem, 1.79rem + 0.93vw, 48px);
+  font-size: clamp(1.75rem, 1.53rem + 0.62vw, 40px);
   font-weight: 700;
 }
 h2 {
-  font-size: clamp(1.625rem, 1.48rem + 0.4vw, 32px);
+  font-size: clamp(1.375rem, 1.26rem + 0.32vw, 27px);
   font-weight: 700;
 }
 /* The emphasis inside a heading.
@@ -959,7 +962,7 @@ h2 em {
   z-index: 2;
 }
 .hero h1 {
-  margin: 0 0 24px;
+  margin: 0 0 17px;
 }
 .hero h1 em {
   color: var(--hero-em);
@@ -1111,12 +1114,12 @@ h2 em {
   max-width: 720px;
 }
 .section-heading h2 {
-  margin: 0 0 24px;
+  margin: 0 0 17px;
 }
 .section-heading > p:last-child {
   color: var(--muted);
-  font-size: 14px;
-  line-height: 1.7;
+  font-size: 13px;
+  line-height: 1.55;
 }
 /* auto-fit, not a fixed column count. `repeat(2, minmax(0, 1fr))` gave two
    579px cards on the 1180px shell and, whenever the filter narrowed the set to
@@ -1216,7 +1219,7 @@ h2 em {
   aspect-ratio: 1;
   border: 1px solid rgba(17, 17, 16, 0.3);
   border-radius: 50%;
-  font-size: 15px;
+  font-size: 14px;
   transition: background 0.2s;
 }
 .project-card:is(:hover, :focus-visible) .project-arrow {
@@ -1253,10 +1256,10 @@ h2 em {
   margin: 0;
   color: #525252;
   font-size: 12px;
-  line-height: 1.65;
+  line-height: 1.52;
 }
 .project-card-bottom {
-  margin-top: 22px;
+  margin-top: 16px;
   padding-top: 13px;
   color: #626262;
 }
@@ -1735,7 +1738,7 @@ h2 em {
   font: 500 9px var(--font-label);
 }
 .principles strong {
-  font-size: 13px;
+  font-size: 12.5px;
 }
 .principles p {
   grid-column: 2;
@@ -1754,18 +1757,21 @@ h2 em {
    every page that was there out of habit. */
 .footer-inner {
   display: flex;
-  justify-content: center;
+  /* Left, with the rest of the site. The row was centred while every other
+     block on the page starts at the content column's left edge, so it read as
+     the one element that had been placed by hand. */
+  justify-content: flex-start;
   /* Reduced from 34/40 by the 10px the links now carry themselves, so the row
      occupies the same total height it did before the tap targets grew. */
   padding: 24px 0 30px;
   color: var(--footer-fg);
-  text-align: center;
+  text-align: left;
 }
 
 .footer-inner-meta {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: flex-start;
   /* Column gap is wide because there is no separator between the links — a `·`
      between each pair would be four more marks on the quietest row of the page,
      and 26px of space says the same thing while saying nothing else.
@@ -1775,7 +1781,7 @@ h2 em {
      between it and the first. Adding a row gap on top of that would double it. */
   column-gap: 26px;
   row-gap: 0;
-  font-size: 13px;
+  font-size: 12.5px;
 }
 .footer-inner-meta a {
   color: var(--fg);
@@ -1910,7 +1916,7 @@ h2 em {
 .project-hero-meta {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: 17px;
   color: #545454;
   font: 500 10px var(--font-label);
   font-variant-numeric: tabular-nums;
@@ -1925,19 +1931,19 @@ h2 em {
    any title longer than five words. */
 .project-hero h1 {
   max-width: 900px;
-  margin: 0 0 24px;
+  margin: 0 0 17px;
   /* Was capped at 112px, from the old ramp. Case-study titles are the
      longest headings on the site — several run past forty characters — so
      this is the page where an oversized h1 cost the most lines. Tracks the
      base h1 ceiling now. */
-  font-size: clamp(2.125rem, 1.79rem + 0.93vw, 48px);
+  font-size: clamp(1.75rem, 1.53rem + 0.62vw, 40px);
 }
 .project-hero > div > p {
   max-width: 720px;
-  margin-bottom: 32px;
+  margin-bottom: 23px;
   color: #383838;
   font-size: 19px;
-  line-height: 1.65;
+  line-height: 1.52;
 }
 .project-tags {
   display: flex;
@@ -1962,7 +1968,7 @@ h2 em {
   flex-direction: column;
   gap: 8px;
   width: max-content;
-  margin-top: 30px;
+  margin-top: 22px;
 }
 .project-outcome span {
   color: #4e4e4e;
@@ -1971,7 +1977,7 @@ h2 em {
   letter-spacing: 0.07em;
 }
 .project-outcome strong {
-  font-size: 16px;
+  font-size: 15px;
   letter-spacing: -0.05em;
 }
 .hero-noise {
@@ -2005,13 +2011,13 @@ h2 em {
   max-width: 800px;
 }
 .project-main h2 {
-  margin: 0 0 25px;
+  margin: 0 0 18px;
 }
 .project-lede {
   max-width: 720px;
   margin: 0;
   font-size: 23px;
-  line-height: 1.57;
+  line-height: 1.48;
   letter-spacing: -0.025em;
 }
 .implementation-section {
@@ -2029,15 +2035,15 @@ h2 em {
 }
 .implementation-list h3 {
   margin: 0 0 9px;
-  font-size: 18px;
+  font-size: 16px;
   letter-spacing: -0.04em;
 }
 .implementation-list p {
   margin: 0;
   max-width: 550px;
   color: var(--prose-soft);
-  font-size: 14px;
-  line-height: 1.7;
+  font-size: 13px;
+  line-height: 1.55;
 }
 .architecture-section {
   padding: 60px 0;
@@ -2063,8 +2069,8 @@ h2 em {
   max-width: 320px;
   margin: 0;
   color: #bababa;
-  font-size: 13px;
-  line-height: 1.65;
+  font-size: 12.5px;
+  line-height: 1.52;
 }
 .architecture-flow {
   display: flex;
@@ -2136,7 +2142,7 @@ h2 em {
   border-left: 5px solid #6b6b6b;
 }
 .architecture-note {
-  margin: 34px 0 0;
+  margin: 24px 0 0;
   color: #8c8c8c;
   font: 400 9px var(--font-label);
   text-transform: uppercase;
@@ -2148,8 +2154,8 @@ h2 em {
 .guide-intro {
   max-width: 555px;
   color: var(--prose-soft);
-  font-size: 14px;
-  line-height: 1.7;
+  font-size: 13px;
+  line-height: 1.55;
 }
 .build-steps {
   margin: 46px 0 0;
@@ -2169,14 +2175,14 @@ h2 em {
 }
 .step-copy h3 {
   margin: 0 0 7px;
-  font-size: 14px;
+  font-size: 13px;
   letter-spacing: -0.03em;
 }
 .step-copy p {
   margin: 0;
   color: var(--prose-soft);
   font-size: 12px;
-  line-height: 1.62;
+  line-height: 1.5;
 }
 .build-step-command {
   position: relative;
@@ -2244,13 +2250,13 @@ h2 em {
   padding: 66px 0 58px;
 }
 .contact-hero h1 {
-  margin: 0 0 28px;
+  margin: 0 0 20px;
 }
 .contact-hero > p {
   max-width: 630px;
   color: var(--prose-fg);
-  font-size: 18px;
-  line-height: 1.7;
+  font-size: 16px;
+  line-height: 1.55;
 }
 .email-display {
   display: inline-flex;
@@ -2301,14 +2307,14 @@ h2 em {
 }
 .service-list h3 {
   margin: 0 0 7px;
-  font-size: 15px;
+  font-size: 14px;
   letter-spacing: -0.04em;
 }
 .service-list p {
   margin: 0;
   color: var(--prose-soft);
   font-size: 12px;
-  line-height: 1.65;
+  line-height: 1.52;
 }
 .contact-quick {
   display: flex;
@@ -2352,11 +2358,11 @@ h2 em {
 .contact-quick-channels {
   display: grid;
   gap: 8px;
-  margin: 22px 0 0;
+  margin: 16px 0 0;
   padding: 0;
   list-style: none;
   color: var(--ink);
-  font-size: 15px;
+  font-size: 14px;
 }
 .contact-quick-channels a {
   color: inherit;
@@ -2426,8 +2432,8 @@ h2 em {
   max-width: 425px;
   margin: 0 0 6px;
   color: var(--prose-fg);
-  font-size: 16px;
-  line-height: 1.7;
+  font-size: 15px;
+  line-height: 1.55;
 }
 .channel-list {
   margin: 60px 0 52px;
@@ -2507,7 +2513,7 @@ h2 em {
   letter-spacing: 0.08em;
 }
 .channel-row strong {
-  font-size: 15px;
+  font-size: 14px;
   letter-spacing: -0.04em;
 }
 .channel-row p {
@@ -2530,7 +2536,7 @@ h2 em {
   margin: 0;
 }
 .resume-download .eyebrow {
-  margin-bottom: 17px;
+  margin-bottom: 12px;
 }
 /* `.reveal` is used by above-the-fold content — the hero copy and hero visual —
    so unlike the scroll-triggered [data-reveal] sections it runs immediately on
@@ -2597,7 +2603,7 @@ h2 em {
     padding-bottom: 50px;
   }
   .project-hero > div > p {
-    margin-bottom: 22px;
+    margin-bottom: 16px;
   }
   .build-steps li {
     grid-template-columns: 42px 1fr;
@@ -2656,7 +2662,7 @@ h2 em {
     padding: 46px 0;
   }
   .section-heading > p:last-child {
-    font-size: 13px;
+    font-size: 12.5px;
   }
   .project-card {
     min-height: 216px;
@@ -2668,13 +2674,13 @@ h2 em {
     margin-bottom: 51px;
   }
   .project-hero > div > p {
-    font-size: 15px;
+    font-size: 14px;
   }
   .project-tags {
     max-width: 100%;
   }
   .project-outcome strong {
-    font-size: 14px;
+    font-size: 13px;
   }
   .project-content {
     grid-template-columns: 1fr;
@@ -2701,7 +2707,7 @@ h2 em {
     display: block;
   }
   .architecture-heading > p {
-    margin-top: 22px;
+    margin-top: 16px;
   }
   .architecture-flow {
     margin-top: 39px;
@@ -2716,7 +2722,7 @@ h2 em {
     padding-bottom: 78px;
   }
   .build-steps {
-    margin-top: 32px;
+    margin-top: 23px;
   }
   .build-steps li {
     grid-template-columns: 28px 1fr;
@@ -2724,7 +2730,7 @@ h2 em {
     padding: 22px 0;
   }
   .step-copy h3 {
-    font-size: 13px;
+    font-size: 12.5px;
   }
   .build-step-command {
     grid-column: 1/-1;
@@ -2743,7 +2749,7 @@ h2 em {
     padding: 42px 0;
   }
   .contact-hero > p {
-    font-size: 15px;
+    font-size: 14px;
   }
   .email-display {
     gap: 10px;
@@ -2793,7 +2799,7 @@ h2 em {
     display: none;
   }
   .channel-row strong {
-    font-size: 13px;
+    font-size: 12.5px;
     overflow-wrap: anywhere;
   }
   .resume-download {
@@ -2808,14 +2814,14 @@ h2 em {
   padding: 66px 0 32px;
 }
 .page-hero h1 {
-  margin: 0 0 24px;
+  margin: 0 0 17px;
 }
 .page-hero > p {
   max-width: 630px;
   margin: 0;
   color: var(--hero-intro-fg);
-  font-size: 18px;
-  line-height: 1.7;
+  font-size: 16px;
+  line-height: 1.55;
 }
 
 /* ===== about page ===== */
@@ -2828,14 +2834,14 @@ h2 em {
   padding: 52px 0 32px;
 }
 .about-hero h1 {
-  margin: 0 0 24px;
+  margin: 0 0 17px;
 }
 .about-hero > .about-hero-copy > p {
   max-width: 480px;
   margin: 0;
   color: var(--hero-intro-fg);
-  font-size: 18px;
-  line-height: 1.7;
+  font-size: 16px;
+  line-height: 1.55;
 }
 .about-photo-frame {
   position: relative;
@@ -2867,10 +2873,10 @@ h2 em {
   padding-top: 70px;
 }
 .about-page-story p {
-  margin: 0 0 20px;
+  margin: 0 0 14px;
   color: var(--prose-fg);
-  font-size: 16px;
-  line-height: 1.75;
+  font-size: 15px;
+  line-height: 1.55;
 }
 .about-page-story p:last-child {
   margin-bottom: 0;
@@ -2888,7 +2894,7 @@ h2 em {
 }
 .about-page-cta h2 {
   margin: 0;
-  font-size: clamp(1.625rem, 1.48rem + 0.4vw, 32px);
+  font-size: clamp(1.375rem, 1.26rem + 0.32vw, 27px);
 }
 .about-page-cta h2 em {
   color: var(--lime);
@@ -2924,7 +2930,7 @@ h2 em {
   background: var(--surface);
 }
 .skill-group h2 {
-  margin: 0 0 18px;
+  margin: 0 0 13px;
   font-size: 19px;
   letter-spacing: -0.04em;
 }
@@ -2971,19 +2977,19 @@ h2 em {
   letter-spacing: 0.06em;
 }
 .timeline-item h2 {
-  margin: 10px 0 4px;
+  margin: 7px 0 6px;
   font-size: 22px;
   letter-spacing: -0.04em;
 }
 .timeline-org {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12.5px;
 }
 .timeline-highlights {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin: 18px 0 0;
+  margin: 13px 0 0;
   padding: 0;
   list-style: none;
 }
@@ -2991,8 +2997,8 @@ h2 em {
   position: relative;
   padding-left: 18px;
   color: var(--prose-fg);
-  font-size: 14px;
-  line-height: 1.65;
+  font-size: 13px;
+  line-height: 1.52;
 }
 .timeline-highlights li::before {
   content: "";
@@ -3008,7 +3014,7 @@ h2 em {
   padding: 40px 0 72px;
 }
 .education-block h2 {
-  margin: 0 0 24px;
+  margin: 0 0 17px;
 }
 .education-item {
   display: grid;
@@ -3016,14 +3022,14 @@ h2 em {
   gap: 30px;
 }
 .education-item h3 {
-  margin: 10px 0 4px;
-  font-size: 18px;
+  margin: 7px 0 6px;
+  font-size: 16px;
   letter-spacing: -0.03em;
 }
 .education-item p {
   margin: 0;
   color: var(--prose-soft);
-  font-size: 13px;
+  font-size: 12.5px;
 }
 
 /* ===== certifications page ===== */
@@ -3057,7 +3063,7 @@ h2 em {
 }
 .cert-issuer {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12.5px;
 }
 .cert-year {
   color: var(--muted);
@@ -3104,7 +3110,7 @@ h2 em {
 }
 .achievement-card strong {
   display: block;
-  margin-bottom: 12px;
+  margin-bottom: 9px;
   font: 500 32px var(--font-label);
   letter-spacing: -0.05em;
   color: var(--lime);
@@ -3112,12 +3118,12 @@ h2 em {
 .achievement-card p {
   margin: 0;
   color: #cfcfcf;
-  font-size: 13px;
-  line-height: 1.6;
+  font-size: 12.5px;
+  line-height: 1.5;
 }
 .achievement-source {
   display: block;
-  margin-top: 16px;
+  margin-top: 12px;
   color: #8c8c8c;
   font: 500 9px var(--font-label);
   text-transform: uppercase;
@@ -3131,7 +3137,7 @@ h2 em {
 }
 .resume-frame-wrap {
   overflow: hidden;
-  margin-bottom: 24px;
+  margin-bottom: 17px;
   border-radius: var(--radius);
   background: #fff;
 }
@@ -3142,9 +3148,9 @@ h2 em {
   border: 0;
 }
 .resume-fallback {
-  margin: 0 0 28px;
+  margin: 0 0 20px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12.5px;
 }
 .resume-page-actions {
   display: flex;
@@ -3161,17 +3167,17 @@ h2 em {
   padding: 44px 0;
 }
 .error-page .eyebrow {
-  margin-bottom: 18px;
+  margin-bottom: 13px;
 }
 .error-page h1 {
-  margin: 0 0 20px;
+  margin: 0 0 14px;
 }
 .error-page p {
   max-width: 520px;
-  margin: 0 0 30px;
+  margin: 0 0 22px;
   color: var(--prose-fg);
-  font-size: 16px;
-  line-height: 1.7;
+  font-size: 15px;
+  line-height: 1.55;
 }
 
 @media (max-width: 900px) {
@@ -3280,7 +3286,7 @@ h2 em {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 12px;
-  margin-top: 20px;
+  margin-top: 14px;
 }
 .image-gallery-thumb {
   position: relative;
@@ -3340,7 +3346,7 @@ h2 em {
   border: 1px solid rgba(255, 255, 255, 0.3);
   background: rgba(255, 255, 255, 0.08);
   color: #fff;
-  font-size: 16px;
+  font-size: 15px;
   cursor: pointer;
 }
 .image-gallery-nav {
@@ -3393,7 +3399,7 @@ h2 em {
   letter-spacing: -0.03em;
 }
 .blog-list-item p {
-  margin: 0 0 12px;
+  margin: 0 0 9px;
   color: var(--muted);
   max-width: 620px;
 }
@@ -3410,6 +3416,7 @@ h2 em {
   color: var(--muted);
 }
 .blog-empty {
+  text-align: left;
   padding: 32px 0;
   text-align: center;
   color: var(--muted);
@@ -3420,15 +3427,15 @@ h2 em {
   padding: 66px 0 52px;
 }
 .blog-post h1 {
-  margin: 10px 0 20px;
+  margin: 7px 0 14px;
 }
 .blog-post-body {
-  margin-top: 32px;
+  margin-top: 23px;
   display: flex;
   flex-direction: column;
   gap: 18px;
-  font-size: 17px;
-  line-height: 1.75;
+  font-size: 15.5px;
+  line-height: 1.55;
   color: var(--fg);
 }
 
@@ -3436,7 +3443,7 @@ h2 em {
 .search-form {
   display: flex;
   gap: 10px;
-  margin-top: 28px;
+  margin-top: 20px;
   max-width: 480px;
 }
 .search-form input {
@@ -3446,7 +3453,7 @@ h2 em {
   border-radius: 999px;
   background: var(--bg);
   color: var(--fg);
-  font-size: 14px;
+  font-size: 13px;
   outline: none;
 }
 .search-form input:focus-visible {
@@ -3474,13 +3481,13 @@ h2 em {
 }
 .search-result-item h2 {
   margin: 0 0 6px;
-  font-size: 18px;
+  font-size: 16px;
   letter-spacing: -0.02em;
 }
 .search-result-item p {
   margin: 0;
   color: var(--muted);
-  font-size: 14px;
+  font-size: 13px;
 }
 .search-result-type {
   flex-shrink: 0;
@@ -3535,7 +3542,7 @@ h2 em {
   background: var(--surface-2);
 }
 .related-pages > .eyebrow {
-  margin: 0 0 24px;
+  margin: 0 0 17px;
 }
 .related-pages ul {
   display: grid;
@@ -3582,8 +3589,8 @@ h2 em {
 }
 .related-pages__blurb {
   color: var(--muted);
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 13px;
+  line-height: 1.45;
 }
 @media (max-width: 700px) {
   .related-pages {

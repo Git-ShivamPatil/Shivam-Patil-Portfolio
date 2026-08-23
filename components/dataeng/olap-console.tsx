@@ -172,7 +172,12 @@ export function OlapConsole() {
       />
 
       <div className="olap-actions">
-        <button type="button" className="button button-solid" onClick={() => void run()} data-ripple>
+        <button
+          type="button"
+          className="button button-solid"
+          onClick={() => void run()}
+          data-ripple
+        >
           {ready ? "Run query" : "Load DuckDB and run"}
         </button>
         <span className="ask-note">
@@ -210,7 +215,22 @@ export function OlapConsole() {
                 {result.rows.map((row, index) => (
                   <tr key={index}>
                     {row.map((cell, cellIndex) => (
-                      <td key={cellIndex}>{cell === null ? "—" : String(cell)}</td>
+                      // `is-num` from the VALUE's type, not from how it
+                      // renders: a text column holding "2024" is a label and
+                      // belongs left, while a numeric column holding the same
+                      // digits belongs in a right-aligned stack with its
+                      // neighbours. DuckDB hands back bigint for wide integer
+                      // types, so both are checked.
+                      <td
+                        key={cellIndex}
+                        className={
+                          typeof cell === "number" || typeof cell === "bigint"
+                            ? "is-num"
+                            : undefined
+                        }
+                      >
+                        {cell === null ? "—" : String(cell)}
+                      </td>
                     ))}
                   </tr>
                 ))}

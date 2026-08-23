@@ -281,7 +281,7 @@
   /* --ink is near-black in BOTH themes, so the initial has to come from the
      light end of the palette rather than --fg. */
   color: var(--lime);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 700;
 }
 .drawer-auth-avatar img {
@@ -294,7 +294,7 @@
   min-width: 0;
 }
 .drawer-auth-who strong {
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 700;
   letter-spacing: -0.02em;
 }
@@ -335,7 +335,7 @@
   border-radius: 999px;
   background: var(--ink);
   color: var(--lime);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 700;
   letter-spacing: -0.01em;
 }

@@ -22,11 +22,11 @@
    titles now that it no longer rides down the viewport on a sticky, so it is
    wider than the 28px a heading that scrolled away from its content needed. */
 .sd-section .section-heading {
-  margin-bottom: 32px;
+  margin-bottom: 23px;
 }
 .sd-section .section-heading p {
   color: var(--prose-soft);
-  margin: 10px 0 0;
+  margin: 7px 0 0;
 }
 .sd-section code {
   padding: 1px 5px;
@@ -48,11 +48,11 @@
   overflow-x: auto;
 }
 .sd-figure figcaption {
-  margin-top: 16px;
+  margin-top: 12px;
   padding-top: 14px;
   color: var(--prose-soft);
-  font-size: 13px;
-  line-height: 1.6;
+  font-size: 12.5px;
+  line-height: 1.5;
 }
 /* The viewBox does the scaling; width:100% keeps it inside the shell on
    narrow screens without a horizontal scrollbar. */
@@ -230,7 +230,7 @@
 .sd-phase-label {
   color: var(--fg);
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
   letter-spacing: -0.02em;
 }
 .sd-phase-note {
@@ -303,8 +303,8 @@
 }
 .sd-section .disclosure-body p {
   margin: 0;
-  font-size: 13.5px;
-  line-height: 1.65;
+  font-size: 13px;
+  line-height: 1.52;
 }
 
 /* ---- spec vs reality ---- */
@@ -315,7 +315,7 @@
 .sd-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13.5px;
+  font-size: 13px;
 }
 .sd-table th,
 .sd-table td {
@@ -347,13 +347,13 @@
 .sd-outro p {
   max-width: 560px;
   color: var(--prose-fg);
-  font-size: 18px;
+  font-size: 16px;
 }
 .sd-outro-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 14px;
-  margin-top: 18px;
+  margin-top: 13px;
 }
 
 @media (max-width: 700px) {

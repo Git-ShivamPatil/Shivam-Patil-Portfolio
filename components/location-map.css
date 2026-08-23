@@ -13,15 +13,15 @@
   margin-bottom: 96px;
 }
 .reach-map-copy h2 {
-  margin: 0 0 18px;
-  font-size: clamp(1.625rem, 1.48rem + 0.4vw, 32px);
+  margin: 0 0 13px;
+  font-size: clamp(1.375rem, 1.26rem + 0.32vw, 27px);
 }
 .reach-map-copy p {
   max-width: 340px;
   margin: 0;
   color: var(--prose-soft);
-  font-size: 14px;
-  line-height: 1.7;
+  font-size: 13px;
+  line-height: 1.55;
 }
 .location-map {
   position: relative;
@@ -82,7 +82,7 @@
 }
 .location-map-placeholder-copy {
   position: relative;
-  text-align: center;
+  text-align: left;
 }
 .location-map-placeholder-copy strong {
   display: block;

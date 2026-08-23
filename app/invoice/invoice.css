@@ -29,8 +29,8 @@
 }
 .invoice-meta p {
   margin: 0;
-  font-size: 13px;
-  line-height: 1.7;
+  font-size: 12.5px;
+  line-height: 1.55;
   color: var(--fg);
 }
 .invoice-label {
@@ -44,7 +44,7 @@
 .invoice-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 12px;
+  margin-top: 9px;
 }
 .invoice-table th {
   padding: 12px 10px;
@@ -61,7 +61,7 @@
 }
 .invoice-table td {
   padding: 16px 10px;
-  font-size: 14px;
+  font-size: 13px;
   text-align: right;
 }
 .invoice-table td small {
@@ -77,11 +77,11 @@
 .invoice-table tfoot .invoice-total td {
   padding-top: 16px;
   color: var(--fg);
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
 }
 .invoice-footnote {
-  margin: 34px 0 0;
+  margin: 24px 0 0;
   color: var(--muted);
   font-size: 12px;
 }

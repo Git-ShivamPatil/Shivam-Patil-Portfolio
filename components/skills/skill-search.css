@@ -7,7 +7,7 @@
 .skill-search-controls {
   display: grid;
   gap: 16px;
-  margin-bottom: 10px;
+  margin-bottom: 7px;
 }
 
 .skill-search-field {
@@ -34,7 +34,7 @@
   border-radius: 12px;
   background: var(--surface, var(--bg));
   color: var(--fg);
-  font-size: 15px;
+  font-size: 14px;
 }
 .skill-search-field input::placeholder {
   color: var(--muted);
@@ -59,7 +59,7 @@
   border-radius: 999px;
   background: transparent;
   color: var(--fg);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
   transition:
@@ -92,15 +92,15 @@
 .skill-search-count {
   margin: 0 0 6px;
   color: var(--prose-soft, var(--muted));
-  font-size: 13px;
+  font-size: 12.5px;
 }
 
 .skill-search-empty {
-  margin: 18px 0 0;
+  margin: 13px 0 0;
   padding: 18px;
   border-radius: 14px;
   color: var(--prose-soft, var(--muted));
-  font-size: 14px;
+  font-size: 13px;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -132,9 +132,9 @@
    at TCS" is what stops "proven in production" being a boast. It is set smaller
    but NOT dimmed to --muted: a reader who skips it has read only the claim. */
 .provenance-head p {
-  margin: 0 0 22px;
+  margin: 0 0 16px;
   color: var(--prose-soft);
-  font-size: 13.5px;
+  font-size: 13px;
 }
 .provenance-list {
   display: grid;
@@ -157,7 +157,7 @@
 }
 .provenance-chip {
   color: var(--fg);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 600;
   letter-spacing: -0.01em;
 }
@@ -172,8 +172,8 @@
 .provenance-row dd {
   margin: 0;
   color: var(--prose-soft);
-  font-size: 13.5px;
-  line-height: 1.6;
+  font-size: 13px;
+  line-height: 1.5;
 }
 @media (max-width: 720px) {
   .provenance {

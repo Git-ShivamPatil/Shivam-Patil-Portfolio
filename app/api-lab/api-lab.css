@@ -144,7 +144,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 1px;
-  margin: 0 0 16px;
+  margin: 0 0 12px;
   border-radius: var(--radius);
   background: var(--line);
   overflow: hidden;
@@ -179,7 +179,7 @@
 }
 
 .api-source {
-  margin-top: 14px;
+  margin-top: 10px;
 }
 .api-source summary {
   color: var(--muted);
@@ -190,7 +190,7 @@
   color: var(--fg);
 }
 .api-source pre {
-  margin: 12px 0 0;
+  margin: 9px 0 0;
   padding: 16px 18px;
   max-height: 420px;
   overflow: auto;

@@ -14,7 +14,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 1px;
-  margin: 0 0 18px;
+  margin: 0 0 13px;
   border-radius: var(--radius);
   background: var(--line);
   overflow: hidden;
@@ -96,11 +96,15 @@
   white-space: nowrap;
 }
 .rel-table thead th {
+  text-align: right;
   color: var(--muted);
   font-weight: 500;
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
+}
+.rel-table thead th:first-child {
+  text-align: left;
 }
 .rel-table tbody th {
   display: flex;
@@ -132,7 +136,7 @@
 
 .rel-note,
 .rel-empty {
-  margin: 16px 0 0;
+  margin: 12px 0 0;
   color: var(--muted);
   font:
     400 13.5px/1.75 var(--font-manrope),
@@ -156,7 +160,7 @@
   background: var(--surface);
 }
 .rel-breaker h3 {
-  margin: 0 0 10px;
+  margin: 0 0 7px;
   color: var(--muted);
   font: 500 11px var(--font-label);
   text-transform: uppercase;
@@ -209,7 +213,7 @@
 }
 
 .rel-history {
-  margin: 16px 0 0;
+  margin: 12px 0 0;
   padding: 0;
   list-style: none;
   border-radius: var(--radius);
@@ -444,7 +448,7 @@
   color: var(--fg);
 }
 .chaos-log ol {
-  margin: 12px 0 0;
+  margin: 9px 0 0;
   padding: 0;
   list-style: none;
   display: grid;
@@ -477,7 +481,7 @@
 /* --------------------------------------------------------------- traces */
 
 .rel-traces {
-  margin: 16px 0 0;
+  margin: 12px 0 0;
   padding: 0;
   list-style: none;
   display: grid;
@@ -492,7 +496,7 @@
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  margin: 0 0 10px;
+  margin: 0 0 7px;
   font: 400 11.5px var(--font-label);
   font-variant-numeric: tabular-nums;
   color: var(--muted);
