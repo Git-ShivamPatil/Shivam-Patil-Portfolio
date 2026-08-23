@@ -59,51 +59,6 @@
   perspective: 700px;
 }
 
-/* ---- cursor follower ---- */
-.cursor-ring,
-.cursor-dot {
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 60;
-  pointer-events: none;
-  border-radius: 50%;
-  opacity: 0;
-  transition: opacity 0.25s ease;
-  /* Promoted so the rAF transform writes never trigger layout. */
-  will-change: transform;
-}
-.cursor-ring {
-  width: 34px;
-  height: 34px;
-  border: 1px solid var(--fg);
-  opacity: 0;
-  transition:
-    opacity 0.25s ease,
-    width 0.22s cubic-bezier(0.22, 1, 0.36, 1),
-    height 0.22s cubic-bezier(0.22, 1, 0.36, 1),
-    background 0.22s ease,
-    border-color 0.22s ease;
-}
-.cursor-ring.is-visible {
-  opacity: 0.42;
-}
-.cursor-ring.is-active {
-  width: 54px;
-  height: 54px;
-  opacity: 0.75;
-  background: color-mix(in srgb, var(--lime) 22%, transparent);
-  border-color: var(--lime);
-}
-.cursor-dot {
-  width: 5px;
-  height: 5px;
-  background: var(--fg);
-}
-.cursor-dot.is-visible {
-  opacity: 0.85;
-}
-
 /* ---- parallax ----
    --parallax-x/y come from the pointer listener, --scroll-parallax-y from the
    scroll listener; both default to 0 so an element is unmoved until a driver
@@ -278,10 +233,6 @@
     opacity: 1 !important;
     transform: none !important;
     animation: none !important;
-  }
-  .cursor-ring,
-  .cursor-dot {
-    display: none !important;
   }
   [data-parallax-pointer],
   [data-parallax-scroll],

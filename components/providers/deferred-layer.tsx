@@ -16,8 +16,17 @@ import { Toaster } from "sonner";
  *
  * Nothing below is needed for the first frame:
  *
- * - `CursorFollower`, `InteractionLayer` — pointer decoration; there is no
- *   pointer event to respond to before the user has seen the page.
+ * - `InteractionLayer` — pointer decoration; there is no pointer event to
+ *   respond to before the user has seen the page.
+ *
+ *   It used to be listed here alongside `CursorFollower`, a ring-and-dot pair
+ *   that trailed the pointer. That is gone entirely — component, styles and
+ *   the rAF loop that drove them. A custom cursor overrides a control the
+ *   operating system owns and the reader has already configured; the dot sat
+ *   on top of the page at z-index 60 following them around, and on a site
+ *   whose stated brief is "only what is required, no bluff, no noise" it was
+ *   the clearest remaining example of noise. Nothing referenced it but the
+ *   render below and its own stylesheet block.
  * - `ScrollProgress`, `BackToTop` — both are functions of scroll position, and
  *   scroll position is 0 until the page is visible enough to scroll.
  * - `ChatWidget` — a launcher button in the corner.
@@ -46,9 +55,6 @@ import { Toaster } from "sonner";
  * after first paint.
  */
 
-const CursorFollower = dynamic(() => import("../cursor-follower").then((m) => m.CursorFollower), {
-  ssr: false,
-});
 const InteractionLayer = dynamic(
   () => import("./interaction-layer").then((m) => m.InteractionLayer),
   { ssr: false },
@@ -147,7 +153,6 @@ export function DeferredLayer() {
     <>
       <InteractionLayer />
       <ScrollProgress />
-      <CursorFollower />
       <BackToTop />
       <PresenceTracker />
       <RegisterServiceWorker />
