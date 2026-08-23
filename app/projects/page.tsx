@@ -13,7 +13,7 @@ import "./projects.css";
 export const metadata = pageMetadata({
   title: "Projects & Case Studies",
   description:
-    "Six end-to-end builds by Shivam Patil in Rust, Go, C++ and Python — each with the architecture, the trade-offs it forced, and the commands to run it yourself.",
+    "Seven end-to-end builds by Shivam Patil in Rust, Go, C++ and Python — each with the architecture, the trade-offs it forced, and the commands to run it yourself.",
   path: "/projects",
 });
 
@@ -53,7 +53,7 @@ export default async function ProjectsPage() {
           <em>made tangible.</em>
         </h1>
         <p>
-          Six end-to-end builds in <strong>Rust, Go, C++ and Python</strong> — a distributed rate
+          Seven end-to-end builds in <strong>Rust, Go, C++ and Python</strong> — a distributed rate
           limiter, an LLM inference server, an agentic AI runtime, a secure RAG platform. Each one
           carries its architecture, the trade-offs it forced, and the commands to run it yourself.
         </p>

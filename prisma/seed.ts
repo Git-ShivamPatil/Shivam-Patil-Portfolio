@@ -105,8 +105,65 @@ interface StaticProject {
 // Keep the two files in sync when either changes.
 const staticProjects: StaticProject[] = [
   {
-    slug: "distributed-rate-limiter-api-gateway",
+    slug: "low-latency-market-data-order-entry",
     number: "01",
+    category: "Trading systems",
+    title: "Low-Latency Market Data & Order Entry Stack",
+    shortTitle: "Market data stack",
+    summary:
+      "Price-time-priority matching engine publishing a binary feed over redundant A/B UDP multicast, with a Rust feed handler that arbitrates the two and rebuilds MBP/MBO books without allocating.",
+    outcome: "1M+ msg/s · ~100ns decode",
+    accent: "cyan",
+    stack: ["Rust", "C++", "FIX 4.4", "UDP multicast", "SBE-style encoding", "Docker"],
+    useCase:
+      "Consume an exchange feed and place orders against it without the decode path or the book update ever touching the heap — and recover cleanly when packets are lost rather than resynchronising by restart.",
+    implemented: [
+      [
+        "Matching engine and binary feed",
+        "Price-time-priority matching publishing a binary market-data feed over redundant A/B UDP multicast channels, with configurable packet-loss injection, a 2-second snapshot cycle, and a TCP replay service for recovery.",
+      ],
+      [
+        "Allocation-free feed handler",
+        "A/B feed arbitration, sequence-gap detection and snapshot-based recovery into MBP/MBO order books — sustaining 1M+ messages/sec at ~100ns decode and ~200ns book update, with zero heap allocations per message verified by a counting allocator.",
+      ],
+      [
+        "FIX 4.4 order gateway",
+        "A full session layer — logon, heartbeats, resend/gap-fill, durable sequence persistence — reconciling order state across a hard process restart, plus a risk service enforcing pre-trade limits on an allocation-free path.",
+      ],
+    ],
+    architecture: [
+      { title: "FIX 4.4 gateway", detail: "session · resend · gap-fill", type: "input" },
+      { title: "Risk service", detail: "pre-trade limits", type: "core" },
+      { title: "Matching engine", detail: "price-time priority", type: "core" },
+      { title: "Snapshot + replay", detail: "2s cycle · TCP recovery", type: "store" },
+      { title: "Rust feed handler", detail: "A/B arbitration · MBP/MBO", type: "output" },
+    ],
+    steps: [
+      [
+        "Bring up the transport",
+        "Start the containerised multicast network and the replay service before either side of the stack connects to it.",
+        "docker compose up -d",
+      ],
+      [
+        "Run the matching engine",
+        "Start the engine and let it publish the binary feed on both the A and B multicast channels.",
+        "cargo run --release --bin matching-engine -- --config configs/local.toml",
+      ],
+      [
+        "Attach the feed handler",
+        "Point the handler at both channels; it arbitrates between them and builds the order books from whichever arrives first.",
+        "cargo run --release --bin feed-handler -- --feed-a 239.1.1.1:30001 --feed-b 239.1.1.2:30001",
+      ],
+      [
+        "Prove the recovery path",
+        "Inject packet loss on one channel and confirm the handler detects the sequence gap and recovers from the snapshot rather than falling behind.",
+        "cargo run --release --bin feed-handler -- --drop-rate 0.02 --verify-allocations",
+      ],
+    ],
+  },
+  {
+    slug: "distributed-rate-limiter-api-gateway",
+    number: "02",
     category: "Distributed systems",
     title: "Distributed Rate Limiter & API Gateway",
     shortTitle: "Rate limiter",
@@ -163,7 +220,7 @@ const staticProjects: StaticProject[] = [
   },
   {
     slug: "agentic-ai-orchestration-platform",
-    number: "02",
+    number: "03",
     category: "AI systems",
     title: "Agentic AI Orchestration Platform",
     shortTitle: "Agentic platform",
@@ -228,7 +285,7 @@ const staticProjects: StaticProject[] = [
   },
   {
     slug: "high-performance-llm-inference-server",
-    number: "03",
+    number: "04",
     category: "Systems engineering",
     title: "High-Performance LLM Inference Server",
     shortTitle: "LLM inference",
@@ -293,7 +350,7 @@ const staticProjects: StaticProject[] = [
   },
   {
     slug: "secure-banking-system",
-    number: "04",
+    number: "05",
     category: "FinTech infrastructure",
     title: "Secure Banking System",
     shortTitle: "Secure banking",
@@ -359,7 +416,7 @@ const staticProjects: StaticProject[] = [
   },
   {
     slug: "online-examination-system",
-    number: "05",
+    number: "06",
     category: "Platform engineering",
     title: "Online Examination System",
     shortTitle: "Exam platform",
@@ -416,7 +473,7 @@ const staticProjects: StaticProject[] = [
   },
   {
     slug: "secure-rag-with-rbac-guardrails-monitoring",
-    number: "06",
+    number: "07",
     category: "Generative AI",
     title: "Secure RAG with RBAC, Guardrails & Monitoring",
     shortTitle: "Secure RAG",

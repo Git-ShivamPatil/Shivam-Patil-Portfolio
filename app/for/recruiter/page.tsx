@@ -67,7 +67,7 @@ export default function RecruiterPath() {
           <div className="path-card">
             <h3>Projects, experience and proof</h3>
             <p>
-              Six end-to-end systems, the roles behind them, and the credentials — including the
+              Seven end-to-end systems, the roles behind them, and the credentials — including the
               ones still in progress, marked as such rather than rounded up.
             </p>
             <div className="path-card-links">

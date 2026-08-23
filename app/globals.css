@@ -1546,6 +1546,57 @@ h2 em {
   border-radius: 4px;
   background: #9e9e9e;
 }
+/* ---- depth ladder: the market-data card ----
+   Six bars of decreasing length either side of a thicker mid rule — an order
+   book's resting size at each price level with the touch through the middle.
+   Same construction as the graphics around it: absolutely positioned inside
+   .project-card-graphic, `currentColor` so it inherits the card's --ink and
+   needs no per-theme rule of its own.
+
+   Keyed on the project's slug rather than its accent — see the note in
+   components/project-card.tsx for why this one is the exception. */
+.depth-graphic {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.depth-graphic i,
+.depth-graphic b {
+  display: block;
+  height: 3px;
+  border-radius: 2px;
+  background: currentColor;
+  opacity: 0.5;
+}
+/* Bid side tapers out from the touch, ask side tapers in — the widths are the
+   shape of a book, not decoration. */
+.depth-graphic i:nth-child(1) {
+  width: 34%;
+}
+.depth-graphic i:nth-child(2) {
+  width: 52%;
+}
+.depth-graphic i:nth-child(3) {
+  width: 72%;
+}
+/* The touch: full width, thicker, and fully opaque so it reads as the line the
+   others are measured against. */
+.depth-graphic b {
+  width: 100%;
+  height: 5px;
+  opacity: 1;
+}
+.depth-graphic i:nth-child(5) {
+  width: 64%;
+}
+.depth-graphic i:nth-child(6) {
+  width: 41%;
+}
+
 .ledger-graphic {
   position: absolute;
   left: 4px;

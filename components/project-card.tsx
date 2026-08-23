@@ -25,54 +25,85 @@ export function ProjectCard({ project, index }: { project: Project; index: numbe
       </div>
       <div className="project-card-body">
         <div className="project-card-graphic" aria-hidden="true">
-          {project.accent === "cyan" && (
+          {/* Keyed on slug, not accent, and that is a deliberate exception.
+
+              Every other illustration below is chosen by `project.accent`,
+              which works because there are exactly six accents and there were
+              exactly six projects. The seventh has no accent left: the enum in
+              schema.prisma holds six values and all are taken, so giving this
+              one its own would mean an `ALTER TYPE` against the production
+              database for what is a drawing.
+
+              Since the monochrome rebuild the accents are six near-identical
+              greys — #e1e1e1 to #d3d3d3 — so sharing `cyan` with the rate
+              limiter costs nothing in colour. What it would have cost is the
+              GRAPHIC, and the two would have sat adjacent in the list wearing
+              the same one. Hence the override: a depth ladder, which is what
+              this project is actually about.
+
+              If a project ever needs both its own colour and its own drawing,
+              that is the point to add the enum value. */}
+          {project.slug === "low-latency-market-data-order-entry" ? (
+            <div className="depth-graphic">
+              <i />
+              <i />
+              <i />
+              <b />
+              <i />
+              <i />
+            </div>
+          ) : (
             <>
-              <GridIcon />
-              <PulseIcon />
+              {project.accent === "cyan" && (
+                <>
+                  <GridIcon />
+                  <PulseIcon />
+                </>
+              )}
+              {project.accent === "violet" && (
+                <div className="agent-graphic">
+                  <b>Plan</b>
+                  <b>Find</b>
+                  <b>Act</b>
+                  <b>Check</b>
+                </div>
+              )}
+              {project.accent === "orange" && (
+                <div className="batch-graphic">
+                  <span />
+                  <span />
+                  <span />
+                  <span />
+                  <i />
+                </div>
+              )}
+              {project.accent === "lime" && (
+                <div className="ledger-graphic">
+                  <i />
+                  <i />
+                  <i />
+                  <i />
+                  <i />
+                </div>
+              )}
+              {project.accent === "blue" && (
+                <div className="exam-graphic">
+                  <i>01</i>
+                  <i>02</i>
+                  <i>03</i>
+                  <b>✓</b>
+                </div>
+              )}
+              {project.accent === "pink" && (
+                <div className="rag-graphic">
+                  <span>?</span>
+                  <i />
+                  <i />
+                  <i />
+                  <b>✓</b>
+                </div>
+              )}
             </>
-          )}
-          {project.accent === "violet" && (
-            <div className="agent-graphic">
-              <b>Plan</b>
-              <b>Find</b>
-              <b>Act</b>
-              <b>Check</b>
-            </div>
-          )}
-          {project.accent === "orange" && (
-            <div className="batch-graphic">
-              <span />
-              <span />
-              <span />
-              <span />
-              <i />
-            </div>
-          )}
-          {project.accent === "lime" && (
-            <div className="ledger-graphic">
-              <i />
-              <i />
-              <i />
-              <i />
-              <i />
-            </div>
-          )}
-          {project.accent === "blue" && (
-            <div className="exam-graphic">
-              <i>01</i>
-              <i>02</i>
-              <i>03</i>
-              <b>✓</b>
-            </div>
-          )}
-          {project.accent === "pink" && (
-            <div className="rag-graphic">
-              <span>?</span>
-              <i />
-              <i />
-              <i />
-              <b>✓</b>
-            </div>
           )}
         </div>
         <h3>{project.shortTitle}</h3>

@@ -91,12 +91,14 @@ export const skillProvenance: ProvenanceBucket[] = [
   {
     id: "self",
     label: "Proven outside work",
-    /* NOT "in the projects on this site". The Rust/C++ evidence below is the
-       low-latency market-data and order-entry stack, which is on the résumé
-       but is not published under /projects — so a qualifier promising a link
-       would be the same species of overclaim this file exists to remove.
-       Publishing that project is what would let this say more. */
-    qualifier: "Designed, built and benchmarked end-to-end, outside any employer",
+    /* This used to read "outside any employer" rather than naming the
+       projects, because the Rust/C++ evidence below — the low-latency
+       market-data and order-entry stack — was on the résumé and NOT published
+       here, so pointing at /projects would have been an overclaim.
+
+       It is published now (project 01), so the qualifier can say where to
+       look. Every group below is evidenced by a case study on this site. */
+    qualifier: "Designed, built and benchmarked end-to-end in the projects on this site",
     groups: [
       {
         skills: ["Rust", "C++"],

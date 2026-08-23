@@ -155,7 +155,7 @@ export const SITE_ROUTES: SiteRoute[] = [
   {
     href: "/projects",
     label: "Projects",
-    blurb: "Six builds, each with the reasoning behind it.",
+    blurb: "Seven builds, each with the reasoning behind it.",
     technicalLabel: "Case studies",
     group: "work",
     priority: 0.95,
