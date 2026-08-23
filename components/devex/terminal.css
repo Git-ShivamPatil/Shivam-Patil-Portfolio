@@ -277,11 +277,18 @@
 /* ---------- skill graph ---------- */
 .skill-graph {
   margin: 0;
+  /* Same floor-and-pan as the /system-design figures — see .sd-diagram. */
+  overflow-x: auto;
 }
 .skill-graph-svg {
   width: 100%;
   height: auto;
   overflow: visible;
+  /* The force simulation is run to completion on the server into a 900-unit
+     viewBox, and the node positions it produces assume that much room. Scaled
+     into a 548px column its forty labels rendered at 6.1px. This holds the
+     graph at the width it was laid out for. */
+  min-width: 900px;
 }
 .skill-graph-edges line {
   stroke: var(--line);

@@ -117,7 +117,19 @@
 /* ---------- panel shell ---------- */
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  /* auto-fit, not `repeat(2, ...)`.
+  
+     The fixed pair was correct while the content column was 1180px wide. It is
+     548px now (see --content-w), and two panels in 548px left each one 263px —
+     which put the gauge's labels at 5.9px and the impact chart at 78% scale.
+     
+     The deeper problem was that the responsive rule was a VIEWPORT media query
+     at 900px: the viewport is still 1920px, so it never fired, while the
+     container it was protecting had already halved. auto-fit tracks the
+     container instead, which is the thing that actually changed. 300px is
+     chosen so two panels need 622px — more than the column — so this resolves
+     to one panel per row and each chart gets the full width it was drawn for. */
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 22px;
   padding: 40px 0 132px;
 }

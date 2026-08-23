@@ -42,6 +42,10 @@
   border-radius: var(--radius);
   background: var(--surface);
   box-shadow: var(--elev-1);
+  /* The drawing inside carries a 700px floor — see .sd-diagram. Where the
+     content column is narrower than that, the figure pans rather than letting
+     the SVG scale its own text down into illegibility. */
+  overflow-x: auto;
 }
 .sd-figure figcaption {
   margin-top: 16px;
@@ -57,6 +61,17 @@
   width: 100%;
   height: auto;
   overflow: visible;
+  /* THE FLOOR.
+
+     `width: 100%` alone means the viewBox scales to whatever box it is given,
+     and SVG text scales with the drawing — so once the content column became
+     548px, 13px node titles rendered at 9.4px and the 10px sub-labels at
+     6.5px. Measured, not estimated. Below its natural width the diagram stops
+     being readable rather than merely being smaller.
+
+     700 units is the width it was laid out at. At or above that it fills the
+     column exactly as before; below it, .sd-figure scrolls. */
+  min-width: 700px;
 }
 
 /* ---- diagram: nodes and edges ---- */

@@ -142,6 +142,25 @@
   /* 76px was a marketing-site header. At this type scale the bar only has to
      clear a 28px avatar and a 12px nav label, and 56px does that with room
      left — it reads as chrome rather than as a section of the page. */
+  /* THE CONTENT COLUMN.
+     
+     548px is not an arbitrary measure — it is the natural width of the header
+     nav, from the left edge of "About me" to the right edge of "System design".
+     Content is aligned to that span deliberately: the top bar's two ends are
+     chrome pinned to the window (wordmark left, controls right), and everything
+     between them is the page. Lining the column up with the nav is what makes
+     the bar read as a frame around the content rather than as a separate strip
+     floating above it.
+
+     The nav is given this same width below, with `space-between`, so the two
+     cannot drift: whatever this number is, the first nav link starts at the
+     column's left edge and the last ends at its right. Change it here and both
+     move together. A test asserts they still match.
+
+     At 548px this is roughly 75 characters at 15px — a comfortable measure for
+     prose, and the reason the number is worth keeping even though it is narrow
+     on a 1920px display. */
+  --content-w: 548px;
   --header-h: 56px;
   /* P17 — the theme customiser writes these two on <html>. Declared here so
      they always resolve: a var() with no fallback and no definition collapses
@@ -554,7 +573,10 @@ button {
 }
 
 .shell {
-  width: min(1180px, calc(100% - 64px));
+  /* Was a flat 1180px. See --content-w for why it is the nav's width now.
+     The calc() floor still governs below ~612px, where the column would
+     otherwise be wider than the viewport. */
+  width: min(var(--content-w), calc(100% - 64px));
   margin: auto;
 }
 /* The real content (.site-header/main/.site-footer) explicitly lifts to
@@ -792,7 +814,16 @@ h2 em {
 .header-nav {
   display: flex;
   align-items: center;
-  justify-content: center;
+  /* space-between, not center, and an explicit width: this is what pins the
+     first link's left edge and the last link's right edge to the content
+     column's edges. With five labels totalling ~444px in a 548px track the
+     computed gaps come out at 26px, which is exactly what the old `gap` gave —
+     so this changes nothing visually today and guarantees the alignment
+     tomorrow.
+
+     `gap` stays as a floor for the case where labels grow. */
+  justify-content: space-between;
+  width: min(var(--content-w), calc(100% - 64px));
   gap: 26px;
 }
 /* Small, uppercase and widely tracked — the one piece of type on the site that
@@ -2989,7 +3020,8 @@ h2 em {
 /* ===== achievements page ===== */
 .achievement-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* Was repeat(3, …), sized for the old 1180px column. See --content-w. */
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 18px;
   padding: 70px 0 132px;
   margin-top: 8px;

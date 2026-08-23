@@ -53,10 +53,15 @@ body:has(.home) main > div {
 }
 
 .home-inner {
-  /* Not `.shell`. The reference sits its hero left of centre rather than
-     centred in the page, and `.shell` is a centred max-width container — the
-     two fight. This is an explicit left inset that grows with the viewport. */
-  width: min(1180px, calc(100% - 64px));
+  /* Deliberately NOT `.shell`, even though it now resolves to the same box.
+
+     The two want the same width for different reasons and could diverge again:
+     `.shell` is the site-wide content column, while this is the hero's own
+     measure. Sharing --content-w is what puts the "S" of "Shivam Patil"
+     directly under the "A" of "About me" in the bar above — which is the whole
+     point of the alignment — without coupling this rule to a class it does not
+     use. */
+  width: min(var(--content-w), calc(100% - 64px));
   margin: 0 auto;
 }
 
