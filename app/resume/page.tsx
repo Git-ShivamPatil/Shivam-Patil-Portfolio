@@ -7,7 +7,7 @@ import { breadcrumbJsonLd } from "../../lib/seo/structured-data";
 export const metadata = pageMetadata({
   title: "Résumé",
   description:
-    "The one-page résumé of Shivam Patil, Software Development Engineer: C++, Rust, Go, Python, distributed systems and AI. Read it here or download the PDF.",
+    "The one-page résumé of Shivam Patil, SDE. Python and FastAPI in production; Rust, C++ and Go self-directed. Read it or download the PDF.",
   path: "/resume",
 });
 
@@ -33,8 +33,9 @@ export default function ResumePage() {
           <em>one page.</em>
         </h1>
         <p>
-          Software Development Engineer — <strong>C++, Rust, Go, Python</strong>, distributed
-          systems and applied AI, based in Mumbai. Read it below, or download the PDF.
+          Software Development Engineer — <strong>Python and FastAPI in production</strong>,{" "}
+          <strong>Rust, C++ and Go self-directed</strong>, distributed systems and applied AI, based
+          in Mumbai. Read it below, or download the PDF.
         </p>
       </section>
 

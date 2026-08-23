@@ -32,8 +32,8 @@ export default function AboutPage() {
           </h1>
           <p>
             I&apos;m Shivam Patil — <strong>SDE at Tata Consultancy Services</strong>, Mumbai.{" "}
-            <strong>1.5+ years</strong> on high-throughput distributed systems and production
-            backends.
+            <strong>1.7 years</strong> shipping Python and FastAPI services in production, and
+            building low-latency systems in Rust, C++ and Go outside work.
           </p>
         </div>
         <AboutPhoto />

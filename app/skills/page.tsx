@@ -1,5 +1,6 @@
 import { pageMetadata } from "../../lib/seo/metadata";
 import { getSkillCategories } from "../skills";
+import { skillProvenance } from "../skills-provenance";
 import { getProjects } from "../projects";
 import { SkillGraph } from "../../components/devex/skill-graph";
 import { SkillSearch } from "../../components/skills/skill-search";
@@ -10,7 +11,7 @@ import "../../components/devex/terminal.css";
 export const metadata = pageMetadata({
   title: "Skills: C++, Rust, Go, Python & AI",
   description:
-    "The languages, frameworks and infrastructure Shivam Patil works in — C++, Rust, Go, Python, Kubernetes — with a graph of which project evidences which skill.",
+    "What Shivam Patil shipped in production at TCS versus what he built self-directed — every skill listed with the work that evidences it.",
   path: "/skills",
 });
 
@@ -73,11 +74,53 @@ export default async function SkillsPage() {
           <br />
           <em>under pressure.</em>
         </h1>
+        {/* This paragraph used to read "C++, Rust, Go and Python, and the
+            infrastructure around them — Kubernetes, Docker, PostgreSQL, AWS."
+            Two things were wrong with it and both mattered.
+
+            It put four languages beside a job title with nothing to say that
+            only one of them is the production stack. And it listed AWS as
+            infrastructure worked in, which is not true — the certification is
+            real and is on /certifications, but every deployment has been
+            Azure/AKS. See app/skills-provenance.ts. */}
         <p>
-          <strong>C++, Rust, Go and Python</strong>, and the infrastructure around them —
-          Kubernetes, Docker, PostgreSQL, AWS. Search the list, filter it by category, or read the
-          graph below to see which project actually evidences which skill.
+          Split by where it was earned: <strong>what has shipped to production at TCS</strong>, and{" "}
+          <strong>what was built self-directed</strong>. Every line names the work that evidences
+          it, so the two are not read as one.
         </p>
+      </section>
+
+      {/* The provenance split, first — before the graph and before the
+          searchable inventory. It is the answer to the question a recruiter
+          actually arrives with, and burying it under a force-directed diagram
+          would be the same mistake the flat list made. */}
+      <section className="shell provenance" data-reveal>
+        {skillProvenance.map((bucket) => (
+          <div key={bucket.id} className="provenance-bucket" data-bucket={bucket.id}>
+            <div className="provenance-head">
+              <h2>{bucket.label}</h2>
+              <p>{bucket.qualifier}</p>
+            </div>
+            <dl className="provenance-list">
+              {bucket.groups.map((group) => (
+                <div key={group.skills.join("+")} className="provenance-row">
+                  {/* <dt>/<dd> rather than two spans: this genuinely is a
+                      description list — a set of terms and what each is backed
+                      by — and the semantics carry to a screen reader, which
+                      announces the pairing rather than eight loose strings. */}
+                  <dt>
+                    {group.skills.map((skill) => (
+                      <span key={skill} className="provenance-chip">
+                        {skill}
+                      </span>
+                    ))}
+                  </dt>
+                  <dd>{group.evidence}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        ))}
       </section>
 
       <section className="shell pb-6" data-reveal>
@@ -93,13 +136,29 @@ export default async function SkillsPage() {
         <SkillGraph input={graphInput} />
       </section>
 
-      {/* The flat list of twelve chip groups is now searchable and filterable.
+      {/* The flat inventory, searchable and filterable.
+
+          It sits BELOW the provenance split and is introduced as an inventory,
+          not as a claim — that ordering is the whole point. On its own this
+          list is the thing that reads as a keyword dump; underneath two labelled
+          buckets it is what it actually is, a complete index of everything
+          touched, with the provenance already established above it.
+
           Every skill is still server-rendered into the HTML — SkillSearch hides
           non-matches with `hidden` rather than rebuilding the list — because
           this page is the only place on the site whose rendered text contains
           "C++", "Rust" and "Go", and a client-built list would leave a crawler
           reading whatever the default filter produced. */}
-      <div className="shell">
+      <div className="shell" data-reveal>
+        <div className="section-heading">
+          <h2>
+            Everything, <em>indexed.</em>
+          </h2>
+          <p>
+            The full inventory, including what is used lightly. Depth is the section above; this is
+            coverage.
+          </p>
+        </div>
         <SkillSearch categories={skillCategories} />
       </div>
     </>

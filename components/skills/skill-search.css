@@ -108,3 +108,79 @@
     transition: none;
   }
 }
+
+/* =========================================================================
+   PROVENANCE — where each skill was earned
+
+   Two labelled buckets above the searchable inventory. See
+   app/skills-provenance.ts for why the split exists and what it is held to.
+
+   No borders and no plates, in keeping with the rest of the site: the
+   separation is carried by the heading, the qualifier line under it, and the
+   space between the two blocks. A bordered box around each bucket would say
+   "two panels"; a heading and a gap says "two claims", which is what they are.
+   ========================================================================= */
+.provenance {
+  display: grid;
+  gap: 48px;
+  padding-bottom: 12px;
+}
+.provenance-head h2 {
+  margin: 0 0 6px;
+}
+/* The qualifier is the half that keeps the claim honest — "shipped and operated
+   at TCS" is what stops "proven in production" being a boast. It is set smaller
+   but NOT dimmed to --muted: a reader who skips it has read only the claim. */
+.provenance-head p {
+  margin: 0 0 22px;
+  color: var(--prose-soft);
+  font-size: 13.5px;
+}
+.provenance-list {
+  display: grid;
+  gap: 18px;
+  margin: 0;
+}
+/* Two columns on desktop, stacked on narrow: the skills read as a label and
+   the evidence as its value, which is the relationship <dl> already encodes. */
+.provenance-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.9fr) 1.6fr;
+  gap: 10px 28px;
+  align-items: start;
+}
+.provenance-row dt {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+}
+.provenance-chip {
+  color: var(--fg);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+/* A separator that is not a line: the chips are one visual run, so a thin
+   middle dot between them reads as "and" without drawing a rule. */
+.provenance-chip + .provenance-chip::before {
+  content: "·";
+  margin-right: 6px;
+  color: var(--muted);
+  font-weight: 400;
+}
+.provenance-row dd {
+  margin: 0;
+  color: var(--prose-soft);
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+@media (max-width: 720px) {
+  .provenance {
+    gap: 36px;
+  }
+  .provenance-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+}

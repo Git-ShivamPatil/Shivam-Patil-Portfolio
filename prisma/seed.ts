@@ -9,20 +9,27 @@ import { PrismaNeon } from "@prisma/adapter-neon";
 
 // Transcribed verbatim from the original app/skills.ts static array (that
 // file is now a DB-backed data module, same as app/projects.ts).
+/**
+ * Two entries are deliberately absent, and both were removed rather than never
+ * added — see scripts/prune-unevidenced-skills.mts for the full reasoning:
+ *
+ * - **AWS.** The Developer Associate certification is real and lives on
+ *   /certifications. Every deployment actually performed is Azure/AKS, so
+ *   listing AWS here read as hands-on cloud experience it is not.
+ * - **MCP (Model Context Protocol).** A grep of the whole repository found it
+ *   in this array and nowhere else. No project, no bullet, no implementation.
+ *
+ * The rule both fail is the one /skills is now built around: every skill token
+ * has to trace to something checkable. Do not re-add either without an artifact
+ * behind it.
+ */
 const skillCategories: { label: string; items: string[] }[] = [
   { label: "Languages", items: ["C++", "Python", "Go", "Rust", "JavaScript", "TypeScript"] },
   { label: "Frontend", items: ["React.js", "Next.js"] },
   { label: "Backend", items: ["FastAPI", "REST APIs", "Microservices", "Distributed Systems"] },
   {
     label: "Cloud & DevOps",
-    items: [
-      "Azure Kubernetes Service (AKS)",
-      "AWS",
-      "Docker",
-      "Kubernetes",
-      "Prometheus",
-      "Grafana",
-    ],
+    items: ["Azure Kubernetes Service (AKS)", "Docker", "Kubernetes", "Prometheus", "Grafana"],
   },
   {
     label: "AI/ML & Generative AI",
@@ -35,7 +42,7 @@ const skillCategories: { label: string; items: string[] }[] = [
   },
   {
     label: "Core CS",
-    items: ["System Programming", "MCP (Model Context Protocol)", "Multithreading", "Concurrency"],
+    items: ["System Programming", "Multithreading", "Concurrency"],
   },
 ];
 

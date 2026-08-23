@@ -12,8 +12,14 @@ export const metadata = pageMetadata({
   // is that segment. So the one page that most needs the name in its title is
   // the one page the template cannot give it to.
   title: "Shivam Patil — Software Engineer | C++, Rust, Go & AI",
+  // This read "Software engineer at Tata Consultancy Services, building
+  // high-throughput backend platforms and distributed systems in C++, Rust, Go
+  // and Python" — one sentence attributing four languages to one employer, when
+  // the production stack there is Python and FastAPI and the systems languages
+  // are self-directed. It is the exact misreading /skills now exists to prevent,
+  // and it was being served as the site's own search-result snippet.
   description:
-    "Software engineer at Tata Consultancy Services, building high-throughput backend platforms and distributed systems in C++, Rust, Go and Python.",
+    "Software engineer. Python and FastAPI in production at Tata Consultancy Services; Rust, C++ and Go in self-directed distributed-systems work.",
   path: "/",
 });
 
