@@ -112,7 +112,7 @@ const staticProjects: StaticProject[] = [
     shortTitle: "Market data stack",
     summary:
       "Price-time-priority matching engine publishing a binary feed over redundant A/B UDP multicast, with a Rust feed handler that arbitrates the two and rebuilds MBP/MBO books without allocating.",
-    outcome: "1M+ msg/s · ~100ns decode",
+    outcome: "2.78M msg/s · 8.2ns decode",
     accent: "cyan",
     stack: ["Rust", "C++", "FIX 4.4", "UDP multicast", "SBE-style encoding", "Docker"],
     useCase:
