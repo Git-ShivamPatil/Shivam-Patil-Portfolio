@@ -124,11 +124,11 @@ const staticProjects: StaticProject[] = [
       ],
       [
         "Allocation-free feed handler",
-        "A/B feed arbitration, sequence-gap detection and snapshot-based recovery into MBP/MBO order books — sustaining 1M+ messages/sec at ~100ns decode and ~200ns book update, with zero heap allocations per message verified by a counting allocator.",
+        "A/B feed arbitration, sequence-gap detection and snapshot-based recovery into MBP/MBO order books — sustaining 1M+ messages/sec at ~100ns decode and ~200ns book update, with zero heap allocations per message verified by a counting allocator. Measured single-host over loopback, batched 32 messages to a datagram.",
       ],
       [
         "FIX 4.4 order gateway",
-        "A full session layer — logon, heartbeats, resend/gap-fill, durable sequence persistence — reconciling order state across a hard process restart, plus a risk service enforcing pre-trade limits on an allocation-free path.",
+        "A FIX 4.4 session layer — logon, heartbeats, resend/gap-fill, durable sequence persistence — cross-checked against QuickFIX as an independent counterparty, reconciling order state across a hard process restart, plus a risk service enforcing pre-trade limits on an allocation-free path.",
       ],
     ],
     architecture: [
